@@ -1,0 +1,66 @@
+{
+  "name": "flow-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "flow": "./cli/flow.mjs",
+    "weft": "./cli/weft.mjs"
+  },
+  "scripts": {
+    "dev": "node server/index.mjs",
+    "start": "node server/index.mjs --production",
+    "serve": "node cli/flow.mjs serve",
+    "build": "vite build",
+    "test": "node --test test/*.test.mjs",
+    "cli": "node cli/flow.mjs",
+    "check:architecture": "node tools/check-architecture.mjs",
+    "check": "npm run check:architecture && npm test && npm run build",
+    "setup": "npm run build && node cli/flow.mjs skills install --json",
+    "check:release": "node tools/check-release.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.223.0",
+    "@opentelemetry/resources": "2.12.0",
+    "@opentelemetry/sdk-trace-node": "2.12.0",
+    "@xyflow/react": "12.12.0",
+    "archiver": "8.0.0",
+    "elkjs": "0.12.1",
+    "express": "5.3.0",
+    "google-auth-library": "11.3.2",
+    "lucide-react": "1.64.0",
+    "multer": "2.5.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sharp": "0.35.5",
+    "sqlite-vec": "0.1.9",
+    "streamdown": "2.7.1",
+    "vite": "8.3.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "prettier": "3.9.10"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "description": "Local visual workflows for image and video generation, with agent tools and asset lineage.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/galElmalah/flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/galElmalah/flow/issues"
+  },
+  "homepage": "https://github.com/galElmalah/flow#readme",
+  "overrides": {
+    "readdir-glob": {
+      "minimatch": "^11.0.1"
+    }
+  }
+}

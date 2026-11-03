@@ -1,0 +1,19 @@
+.weft-tooltip {
+  position: fixed;
+  z-index: 30000;
+  max-width: min(280px, calc(100vw - 16px));
+  box-sizing: border-box;
+  padding: 8px 11px;
+  border: 1px solid #555;
+  border-radius: 7px;
+  background: #1b1b1b;
+  color: #f0f0f0;
+  box-shadow: 0 5px 18px #0008;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 450;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}

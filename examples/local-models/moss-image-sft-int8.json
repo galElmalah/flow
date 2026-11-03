@@ -1,0 +1,150 @@
+{
+  "id": "moss-image-sft-int8",
+  "name": "MOSS-Image SFT · INT8",
+  "kind": "image",
+  "graph": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "moss_image_sft_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+        "type": "moss_image",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "flux2-vae_small.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "A scene",
+        "clip": [
+          "2",
+          0
+        ]
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "nsfw, worst quality, bad anatomy, watermark, jpeg artifact",
+        "clip": [
+          "2",
+          0
+        ]
+      }
+    },
+    "6": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 0,
+        "steps": 25,
+        "cfg": 2.5,
+        "sampler_name": "er_sde",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "flow-moss",
+        "images": [
+          "8",
+          0
+        ]
+      }
+    }
+  },
+  "bindings": {
+    "prompt": {
+      "nodeId": "4",
+      "input": "text"
+    },
+    "seed": {
+      "nodeId": "7",
+      "input": "seed"
+    },
+    "width": {
+      "nodeId": "6",
+      "input": "width"
+    },
+    "height": {
+      "nodeId": "6",
+      "input": "height"
+    }
+  },
+  "output": {
+    "nodeId": "9",
+    "field": "images",
+    "index": 0
+  },
+  "resolution": {
+    "longEdge": 1024,
+    "multiple": 16
+  },
+  "requiredModels": [
+    {
+      "folder": "diffusion_models",
+      "filename": "moss_image_sft_int8_convrot.safetensors",
+      "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+    },
+    {
+      "folder": "text_encoders",
+      "filename": "qwen3.5_9b_int8_convrot.safetensors",
+      "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+    },
+    {
+      "folder": "vae",
+      "filename": "flux2-vae_small.safetensors",
+      "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+    }
+  ]
+}

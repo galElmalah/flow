@@ -1,0 +1,139 @@
+.video-generate-node .video-generation-preview {
+  width: calc(100% - 20px);
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 16/9;
+  background: #080808;
+}
+.video-generation-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #080808;
+}
+.video-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  color: #aaa;
+  font-size: 12px;
+}
+.video-setup-notice {
+  margin: 10px 12px;
+  border: 1px solid #444;
+  border-radius: 7px;
+  padding: 10px;
+  font-size: 11px;
+  color: #bbb;
+}
+.video-setup-notice strong {
+  color: #eee;
+  font-size: 12px;
+}
+.video-setup-notice p {
+  margin: 7px 0;
+  line-height: 1.5;
+}
+.video-setup-notice small {
+  display: block;
+  margin-top: 7px;
+  line-height: 1.5;
+}
+.video-setup-notice button,
+.video-inspect {
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 5px;
+  color: #eee;
+  padding: 6px 9px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.video-inspect {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+}
+.video-job-status {
+  display: flex;
+  gap: 7px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: #bbb;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.output-grid video,
+.gallery-tile video,
+.tray-filmstrip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #080808;
+}
+.tray-preview video {
+  display: block;
+  max-width: 100%;
+  max-height: 58vh;
+  width: 100%;
+  background: #080808;
+}
+.gallery-video-label {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: #111d;
+  color: #fff;
+  border: 1px solid #666;
+  border-radius: 4px;
+  padding: 4px 7px;
+  font-size: 11px;
+}
+.gemini-video-settings .connection-form {
+  padding: 0;
+}
+.gemini-video-settings pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #0b0b0b;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+}
+.gemini-video-settings h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gemini-video-settings .connection-form {
+  display: grid;
+  gap: 16px;
+  background: transparent;
+  border: 0;
+  margin-bottom: 0;
+}
+.gemini-video-settings .connection-form label {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.gemini-video-settings .connection-form p {
+  font-size: 12px;
+  margin: 0;
+}
+.gemini-video-settings .autocomplete {
+  width: 100%;
+}
+.gemini-video-settings .provider-setting-actions {
+  margin-top: 0;
+}
+.gemini-video-settings .provider-setting-actions > button {
+  flex: none;
+  font-size: 12px;
+  padding: 10px 15px;
+}

@@ -1,0 +1,4 @@
+[
+  { "id": "codex", "label": "Codex", "providerId": "codex", "model": "native", "count": 4 },
+  { "id": "grok", "label": "Grok Imagine", "providerId": "grok-image", "model": "grok-imagine-image-2.0", "count": 4, "quality": "medium", "image": { "resolution": "1k" } }
+]

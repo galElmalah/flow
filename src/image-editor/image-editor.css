@@ -1,0 +1,1254 @@
+.image-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: #0a0a0a;
+  color: #ededed;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  outline: none;
+}
+.editor-header {
+  height: 74px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px;
+  border-bottom: 1px solid #303030;
+  background: #101010;
+}
+.editor-header > div,
+.editor-header-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.editor-header h1 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+.editor-header span {
+  color: #888;
+  font-size: 11px;
+}
+.editor-engine {
+  padding-right: 18px;
+  border-right: 1px solid #333;
+}
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  flex: 1;
+  min-height: 0;
+}
+.editor-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 17px 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #252525;
+}
+.editor-toolbar button,
+.editor-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.editor-toolbar button.is-active {
+  background: #222;
+  border-color: #444;
+  color: #fff;
+}
+.editor-toolbar input {
+  accent-color: #eee;
+}
+.image-editor button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.editor-stage {
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: auto;
+  padding: 28px;
+  background-color: #080808;
+  background-image: radial-gradient(#202020 0.6px, transparent 0.6px);
+  background-size: 13px 13px;
+}
+.editor-artboard {
+  position: relative;
+  line-height: 0;
+  box-shadow: 0 14px 60px #0008;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+.editor-artboard img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 250px);
+  object-fit: contain;
+}
+.editor-artboard > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.editor-artboard.is-picking > svg {
+  cursor: crosshair;
+}
+.editor-processing {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border: 1px solid #555;
+  background: #111e;
+  border-radius: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: calc(100% - 32px);
+}
+.editor-processing strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: normal;
+}
+.editor-processing small {
+  display: block;
+  margin-top: 7px;
+  color: #aaa;
+  font-size: 10px;
+}
+.editor-processing progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin: 12px 0 4px;
+  accent-color: #eee;
+}
+.editor-comment-pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.image-editor .editor-comment-pin,
+.editor-draft-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border: 1px solid #eee;
+  border-radius: 50% 50% 50% 2px;
+  background: #111;
+  color: white;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  box-shadow: 0 2px 10px #0008;
+}
+.image-editor .editor-comment-pin {
+  pointer-events: auto;
+  padding: 0;
+  font-size: 11px;
+}
+.editor-comment-pin.is-resolved {
+  opacity: 0.55;
+}
+.image-editor .editor-comment-pin.is-active {
+  background: #eee;
+  color: #111;
+}
+.editor-draft-pin {
+  border-style: dashed;
+}
+.editor-pin-preview {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: 190px;
+  padding: 12px;
+  border: 1px solid #555;
+  background: #111;
+  border-radius: 6px;
+  color: #eee;
+  line-height: 1.5;
+  text-align: left;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+.editor-comment-pin:hover .editor-pin-preview,
+.editor-comment-pin:focus-visible .editor-pin-preview {
+  display: block;
+}
+.editor-inline-comment {
+  position: fixed;
+  z-index: 20;
+  background: #141414;
+  color: #eee;
+  border: 1px solid #666;
+  border-radius: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+  line-height: 1.6;
+  box-shadow: 0 12px 50px #000b;
+  max-height: 70dvh;
+  overflow: auto;
+  animation: editor-comment-in 130ms ease-out;
+}
+.editor-inline-comment header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.editor-inline-comment strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.editor-inline-target {
+  font-size: 10px;
+  color: #999;
+  overflow-wrap: anywhere;
+}
+.editor-inline-comment p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.editor-inline-comment .editor-comment-submit {
+  border: 1px solid #666;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+.editor-comment-form > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.editor-comment-form > p {
+  color: #888;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.editor-select-comments {
+  font-size: 10px;
+  color: #ccc;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 7px 9px;
+  margin-bottom: 14px;
+}
+.editor-prepare-only {
+  width: 100%;
+  text-decoration: underline;
+  font-size: 10px;
+  color: #aaa;
+  margin-bottom: 10px;
+  padding: 5px;
+}
+.editor-edit-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.editor-edit-result img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+@keyframes editor-comment-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor-inline-comment {
+    animation: none;
+  }
+}
+.editor-canvas-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 24px;
+  color: #999;
+  font-size: 11px;
+  border-top: 1px solid #222;
+}
+.editor-sidebar {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #333;
+  background: #111;
+}
+.editor-tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+  padding: 7px 14px;
+  gap: 8px;
+}
+.editor-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  justify-content: center;
+  padding: 12px 5px;
+  color: #999;
+  border-bottom: 1px solid transparent;
+}
+.editor-tabs button[aria-selected="true"] {
+  color: #eee;
+  border-color: #ccc;
+}
+.editor-tabs span {
+  font-size: 10px;
+  color: #777;
+}
+.editor-inspector-scroll {
+  overflow: auto;
+  min-height: 100px;
+  flex: 1;
+  padding: 0 17px 18px;
+}
+.editor-layers > p,
+.editor-comments > p {
+  font-size: 11px;
+  color: #888;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.editor-layers article {
+  border: 1px solid #303030;
+  border-radius: 7px;
+  margin-bottom: 8px;
+  padding: 10px;
+}
+.editor-layers article.is-selected {
+  border-color: #999;
+  background: #1b1b1b;
+}
+.editor-layer-name {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.editor-layer-name button {
+  padding: 0;
+}
+.editor-layer-name button > span {
+  border: 1px solid #777;
+  border-radius: 4px;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.editor-layer-name input {
+  min-width: 0;
+  width: 100%;
+  background: none;
+  border: 1px solid transparent;
+  color: #ddd;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.editor-layer-name input:focus {
+  border-color: #666;
+  outline: none;
+}
+.editor-layer-actions {
+  display: flex;
+  align-items: center;
+  margin: 6px -3px -4px;
+  gap: 3px;
+}
+.editor-layer-actions .icon-button {
+  height: 25px;
+  width: 30px;
+}
+.editor-layer-actions > a {
+  display: flex;
+  margin-left: auto;
+  padding: 8px;
+  color: #aaa;
+}
+.editor-no-regions {
+  padding: 25px 0;
+  color: #777;
+  font-size: 11px;
+}
+.editor-comment-form {
+  border-top: 1px solid #333;
+  padding-top: 17px;
+  margin-top: 20px;
+}
+.editor-comment-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.editor-comment-form label span {
+  font-size: 10px;
+  color: #888;
+}
+.image-editor textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 78px;
+  resize: vertical;
+  max-height: 190px;
+  margin: 10px 0 12px;
+  background: #0a0a0a;
+  border: 1px solid #383838;
+  border-radius: 7px;
+  padding: 11px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #ddd;
+}
+.image-editor textarea:focus {
+  outline: 1px solid #777;
+}
+.editor-comment-form > button {
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+.editor-comments article {
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 12px;
+}
+.editor-comments article.is-resolved {
+  opacity: 0.5;
+}
+.editor-comment-target {
+  font-size: 10px;
+  color: #aaa;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.editor-comments article p {
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.editor-comments article > button:last-child {
+  font-size: 10px;
+  color: #aaa;
+}
+.editor-edit-form {
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+  padding: 17px;
+  background: #151515;
+}
+.editor-edit-form label {
+  font-size: 12px;
+}
+.editor-edit-form textarea {
+  min-height: 64px;
+  max-height: 110px;
+}
+.editor-provider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 8px;
+}
+.image-editor .editor-create {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #eee;
+  color: #111;
+  border-radius: 7px;
+  padding: 12px;
+  margin: 12px 0 9px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.editor-edit-form > small {
+  font-size: 10px;
+  color: #888;
+  line-height: 1.6;
+  display: block;
+}
+.editor-model-message {
+  padding: 18px 25px;
+  border-top: 1px solid #333;
+  color: #aaa;
+}
+.editor-model-message p {
+  line-height: 1.7;
+  font-size: 12px;
+}
+.editor-model-message button,
+.editor-prepared button {
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #ddd;
+}
+.editor-model-message small {
+  display: block;
+  margin-top: 8px;
+}
+.editor-error {
+  background: #202020;
+  padding: 13px 24px;
+  border-bottom: 1px solid #777;
+  line-height: 1.6;
+  max-height: 100px;
+  overflow: auto;
+}
+.editor-error button {
+  margin-left: 15px;
+  text-decoration: underline;
+}
+.editor-prepared {
+  padding: 16px 22px;
+  border-top: 1px solid #444;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+}
+.editor-prepared > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.editor-prepared small {
+  color: #888;
+}
+.editor-prepared a {
+  color: #ddd;
+  text-decoration: underline;
+}
+.editor-prepared button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.tray-edit-regions {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #555;
+  border-radius: 7px;
+  font-size: 12px;
+  color: #ddd;
+  background: #191919;
+}
+@media (max-width: 850px) {
+  .editor-layout {
+    grid-template-columns: minmax(0, 1fr) 285px;
+  }
+  .editor-engine {
+    display: none;
+  }
+  .editor-toolbar {
+    padding: 10px;
+    gap: 2px;
+  }
+  .editor-toolbar button,
+  .editor-toolbar label {
+    padding: 7px;
+    font-size: 10px;
+  }
+  .editor-sidebar .editor-edit-form {
+    padding: 12px;
+  }
+  .editor-stage {
+    padding: 14px;
+  }
+  .editor-header {
+    height: 62px;
+    padding: 0 16px;
+  }
+  .editor-inspector-scroll {
+    padding: 0 12px 12px;
+  }
+}
+@media (max-width: 600px) {
+  .image-editor {
+    overflow: auto;
+  }
+  .editor-layout {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+  .editor-workspace {
+    flex-shrink: 0;
+  }
+  .editor-stage {
+    min-height: 250px;
+  }
+  .editor-artboard img {
+    max-height: 46dvh;
+  }
+  .editor-sidebar {
+    border-left: 0;
+    border-top: 1px solid #444;
+    min-height: 420px;
+    flex-shrink: 0;
+  }
+  .editor-inspector-scroll {
+    max-height: 330px;
+  }
+  .editor-header span {
+    font-size: 10px;
+  }
+  .editor-canvas-footer {
+    padding: 12px;
+    font-size: 10px;
+  }
+}
+
+/* The image is the working surface; comments stay anchored to it. */
+.editor-artboard img {
+  max-height: calc(100dvh - 390px);
+}
+.editor-inline-comment {
+  width: 300px;
+  border-color: #737373;
+  border-radius: 12px;
+}
+.editor-inline-comment textarea {
+  font-size: 12px;
+  min-height: 90px;
+}
+.editor-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.image-editor .editor-inline-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 6px;
+  background: #eee;
+  color: #111;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: auto;
+}
+.editor-inline-comment > .editor-inline-send {
+  margin-left: 8px;
+}
+.editor-inline-hint {
+  display: block;
+  margin-top: 11px;
+  color: #888;
+  font-size: 9px;
+}
+.editor-send-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.editor-send-summary strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.editor-send-summary span {
+  color: #999;
+  font-size: 10px;
+}
+.editor-edit-form label small {
+  margin-left: 5px;
+  color: #777;
+  font-size: 10px;
+}
+.editor-edit-form > small {
+  font-size: 9px;
+}
+.editor-preview-tools strong {
+  font-size: 12px;
+  margin-right: auto;
+}
+.editor-preview-tools a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+}
+.editor-variations {
+  flex-shrink: 0;
+  border-top: 1px solid #333;
+  background: #101010;
+}
+.editor-variations > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px 8px;
+}
+.editor-variations > header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.editor-variations strong {
+  font-size: 11px;
+  font-weight: 500;
+}
+.editor-variations > header span {
+  font-size: 10px;
+  color: #888;
+}
+.editor-variations > p {
+  margin: 10px 22px;
+  color: #aaa;
+}
+.editor-variation-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 8px 22px 16px;
+  min-height: 108px;
+}
+.image-editor .editor-variation-tile {
+  width: 120px;
+  flex-shrink: 0;
+  padding: 4px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  text-align: left;
+  background: #151515;
+}
+.image-editor .editor-variation-tile.is-active {
+  border-color: #eee;
+}
+.editor-variation-tile img {
+  display: block;
+  width: 110px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.editor-variation-tile span {
+  display: block;
+  color: #bbb;
+  font-size: 10px;
+  padding: 7px 4px 3px;
+}
+.editor-variation-empty {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: #888;
+  padding: 12px;
+}
+.editor-variation-empty > div {
+  font-size: 12px;
+}
+.editor-variation-empty small {
+  display: block;
+  font-size: 10px;
+  color: #666;
+  margin-top: 8px;
+  max-width: 260px;
+  line-height: 1.6;
+}
+.editor-variation-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 5px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.editor-variation-group.is-running {
+  border-color: #999;
+  box-shadow: 0 0 18px #ffffff12;
+}
+.editor-variation-jobs {
+  display: flex;
+  gap: 6px;
+}
+.editor-variation-pending {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 110px;
+  min-height: 90px;
+  background: #181818;
+  border: 1px dashed #444;
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+.editor-variation-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 200px;
+  padding-right: 8px;
+  gap: 7px;
+}
+.editor-variation-info > small {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #999;
+  max-height: 30px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.editor-variation-info > div {
+  display: flex;
+  gap: 12px;
+}
+.editor-variation-info button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #bbb;
+  font-size: 9px;
+  padding: 0;
+}
+.editor-variation-info > strong {
+  text-transform: capitalize;
+}
+@media (max-width: 850px) {
+  .editor-variations > header > div {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .editor-artboard img {
+    max-height: calc(100dvh - 415px);
+  }
+  .editor-inline-actions {
+    flex-wrap: wrap;
+  }
+  .editor-variation-strip {
+    padding: 8px 12px 12px;
+  }
+}
+@media (max-width: 600px) {
+  .editor-artboard img {
+    max-height: 46dvh;
+  }
+  .editor-stage {
+    min-height: 320px;
+  }
+  .editor-variations > header {
+    padding: 12px;
+  }
+}
+.tray-edit-origin {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  margin: 12px 0;
+  color: #ddd;
+}
+.tray-edit-origin img {
+  width: 60px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.tray-edit-origin > span {
+  flex: 1;
+  font-size: 12px;
+}
+.tray-edit-origin small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #999;
+}
+.gallery-variation-label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 5px 8px;
+  background: #111e;
+  border: 1px solid #777;
+  border-radius: 5px;
+  color: #eee;
+  font-size: 10px;
+}
+/* Keep the persistent assistant clear of the variation filmstrip. */
+.image-editor .agent-dock.in-editor {
+  top: 12px;
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.image-editor .agent-dock.in-editor:not(.is-open) {
+  width: min(400px, calc(100vw - 650px));
+}
+@media (max-width: 850px) {
+  .image-editor .agent-dock.in-editor:not(.is-open) {
+    width: calc(100vw - 440px);
+  }
+}
+@media (max-width: 600px) {
+  .image-editor .agent-dock.in-editor:not(.is-open) {
+    top: 8px;
+    width: auto;
+  }
+  .image-editor .agent-dock.in-editor:not(.is-open) .agent-composer {
+    display: none;
+  }
+}
+.image-editor .agent-dock.in-editor:not(.is-open),
+.image-editor .agent-dock.in-editor.is-open {
+  left: 50%;
+  transform: translateX(-50%);
+}
+@media (max-width: 600px) {
+  .image-editor .agent-dock.in-editor:not(.is-open) {
+    top: 16px;
+    right: 80px;
+    left: auto;
+    transform: none;
+    width: 42px;
+    height: 42px;
+    max-width: 42px;
+    padding: 3px;
+    border-radius: 11px;
+  }
+  .image-editor .agent-dock.in-editor:not(.is-open) .agent-dock-row {
+    min-height: 34px;
+    gap: 0;
+  }
+  .image-editor .agent-dock.in-editor:not(.is-open) .agent-toggle {
+    position: relative;
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+  }
+  .image-editor .agent-dock.in-editor:not(.is-open) .agent-toggle > .spin {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    border-radius: 50%;
+    background: #151515;
+  }
+}
+.editor-variation-details {
+  padding: 25px 18px;
+  overflow-y: auto;
+}
+.editor-variation-details h2 {
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 12px 0;
+}
+.editor-variation-details > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #999;
+}
+.editor-variation-details .editor-result-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #eee;
+  color: #111;
+  padding: 13px;
+  border-radius: 7px;
+  margin-top: 22px;
+}
+.editor-result-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  font-size: 11px;
+  color: #bbb;
+}
+.editor-result-original {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin: 16px 0 24px;
+  text-align: left;
+}
+.editor-result-original img {
+  width: 70px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+.editor-result-original span {
+  font-size: 11px;
+}
+.editor-result-original small {
+  display: block;
+  color: #888;
+  margin-top: 6px;
+  font-size: 10px;
+}
+.editor-variation-details dl {
+  margin: 0 0 24px;
+}
+.editor-variation-details dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  font-size: 10px;
+  border-bottom: 1px solid #292929;
+}
+.editor-variation-details dt {
+  color: #888;
+}
+.editor-variation-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.editor-variation-details h3 {
+  font-size: 11px;
+  font-weight: 500;
+}
+.editor-variation-details article {
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.editor-variation-details article span {
+  color: #888;
+  font-size: 10px;
+}
+.editor-variation-details article p {
+  font-size: 11px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.editor-comment-pin.is-active .editor-pin-preview {
+  display: none;
+}
+.editor-region-naming {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+}
+.editor-region-naming > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.editor-region-naming strong {
+  font-size: 11px;
+  font-weight: 500;
+}
+.editor-region-naming button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 10px;
+  color: #ddd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.editor-region-naming > p,
+.editor-region-naming details p {
+  color: #999;
+  line-height: 1.7;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.editor-region-naming details {
+  margin-top: 11px;
+  font-size: 10px;
+  color: #888;
+}
+.editor-region-naming summary {
+  cursor: pointer;
+}
+.editor-region-naming details .autocomplete {
+  margin-top: 12px;
+}
+.editor-region-naming label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  color: #ccc;
+  font-size: 10px;
+}
+.editor-region-naming input {
+  accent-color: #eee;
+}
+.editor-naming-progress {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+  color: #aaa;
+  font-size: 10px;
+}
+.editor-naming-progress progress {
+  width: 100%;
+  height: 3px;
+  accent-color: #eee;
+}
+.editor-inherited-regions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 20px;
+  border-bottom: 1px solid #303030;
+  background: #141414;
+  flex-shrink: 0;
+}
+.editor-inherited-regions strong,
+.editor-inherited-regions span {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.editor-inherited-regions span {
+  color: #999;
+}
+.editor-inherited-regions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 10px;
+  padding: 8px;
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+.editor-mode-description {
+  color: #aaa;
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 9px 0 12px;
+}
+.editor-recolor-controls {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0;
+}
+.editor-recolor-controls > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #bbb;
+  font-size: 11px;
+}
+.editor-recolor-controls input[type="color"] {
+  width: 42px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #111;
+}
+.editor-recolor-controls label {
+  display: flex;
+  justify-content: space-between;
+}
+.editor-recolor-controls input[type="range"] {
+  width: 100%;
+  accent-color: #eee;
+}
+.editor-version-option {
+  position: relative;
+}
+.editor-version-info {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #666;
+  border-radius: 50%;
+  color: #eee;
+  background: #111e;
+}
+.editor-edit-form {
+  max-height: min(58dvh, 510px);
+  overflow-y: auto;
+}

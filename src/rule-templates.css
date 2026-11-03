@@ -1,0 +1,198 @@
+.rule-templates {
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+  padding: 18px 0;
+  margin: 18px 0;
+  color: #dedede;
+}
+.rules-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rules-heading h3 {
+  font-size: 13px;
+  font-weight: 550;
+  margin: 0;
+}
+.rules-heading > span {
+  margin-left: auto;
+  font-size: 10px;
+  color: #aaa;
+  white-space: nowrap;
+}
+.rules-description,
+.rules-empty,
+.rules-note,
+.inherited-rules > p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #999;
+}
+.rule-pickers {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+.applied-rules {
+  display: grid;
+  gap: 7px;
+}
+.applied-rule {
+  border: 1px solid #373737;
+  border-radius: 8px;
+  background: #151515;
+}
+.applied-rule > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 9px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 11px;
+}
+.applied-rule > summary::-webkit-details-marker {
+  display: none;
+}
+.applied-rule > summary > span {
+  flex: 1;
+}
+.applied-rule > summary > input {
+  accent-color: #fff;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+}
+.applied-rule[open] > summary > svg {
+  transform: rotate(180deg);
+}
+.rule-editor {
+  border-top: 1px solid #303030;
+  padding: 11px;
+}
+.rule-templates label {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+  color: #aaa;
+  margin: 0 0 12px;
+}
+.rule-templates textarea,
+.rule-templates input:not([type="checkbox"]) {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #ddd;
+  background: #1d1d1d;
+  border: 1px solid #3d3d3d;
+  border-radius: 5px;
+  padding: 8px;
+}
+.rule-templates textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+.rule-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rule-templates button {
+  color: #ddd;
+  background: #222;
+  border: 1px solid #414141;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.rule-templates button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.rule-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.inherited-rules,
+.custom-rule-composer {
+  font-size: 11px;
+  margin-top: 13px;
+}
+.inherited-rules > summary,
+.custom-rule-composer > summary {
+  cursor: pointer;
+  padding: 9px 0;
+  color: #ddd;
+}
+.custom-rule-composer > summary {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.inherited-rule {
+  padding: 8px 0;
+  border-top: 1px solid #2c2c2c;
+}
+.inherited-rule > small {
+  display: block;
+  font-size: 10px;
+  color: #999;
+  margin-top: 4px;
+}
+.inherited-rule > p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #aaa;
+  margin: 6px 0;
+}
+.rules-note {
+  margin: 12px 0 0;
+  font-size: 10px;
+}
+.rule-feedback {
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 9px;
+  border: 1px solid #484848;
+  border-radius: 6px;
+}
+.node-rule-count {
+  border: 1px solid #444;
+  background: transparent;
+  color: #ddd;
+  border-radius: 5px;
+  font-size: 9px;
+  padding: 3px 5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.property-rules-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ddd;
+  background: #1b1b1b;
+  border: 1px solid #383838;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  width: 100%;
+  margin: 12px 0;
+  cursor: pointer;
+}
+.rules-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #bbb;
+  background: #151515;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px;
+}

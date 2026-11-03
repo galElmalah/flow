@@ -1,0 +1,145 @@
+{
+  "id": "284e5a3e-32c6-459e-9b86-4a64ba96c89e",
+  "name": "Parallel material studies",
+  "nodes": [
+    {
+      "id": "seed",
+      "type": "image",
+      "position": {
+        "x": 0,
+        "y": 65
+      },
+      "data": {
+        "label": "Seed image",
+        "images": [
+          "/assets/paper-seed.png"
+        ]
+      }
+    },
+    {
+      "id": "prompt",
+      "type": "prompt",
+      "position": {
+        "x": 0,
+        "y": 445
+      },
+      "data": {
+        "label": "Art direction",
+        "text": "An abstract study of light and color. Soft, flowing gradients with rich paper grain. Let warm apricot melt into electric blue and lavender. Tactile, atmospheric, beautifully imperfect.\n\nPreserve the mood of the reference. No text, no objects."
+      }
+    },
+    {
+      "id": "variations",
+      "type": "variations",
+      "position": {
+        "x": 380,
+        "y": 445
+      },
+      "data": {
+        "label": "Explore the palette",
+        "lines": "Seafoam green and midnight teal. Flowing light on tactile paper."
+      }
+    },
+    {
+      "id": "generate",
+      "type": "generate",
+      "position": {
+        "x": 780,
+        "y": 65
+      },
+      "data": {
+        "label": "Image generation",
+        "count": 1,
+        "seed": 4200,
+        "ratio": "1:1",
+        "quality": "high",
+        "preview": "/assets/paper-seed.png"
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "position": {
+        "x": 1200,
+        "y": 65
+      },
+      "data": {
+        "label": "Output collection"
+      }
+    },
+    {
+      "id": "2c898600-5701-49b8-b1e8-31cf728e5e02",
+      "type": "generate",
+      "position": {
+        "x": 809.0343915343916,
+        "y": 545.436507936508
+      },
+      "data": {
+        "label": "Image generation",
+        "count": 1,
+        "seed": 4200,
+        "ratio": "1:1",
+        "quality": "high",
+        "preview": "/assets/paper-seed.png",
+        "providerId": "local-color",
+        "model": "color-study"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "seed-gen",
+      "source": "seed",
+      "target": "generate",
+      "sourceHandle": "image",
+      "targetHandle": "image"
+    },
+    {
+      "id": "prompt-var",
+      "source": "prompt",
+      "target": "variations",
+      "sourceHandle": "text",
+      "targetHandle": "text"
+    },
+    {
+      "id": "var-gen",
+      "source": "variations",
+      "target": "generate",
+      "sourceHandle": "text",
+      "targetHandle": "text"
+    },
+    {
+      "id": "gen-out",
+      "source": "generate",
+      "target": "output",
+      "sourceHandle": "image",
+      "targetHandle": "image"
+    },
+    {
+      "id": "xy-edge__seedimage-2c898600-5701-49b8-b1e8-31cf728e5e02image",
+      "source": "seed",
+      "target": "2c898600-5701-49b8-b1e8-31cf728e5e02",
+      "sourceHandle": "image",
+      "targetHandle": "image"
+    },
+    {
+      "id": "xy-edge__variationstext-2c898600-5701-49b8-b1e8-31cf728e5e02text",
+      "source": "variations",
+      "target": "2c898600-5701-49b8-b1e8-31cf728e5e02",
+      "sourceHandle": "text",
+      "targetHandle": "text"
+    },
+    {
+      "id": "xy-edge__2c898600-5701-49b8-b1e8-31cf728e5e02image-outputimage",
+      "source": "2c898600-5701-49b8-b1e8-31cf728e5e02",
+      "target": "output",
+      "sourceHandle": "image",
+      "targetHandle": "image"
+    }
+  ],
+  "viewport": {
+    "x": 56,
+    "y": 98.01986754966885,
+    "zoom": 0.5006622516556292
+  }
+}

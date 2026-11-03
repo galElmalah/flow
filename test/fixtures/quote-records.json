@@ -1,0 +1,282 @@
+{
+  "id": "synthetic-quotes",
+  "name": "Synthetic quote records",
+  "nodes": [
+    {
+      "id": "style-seeds",
+      "type": "image",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "label": "Quoture · style references",
+        "images": [
+          "/assets/paper-seed.png"
+        ]
+      }
+    },
+    {
+      "id": "quotes",
+      "type": "dataset",
+      "position": {
+        "x": 0,
+        "y": 410
+      },
+      "data": {
+        "label": "Ten exact Quoture passages",
+        "records": [
+          {
+            "id": "example-1",
+            "fields": {
+              "readingID": "1000",
+              "quote": "Example thought 1 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-1",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-2",
+            "fields": {
+              "readingID": "1001",
+              "quote": "Example thought 2 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-2",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-3",
+            "fields": {
+              "readingID": "1002",
+              "quote": "Example thought 3 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-3",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-4",
+            "fields": {
+              "readingID": "1003",
+              "quote": "Example thought 4 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-4",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-5",
+            "fields": {
+              "readingID": "1004",
+              "quote": "Example thought 5 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-5",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-6",
+            "fields": {
+              "readingID": "1005",
+              "quote": "Example thought 6 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-6",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-7",
+            "fields": {
+              "readingID": "1006",
+              "quote": "Example thought 7 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-7",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-8",
+            "fields": {
+              "readingID": "1007",
+              "quote": "Example thought 8 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-8",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-9",
+            "fields": {
+              "readingID": "1008",
+              "quote": "Example thought 9 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-9",
+              "role": "quote"
+            }
+          },
+          {
+            "id": "example-10",
+            "fields": {
+              "readingID": "1009",
+              "quote": "Example thought 10 about learning through practice.",
+              "author": "Example author",
+              "speaker": "An anonymous learner",
+              "meaning": "Learning through practice",
+              "scene": "An anonymous person arranging simple stones beside a tree.",
+              "sourceTitle": "Synthetic fixture",
+              "sourceLocator": "example-10",
+              "role": "quote"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-template",
+      "type": "template",
+      "position": {
+        "x": 420,
+        "y": 410
+      },
+      "data": {
+        "label": "Quote + scene template",
+        "text": "ROLE: {{role}}\nIMMUTABLE READING ID: {{readingID}}\nAUTHOR / WORK ATTRIBUTION: {{author}}\nSPEAKER CONTEXT: {{speaker}}\nEXACT PASSAGE (interpret only; never print):\n{{quote}}\n\nMEANING / CONTEXT:\n{{meaning}}\n\nSCENE DIRECTION:\n{{scene}}\n\nSOURCE: {{sourceTitle}} — {{sourceLocator}}"
+      }
+    },
+    {
+      "id": "scene-writer",
+      "type": "prompt-generate",
+      "position": {
+        "x": 840,
+        "y": 0
+      },
+      "data": {
+        "label": "Scene writer · Claude",
+        "text": "Write one precise original image-generation scene brief of 100–150 words for ONLY the current record. Return only that brief. Preserve the supplied meaning, speaker distinction and scene direction. Do not research or alter the quote. Use anonymous figures or the named fictional speakers exactly as directed; never substitute the author for a fictional character or invent a portrait. The two attached images establish engraving and cobalt palette only. Simplify any backdrop to generous quiet cobalt and one spare classical cue. No printed text, author likeness copied from the references, sun, halo, spotlight, gold wash or extra scenes. Describe a clear composition that reads on a phone.",
+        "providerId": "claude-code",
+        "model": "default"
+      }
+    },
+    {
+      "id": "art-template",
+      "type": "template",
+      "position": {
+        "x": 840,
+        "y": 650
+      },
+      "data": {
+        "label": "Quoture · artwork template",
+        "text": "Use case: stylized-concept. Create ONE original Quoture quote illustration, wide 2:1, natively 2048 x 1024, opaque full bleed. Immutable reading ID: {{readingID}}. This is a new unselected study for this one passage.\n\n{{input}}\n\nSTYLE AND SCENERY TEMPLATE:\nBoth attached images are STYLE REFERENCES ONLY, never edit targets or identity references. Create a new composition specific to this quote; never reuse the reference person's face, pose or scene. Match the calm antique copperplate / woodcut collage: fine charcoal cross-hatching and stipple, warm ivory paper and subjects, spacious quiet matte cobalt blue in the established #4166D5 family. One restrained ivory classical architectural cue. Generous uninterrupted blue; phone-readable silhouettes, natural hands, small clear props. At most one tiny muted olive, terracotta or teal accent; keep robes ivory/charcoal. A few small flat etched clouds are optional.\nKeep all important content within the central 80%. No elaborate interior, crowded bookshelves, city panorama, sunburst, halo, spotlight, dramatic sky, gold wash, gradient, neon, glossy 3D, author portrait, robot or code motif. Never render the quote, reading ID, author name, source, letters, digits, labels, logos, watermark, border, paper margin, UI or multiple panels. Do not copy text or marks from a reference. Preserve the generated original; no post-generation crop, padding or recoloring."
+      }
+    },
+    {
+      "id": "illustrations",
+      "type": "generate",
+      "position": {
+        "x": 1260,
+        "y": 0
+      },
+      "data": {
+        "label": "Generate · one per quote",
+        "count": 1,
+        "seed": 29000,
+        "ratio": "2:1",
+        "quality": "high",
+        "providerId": "codex",
+        "model": "native"
+      }
+    },
+    {
+      "id": "collection",
+      "type": "output",
+      "position": {
+        "x": 1260,
+        "y": 650
+      },
+      "data": {
+        "label": "10 quote-specific studies"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "quotes-scene-template",
+      "source": "quotes",
+      "target": "scene-template",
+      "targetHandle": "text"
+    },
+    {
+      "id": "scene-template-scene-writer",
+      "source": "scene-template",
+      "target": "scene-writer",
+      "targetHandle": "text"
+    },
+    {
+      "id": "style-seeds-scene-writer",
+      "source": "style-seeds",
+      "target": "scene-writer",
+      "targetHandle": "image"
+    },
+    {
+      "id": "scene-writer-art-template",
+      "source": "scene-writer",
+      "target": "art-template",
+      "targetHandle": "text"
+    },
+    {
+      "id": "art-template-illustrations",
+      "source": "art-template",
+      "target": "illustrations",
+      "targetHandle": "text"
+    },
+    {
+      "id": "illustrations-collection",
+      "source": "illustrations",
+      "target": "collection",
+      "targetHandle": "image"
+    }
+  ],
+  "viewport": {
+    "x": 70,
+    "y": 140,
+    "zoom": 0.45
+  }
+}

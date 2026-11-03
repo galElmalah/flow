@@ -1,0 +1,194 @@
+.workspace-notch {
+  position: fixed;
+  z-index: 60;
+  top: 8px;
+  left: calc(50% + var(--rail) / 2);
+  transform: translateX(-50%);
+  width: min(980px, calc(100vw - var(--rail) - 32px));
+  pointer-events: none;
+}
+.workspace-notch-proximity {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  max-width: 100%;
+  height: 52px;
+  pointer-events: auto;
+}
+.workspace-notch-handle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 144px;
+  height: 24px;
+  margin: 0 auto 6px;
+  border: 1px solid #ffffff29;
+  border-radius: 0 0 14px 14px;
+  background: #111e;
+  box-shadow:
+    inset 0 1px 0 #ffffff13,
+    0 4px 15px #0005;
+  pointer-events: auto;
+}
+.workspace-notch-grip {
+  width: 38px;
+  height: 3px;
+  border-radius: 4px;
+  background: #999;
+}
+.workspace-notch-status {
+  width: 5px;
+  height: 5px;
+  background: #999;
+  border-radius: 50%;
+}
+.workspace-notch-status.is-busy {
+  background: #ddd;
+  box-shadow: 0 0 8px #fff9;
+  animation: notch-pulse 1.6s ease-in-out infinite;
+}
+@keyframes notch-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+.workspace-notch-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.97);
+  transform-origin: top center;
+  transition:
+    grid-template-rows 260ms ease,
+    opacity 180ms ease,
+    transform 260ms ease;
+}
+.workspace-notch.is-open .workspace-notch-reveal {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.workspace-notch-content {
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #111e;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 0 0 1px #ffffff26,
+    0 14px 42px #0007;
+}
+.workspace-notch.is-open .workspace-notch-content {
+  padding: 14px;
+}
+.workspace-notch .topbar {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 39px;
+  padding: 0;
+  gap: 12px;
+  background: transparent;
+  pointer-events: auto;
+}
+.workspace-notch .workflow-switcher {
+  flex: 1 1 320px;
+}
+.workspace-notch .project-pill {
+  flex: 1;
+  max-width: 350px;
+}
+.workspace-notch .topbar-actions {
+  flex-wrap: wrap;
+  margin-left: auto;
+  gap: 10px;
+}
+.workspace-notch .connection-status,
+.workspace-notch .cli-button {
+  display: inline-flex;
+}
+.workspace-notch .connection-status > span:not(.status-dot),
+.workspace-notch .connection-status > svg,
+.workspace-notch .cli-button span {
+  display: inline;
+}
+.workspace-notch .dock-tools {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ffffff12;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.workspace-notch .dock-tools .workflow-activity {
+  flex: 1 1 270px;
+}
+.workspace-notch .dock-tools > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #ffffff20;
+  border-radius: 7px;
+  background: #ffffff05;
+  color: #ccc;
+  font-size: 11px;
+}
+.workspace-notch .dock-tools .snapshot-banner {
+  flex-basis: 100%;
+}
+.studio .workflow-menu {
+  position: fixed;
+  z-index: 65;
+  top: 98px;
+  left: max(
+    calc(var(--rail) + 16px),
+    calc((100vw + var(--rail) - 980px) / 2 + 14px)
+  );
+  max-width: calc(100vw - var(--rail) - 32px);
+  max-height: calc(100dvh - 116px);
+}
+.studio:not(.canvas-mode) .main:not(.settings-main) {
+  top: 46px;
+}
+@media (max-width: 650px) {
+  .workspace-notch {
+    width: calc(100vw - var(--rail) - 16px);
+  }
+  .workspace-notch .workflow-switcher {
+    flex-basis: 100%;
+  }
+  .workspace-notch .project-pill {
+    max-width: none;
+  }
+  .workspace-notch .topbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .workspace-notch-content {
+    max-height: calc(100dvh - 70px);
+    overflow-y: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-notch-reveal {
+    transition: none;
+  }
+  .workspace-notch-status.is-busy {
+    animation: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .workspace-notch-content {
+    background: #111;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

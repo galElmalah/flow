@@ -1,0 +1,96 @@
+.canvas-mode .rail {
+  width: var(--rail);
+}
+
+/* Keep glass on its own layer so icons, popovers and tooltips remain sharp. */
+.canvas-mode .rail::before {
+  content: "";
+  position: absolute;
+  inset: 8px 4px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid #ffffff26;
+  border-radius: 18px;
+  background:
+    linear-gradient(155deg, #ffffff08, transparent 25%, #ffffff03 80%),
+    rgb(12 12 15 / 72%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1) brightness(0.85);
+  backdrop-filter: blur(18px) saturate(1.1) brightness(0.85);
+  box-shadow:
+    inset 0 1px 0 #ffffff30,
+    inset 1px 0 0 #ffffff13,
+    inset 0 -1px 0 #ffffff12,
+    0 8px 28px #0004;
+}
+
+.canvas-mode .rail .brand,
+.canvas-mode .rail-bottom {
+  flex-shrink: 0;
+}
+
+.canvas-mode .rail-main {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  width: 100%;
+  padding: 3px 0;
+}
+
+.canvas-mode .rail-separator {
+  flex-shrink: 0;
+  background: #ffffff26;
+}
+
+.canvas-mode .rail .icon-button:not(.active) {
+  color: #c1c1ca;
+}
+
+.canvas-mode .rail .icon-button:not(.active):hover {
+  color: #fff;
+  background: #ffffff16;
+}
+
+.canvas-mode .rail .icon-button:focus-visible {
+  outline-offset: 2px;
+}
+
+.canvas-mode .rail-restore {
+  border-color: #ffffff29;
+  border-radius: 10px;
+  background: rgb(12 12 15 / 76%);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 1px 0 #ffffff24,
+    0 4px 14px #0004;
+}
+
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .canvas-mode .rail::before,
+  .canvas-mode .rail-restore {
+    background: #111113;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .canvas-mode .rail::before,
+  .canvas-mode .rail-restore {
+    background: #111113;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .canvas-mode .rail::before,
+  .canvas-mode .rail-restore {
+    border-color: #aaa;
+  }
+
+  .canvas-mode .rail .icon-button:not(.active) {
+    color: #eee;
+  }
+}

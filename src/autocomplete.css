@@ -1,0 +1,301 @@
+.autocomplete {
+  position: relative;
+  display: inline-flex;
+  width: 190px;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
+  color: #dedede;
+}
+.autocomplete > input[role="combobox"] {
+  width: 100%;
+  min-width: 0;
+  height: 33px;
+  padding: 0 29px 0 10px;
+  border: 1px solid #464646;
+  border-radius: 5px;
+  background: #151515;
+  color: #dedede;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  cursor: text;
+  outline-offset: 2px;
+}
+.autocomplete > input::placeholder {
+  color: #acacac;
+  opacity: 1;
+}
+.autocomplete > svg {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  pointer-events: none;
+}
+.autocomplete.is-open > input {
+  border-color: #aaa;
+}
+.autocomplete.has-icon > input[role="combobox"] {
+  padding-left: 37px;
+}
+.autocomplete-selected-icon {
+  position: absolute;
+  z-index: 1;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  color: inherit;
+}
+.autocomplete-option-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 25px;
+}
+.autocomplete-option-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.autocomplete-option-copy > small {
+  color: #888;
+  font-size: 10px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.autocomplete.is-disabled {
+  opacity: 0.45;
+}
+.autocomplete.is-disabled > input {
+  cursor: not-allowed;
+}
+.autocomplete-popup {
+  position: fixed;
+  z-index: 10000;
+  padding: 5px;
+  border: 1px solid #535353;
+  border-radius: 7px;
+  background: #141414;
+  color: #dedede;
+  box-shadow: 0 12px 35px #000b;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  font: 400 11px var(--font-ui);
+  animation: autocomplete-appear 100ms ease-out;
+}
+.autocomplete-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.autocomplete-option > span {
+  overflow-wrap: anywhere;
+}
+.autocomplete-option.is-active {
+  background: #2c2c2c;
+  color: #fff;
+}
+.autocomplete-option[aria-selected="true"] {
+  color: #fff;
+}
+.autocomplete-option.is-disabled {
+  color: #666;
+  cursor: not-allowed;
+}
+.autocomplete-empty {
+  padding: 12px 8px;
+  color: #aaa;
+}
+.autocomplete-popup.has-submenu {
+  display: grid;
+  grid-template-columns: 1fr 1.08fr;
+  padding: 0;
+  overflow: hidden;
+}
+.autocomplete-branches,
+.autocomplete-models {
+  min-width: 0;
+  padding: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.autocomplete-branches,
+.autocomplete-models {
+  min-height: 0;
+}
+.autocomplete-models {
+  border-left: 1px solid #383838;
+  background: #191919;
+}
+.autocomplete-menu-heading {
+  position: sticky;
+  top: -5px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  font-size: 10px;
+  color: #999;
+  background: #171717;
+}
+.autocomplete-submenu-back {
+  display: none;
+}
+@media (max-width: 600px) {
+  .autocomplete-popup.has-submenu {
+    grid-template-columns: 1fr;
+  }
+  .has-submenu .autocomplete-models {
+    display: none;
+    border: 0;
+  }
+  .has-submenu.in-submenu .autocomplete-models {
+    display: block;
+  }
+  .has-submenu.in-submenu .autocomplete-branches {
+    display: none;
+  }
+  .autocomplete-submenu-back {
+    display: inline-flex;
+    padding: 3px;
+  }
+}
+.generation-params .autocomplete {
+  width: 100%;
+}
+.generation-params .autocomplete > input[role="combobox"] {
+  height: 30px;
+  font-size: 10px;
+}
+.parallel-control .autocomplete {
+  width: 135px;
+}
+.parallel-control .autocomplete > input[role="combobox"] {
+  height: 28px;
+  font-size: 10px;
+}
+.property-content label .autocomplete {
+  width: 100%;
+}
+.property-content .autocomplete > input[role="combobox"] {
+  padding-right: 29px;
+  background: #151515;
+}
+.gallery-filters .autocomplete {
+  width: 200px;
+}
+.gallery-filters .autocomplete > input[role="combobox"] {
+  height: 36px;
+  font-size: 10px;
+}
+.model-inline-select .autocomplete {
+  width: 190px;
+}
+.model-inline-select .autocomplete > input[role="combobox"] {
+  width: 100%;
+  height: 25px;
+  font-size: 9px;
+}
+.ai-result header .autocomplete {
+  width: 145px;
+  margin-left: auto;
+}
+.ai-result header .autocomplete > input[role="combobox"] {
+  height: 25px;
+  font-size: 9px;
+}
+.project-field .autocomplete,
+.history-project-filter .autocomplete {
+  width: 100%;
+}
+@keyframes autocomplete-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autocomplete-popup {
+    animation: none;
+  }
+}
+
+/* A single surface advances from providers to models. */
+.autocomplete-popup.has-submenu.is-drilldown {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  transition:
+    width 180ms ease,
+    height 180ms ease,
+    top 180ms ease,
+    max-height 180ms ease;
+}
+.is-drilldown .autocomplete-branches,
+.is-drilldown .autocomplete-models {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  background: none;
+  animation: autocomplete-drill-in 180ms ease both;
+}
+.is-drilldown .autocomplete-models {
+  display: none;
+}
+.is-drilldown.in-submenu .autocomplete-branches {
+  display: none;
+}
+.is-drilldown.in-submenu .autocomplete-models {
+  display: block;
+}
+.is-drilldown .autocomplete-submenu-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 5px;
+}
+.is-drilldown .autocomplete-submenu-back:hover {
+  background: #333;
+}
+@keyframes autocomplete-drill-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autocomplete-popup.is-drilldown {
+    transition: none;
+  }
+  .is-drilldown .autocomplete-branches,
+  .is-drilldown .autocomplete-models {
+    animation: none;
+  }
+}
+
+.is-drilldown .autocomplete-popup-header {
+  flex-shrink: 0;
+}

@@ -1,0 +1,23 @@
+{
+  "providers": [
+    {
+      "id": "my-harness",
+      "name": "My image harness",
+      "kind": "command",
+      "description": "Wrap any local image-generating tool using the JSON job protocol.",
+      "command": ["/absolute/path/to/your/image-harness", "--input", "{input}", "--output", "{output}"],
+      "models": ["default"],
+      "seeded": false,
+      "timeoutMs": 1200000
+    },
+    {
+      "id": "image-api",
+      "name": "Images API",
+      "kind": "image-api",
+      "description": "An OpenAI-compatible image generation and editing endpoint.",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "models": ["gpt-image-2.5-flare", "gpt-image-2.5-sunburst"]
+    }
+  ]
+}

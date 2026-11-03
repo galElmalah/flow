@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flow · Canvas glass preview</title>
+    <link rel="stylesheet" href="./preview.css" />
+  </head>
+  <body>
+    <header class="preview-bar">
+      <div>
+        <span class="preview-mark">F</span><strong>Canvas materials</strong
+        ><span class="preview-label">Design preview</span>
+      </div>
+      <div class="materials" role="group" aria-label="Sidebar material">
+        <button data-material="solid" aria-pressed="false">Current</button
+        ><button data-material="frosted" aria-pressed="false">Frosted</button
+        ><button data-material="liquid" aria-pressed="true">Liquid</button>
+      </div>
+      <a href="/project/quoture/workflow/quoture-10-studies">Back to Flow ↗</a>
+    </header>
+    <main class="studio" data-material="liquid" id="studio">
+      <div
+        class="canvas"
+        id="canvas"
+        aria-label="Canvas material preview. Drag empty canvas to move artwork behind the sidebars."
+      >
+        <div class="world" id="world">
+          <svg class="wires" viewBox="0 0 1600 960" aria-hidden="true">
+            <path d="M395 405 C470 405 450 260 530 260" />
+            <path d="M395 405 C620 405 660 505 795 505" />
+            <path d="M790 260 C865 260 720 460 795 460" />
+            <path d="M1085 445 C1150 445 1090 295 1180 295" />
+            <circle cx="459" cy="357" r="2" />
+            <circle cx="1144" cy="360" r="2" />
+          </svg>
+          <article class="node seed-node" style="left: 105px; top: 240px">
+            <div class="node-heading">
+              <span>▧</span> Cobalt · engraving reference <span>···</span>
+            </div>
+            <img
+              src="/files/uploads/b10cd59c-90ad-40f7-8267-afaebdedb66f.jpg"
+              alt="Ivory engraved thinker against cobalt blue"
+            />
+            <div class="node-foot">Style reference <span>1 image</span></div>
+            <i class="socket right"></i>
+          </article>
+          <article class="node prompt-node" style="left: 530px; top: 140px">
+            <div class="node-heading">
+              <span>T</span> Shared art direction <span>···</span>
+            </div>
+            <p class="node-hint">One direction. Every scene.</p>
+            <div class="prompt-text">
+              Antique copperplate engraving. Warm ivory figures, fine charcoal
+              cross-hatching, generous cobalt blue.<br /><br />Give each quote
+              its own scene. Clear silhouettes, natural hands. No printed text.
+            </div>
+            <div class="node-foot">Shared prompt <span>Connected</span></div>
+            <i class="socket left"></i><i class="socket right"></i>
+          </article>
+          <article class="node generation-node" style="left: 795px; top: 330px">
+            <div class="node-heading">
+              <span>✧</span> Quote illustrations <span>···</span>
+            </div>
+            <div class="provider">
+              <img src="/harnesses/codex-color.svg" alt="" /> Codex Image
+              <span>2:1</span>
+            </div>
+            <img
+              class="art"
+              id="generation-image"
+              src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/b5f1a160-97db-4efb-bb2c-29bcf9ce351a/output.png"
+              alt="Two engraved figures tending a garden against cobalt blue"
+            />
+            <div class="node-foot">Saved output <span>10 images</span></div>
+            <i class="socket left"></i><i class="socket right"></i>
+          </article>
+          <article
+            class="node collection-node"
+            style="left: 1180px; top: 120px"
+          >
+            <div class="node-heading">
+              <span>▦</span> Quote collection <span>···</span>
+            </div>
+            <div class="collection-images">
+              <button
+                data-image="garden"
+                aria-label="Inspect garden illustration"
+              >
+                <img
+                  src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/b5f1a160-97db-4efb-bb2c-29bcf9ce351a/output.png"
+                  alt="Garden illustration"
+                /></button
+              ><button data-image="bird" aria-label="Inspect bird illustration">
+                <img
+                  src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/789da514-d1dd-4772-a5e0-1b18cd770707/output.png"
+                  alt="Bird illustration"
+                /></button
+              ><button
+                data-image="mirror"
+                aria-label="Inspect mirror illustration"
+              >
+                <img
+                  src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/7ea9f3be-7017-47cf-8f61-dff372c42806/output.png"
+                  alt="Mirror illustration"
+                /></button
+              ><button
+                data-image="travellers"
+                aria-label="Inspect travellers illustration"
+              >
+                <img
+                  src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/63482783-37c7-4dff-bd90-765184652e85/output.png"
+                  alt="Travellers illustration"
+                />
+              </button>
+            </div>
+            <div class="node-foot">
+              10 saved illustrations <span>Local</span>
+            </div>
+            <i class="socket left"></i>
+          </article>
+          <article class="node cover-node" style="left: 240px; top: 690px">
+            <div class="node-heading">
+              <span>▧</span> Category · Ancient Philosophy <span>···</span>
+            </div>
+            <img
+              src="/files/runs/6fe347e2-7fa2-4e6d-930a-66a009a7b4d4/5af7f575-101b-4ae2-bc55-845d98374630/output.png"
+              alt="Ivory philosopher bust on a warm ochre field"
+            />
+          </article>
+        </div>
+      </div>
+      <div class="app-topbar">
+        <div class="project-title">
+          <img src="/favicon.svg" alt="Flow" /><span
+            ><small>Quoture · local</small>Quotes + covers</span
+          ><span class="chevron">⌄</span>
+        </div>
+        <div class="app-tabs">
+          <span class="selected">Canvas</span><span>Gallery</span
+          ><span>Styles</span>
+        </div>
+        <span class="preview-only">Preview only · no workflow changes</span>
+      </div>
+      <nav class="rail" aria-label="Preview panels">
+        <button
+          id="toggle-library"
+          aria-label="Toggle node library"
+          aria-pressed="true"
+        >
+          ＋</button
+        ><button
+          id="toggle-inspector"
+          aria-label="Toggle image inspector"
+          aria-pressed="true"
+        >
+          ▧
+        </button>
+      </nav>
+      <aside class="glass library" id="library" aria-label="Node library">
+        <div class="panel-title">
+          <h2>Add nodes</h2>
+          <button id="close-library" aria-label="Close node library">×</button>
+        </div>
+        <label class="search"
+          ><span>⌕</span
+          ><input
+            id="search"
+            placeholder="Find a node…"
+            aria-label="Search node library"
+          /><span>⌘ K</span></label
+        >
+        <p class="eyebrow">WORKFLOW</p>
+        <div id="library-items">
+          <button data-kind="image">
+            <span class="type-icon">▧</span
+            ><span
+              ><strong>Reference image</strong
+              ><small>Start from a visual</small></span
+            ><span>↗</span></button
+          ><button data-kind="prompt">
+            <span class="type-icon">T</span
+            ><span
+              ><strong>Prompt</strong><small>Your shared direction</small></span
+            ><span>↗</span></button
+          ><button data-kind="set">
+            <span class="type-icon">≡</span
+            ><span
+              ><strong>Prompt Set</strong
+              ><small>A collection of scenes</small></span
+            ><span>↗</span></button
+          ><button data-kind="generate">
+            <span class="type-icon">✧</span
+            ><span
+              ><strong>Image generation</strong
+              ><small>Bring your ideas to life</small></span
+            ><span>↗</span></button
+          ><button data-kind="collection">
+            <span class="type-icon">▦</span
+            ><span
+              ><strong>Collection</strong
+              ><small>Every variation, together</small></span
+            ><span>↗</span>
+          </button>
+        </div>
+        <div class="library-bottom">
+          <p class="eyebrow">LOCAL HARNESSES</p>
+          <div class="harness">
+            <img src="/harnesses/codex-color.svg" alt="Codex" /><span
+              >Codex</span
+            ><span>Connected</span>
+          </div>
+          <div class="harness">
+            <img src="/harnesses/claudecode-color.svg" alt="Claude Code" /><span
+              >Claude Code</span
+            ><span>Connected</span>
+          </div>
+        </div>
+      </aside>
+      <aside
+        class="glass inspector"
+        id="inspector"
+        aria-label="Image inspector"
+      >
+        <div class="panel-title">
+          <div>
+            <span class="eyebrow">IMAGE INSPECTOR</span>
+            <h2 id="image-title">A little cultivation</h2>
+          </div>
+          <button id="close-inspector" aria-label="Close image inspector">
+            ×
+          </button>
+        </div>
+        <div class="inspector-scroll">
+          <img
+            class="inspector-preview"
+            id="inspector-image"
+            src="/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/b5f1a160-97db-4efb-bb2c-29bcf9ce351a/output.png"
+            alt="Selected Quoture illustration"
+          />
+          <div class="inspector-tabs">
+            <span class="selected">Lineage</span><span>Inputs</span
+            ><span>Output</span>
+          </div>
+          <div class="meta">
+            <div><span>Provider</span><strong>Codex Image</strong></div>
+            <div><span>Aspect ratio</span><strong>2:1</strong></div>
+          </div>
+          <h3>Prompt</h3>
+          <p class="scene-copy" id="scene-copy">
+            Two anonymous figures quietly tend a small garden on a marble ledge.
+            A watering can, young plants and a shared task. Warm ivory engraving
+            on generous cobalt blue.
+          </p>
+          <h3>Source chain</h3>
+          <div class="source">
+            <img
+              src="/files/uploads/b10cd59c-90ad-40f7-8267-afaebdedb66f.jpg"
+              alt="Cobalt engraving style reference"
+            /><span>Engraving reference<small>Style · shared input</small></span
+            ><span>↗</span>
+          </div>
+          <div class="source text-source">
+            <span>T</span
+            ><span
+              >Shared art direction<small>Prompt · shared input</small></span
+            ><span>↗</span>
+          </div>
+          <div class="material-note">
+            <span class="material-dot"></span>
+            <p id="material-note">
+              Smoked glass, soft depth and a light-catching edge. Artwork stays
+              behind the controls.
+            </p>
+          </div>
+        </div>
+      </aside>
+      <div class="glass bottom-dock">
+        <button id="reset-canvas" aria-label="Reset canvas position">⌖</button
+        ><span class="dock-divider"></span
+        ><span class="drag-hint">Drag the canvas</span
+        ><span class="dock-divider"></span
+        ><button id="move-canvas">Slide artwork behind glass ↔</button>
+      </div>
+      <div class="demo-footer">
+        <span id="live-status" role="status"
+          >Liquid · readable, smoked glass</span
+        ><label
+          ><input type="checkbox" id="reduce-transparency" />Reduce
+          transparency</label
+        >
+      </div>
+    </main>
+    <script src="./preview.js"></script>
+  </body>
+</html>
