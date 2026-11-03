@@ -10,7 +10,7 @@ def progress(stage, message, completed=None, total=None):
     event = {"stage": stage, "message": message}
     if total is not None:
         event.update(completed=completed, total=total)
-    print("WEFT_SAM_PROGRESS " + json.dumps(event), file=sys.stderr, flush=True)
+    print("FLOW_SAM_PROGRESS " + json.dumps(event), file=sys.stderr, flush=True)
 
 progress("runtime", "Starting Python and PyTorch")
 import cv2

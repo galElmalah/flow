@@ -72,7 +72,7 @@ export function AgentAccess({
           <strong>Project folder</strong>
           <code>{project.root}</code>
           <p>
-            A .weft-project.json manifest lets agents discover the local
+            A flow.project.json manifest lets agents discover the local
             platform, project and default workflow from this folder or its
             children.
           </p>
@@ -118,7 +118,7 @@ export function AgentAccess({
       <div className="modal-note">
         <FolderOpen size={15} />
         <span>
-          Run these commands from the <strong>weft</strong> folder, or invoke
+          Run these commands from the <strong>flow</strong> folder, or invoke
           its CLI by absolute path from your local project.
         </span>
       </div>

@@ -4,7 +4,7 @@ import { jsonLines, textSnapshots } from "../shared/stream.mjs";
 export const provider = {
   id: "gemini-cli",
   name: "Gemini CLI",
-  executable: process.env.WEFT_GEMINI_BIN || "gemini",
+  executable: process.env.FLOW_GEMINI_BIN || "gemini",
   acceptsImages: false,
   setup:
     "Install Gemini CLI for enterprise Code Assist or API-key access. Personal Google AI plans use Antigravity CLI.",

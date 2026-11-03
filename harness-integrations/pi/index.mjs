@@ -4,7 +4,7 @@ import { jsonLines, textSnapshots } from "../shared/stream.mjs";
 export const provider = {
   id: "pi",
   name: "Pi",
-  executable: process.env.WEFT_PI_BIN || "pi",
+  executable: process.env.FLOW_PI_BIN || "pi",
   acceptsImages: true,
   setup: "Install Pi and sign in with pi",
   description: "Prompt generation through your local Pi coding agent.",

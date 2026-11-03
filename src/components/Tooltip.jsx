@@ -76,7 +76,7 @@ export function Tooltip({ label, children, side }) {
             ref={bubble}
             id={id}
             role="tooltip"
-            className="weft-tooltip"
+            className="flow-tooltip"
             data-side={position?.side}
             style={{
               left: position?.left ?? 0,

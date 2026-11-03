@@ -71,8 +71,8 @@ same stdin JSON to this bridge with `--usage-only`. The bridge reads stdin once;
 your wrapper must buffer that JSON before passing it to both scripts. Never save the
 complete status-line payload: it can contain transcript paths and other session data.
 
-Snapshots default to `$XDG_CACHE_HOME/weft/claude-usage.json` or
-`~/.cache/weft/claude-usage.json`. `WEFT_CLAUDE_USAGE_FILE` overrides the path; set it
+Snapshots default to `$XDG_CACHE_HOME/flow/claude-usage.json` or
+`~/.cache/flow/claude-usage.json`. `FLOW_CLAUDE_USAGE_FILE` overrides the path; set it
 in both Claude and Flow's environment. Files are atomically replaced with mode 0600.
 Reports older than ten minutes and expired reset windows are rejected. Claude emits
 these status-line fields after an API response; refreshing Flow cannot create a new
@@ -111,7 +111,7 @@ request. The internal `retrieveUserQuota` API is not used as an undocumented aut
 
 No `gemini`, `gemini-api` or Antigravity executable was found locally during the
 October 30 verification. On November 1, Google's official `gemini-api` v0.4.5 was
-installed privately at `.weft/tools/bin/gemini-api`. Its video dry run passed, but
+installed privately at `.flow/tools/bin/gemini-api`. Its video dry run passed, but
 an actual request returned HTTP 403 because neither an API key nor an access token
 was configured. No video was generated or authenticated Pro entitlement tested.
 See [the live CLI validation](qa/gemini-video/README.md) for evidence and the next step.

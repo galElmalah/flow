@@ -219,7 +219,7 @@ export async function readCodexUsage({
       method: "initialize",
       params: {
         clientInfo: {
-          name: "weft_usage",
+          name: "flow_usage",
           title: "Flow usage reader",
           version: "0.1.0",
         },

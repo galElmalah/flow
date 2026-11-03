@@ -12,7 +12,7 @@ import { ProjectService } from "../server/projects.mjs";
 import { ImageEditors } from "../server/image-editor/service.mjs";
 import { registerProjectRoutes } from "../server/routes/projects.mjs";
 import { registerImageEditorRoutes } from "../server/routes/image-editors.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import {
   toggleRegion,
   editBrief,
@@ -23,8 +23,8 @@ import { Queue } from "../server/queue.mjs";
 import { galleryItems } from "../server/search/documents.mjs";
 
 test("SAM editor API preserves originals, scopes ownership, serializes segmentation and prepares replayable masked edit workflows", async (t) => {
-  const temporaryRoot = await mkdtemp(path.join(tmpdir(), "weft-editor-"));
-  const dataRoot = path.join(temporaryRoot, ".weft");
+  const temporaryRoot = await mkdtemp(path.join(tmpdir(), "flow-editor-"));
+  const dataRoot = path.join(temporaryRoot, ".flow");
   const store = new Store(dataRoot);
   await store.init();
   const projects = new ProjectService(store);
@@ -128,8 +128,8 @@ test("SAM editor API preserves originals, scopes ownership, serializes segmentat
   const server = app.listen(0, "127.0.0.1");
   await new Promise((r) => server.once("listening", r));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const client = new WeftClient({ url, projectId: "quotes" }),
-    foreign = new WeftClient({ url, projectId: "other" });
+  const client = new FlowClient({ url, projectId: "quotes" }),
+    foreign = new FlowClient({ url, projectId: "other" });
   t.after(async () => {
     await editors.close();
     await queue.stop();

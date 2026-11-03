@@ -36,7 +36,7 @@ const snapshot = () => ({
 });
 
 async function usageFile(t) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "weft-claude-usage-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "flow-claude-usage-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return path.join(root, "private", "usage.json");
 }

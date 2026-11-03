@@ -13,10 +13,10 @@ import { tmpdir } from "node:os";
 import express from "express";
 import { CodexConnection } from "../harness-integrations/codex/connection.mjs";
 import { registerProviderRoutes } from "../server/routes/providers.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 
 async function fixture(t) {
-  const directory = await mkdtemp(path.join(tmpdir(), "weft-codex-auth-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "flow-codex-auth-"));
   const executable = path.join(directory, "codex-fixture.mjs");
   await writeFile(
     executable,
@@ -183,7 +183,7 @@ test("Codex HTTP/client configuration rejects active jobs and invalid input; hea
   const server = app.listen(0, "127.0.0.1");
   await new Promise((r) => server.once("listening", r));
   t.after(() => new Promise((r) => server.close(r)));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   await assert.rejects(

@@ -23,7 +23,7 @@ const response = (value) =>
     headers: { "content-type": "application/json" },
   });
 async function fixture(t, options = {}) {
-  const dataRoot = await mkdtemp(path.join(os.tmpdir(), "weft-local-runtime-"));
+  const dataRoot = await mkdtemp(path.join(os.tmpdir(), "flow-local-runtime-"));
   t.after(() => rm(dataRoot, { recursive: true, force: true }));
   const commands = [],
     children = [],
@@ -342,7 +342,7 @@ test("checkpoint download validates hash before atomic install and exposes verif
   const receipt = await readFile(
     path.join(
       dataRoot,
-      "models/local/comfyui/source/models/checkpoints/model.safetensors.weft.json",
+      "models/local/comfyui/source/models/checkpoints/model.safetensors.flow.json",
     ),
     "utf8",
   );
@@ -414,7 +414,7 @@ test("download cancellation is durable and a restart marks incomplete tasks inte
 });
 
 test("real streaming downloader requires HTTPS on redirects, validates hash, and never finalizes a corrupt artifact", async (t) => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "weft-download-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "flow-download-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const file = path.join(root, "weights.part");
   let progress;

@@ -37,11 +37,11 @@ export function registerAssetRoutes(app, { assets }) {
         workflowId: req.query.workflowId,
         mode: datasetModeSchema.parse(req.query.mode || "all"),
       });
-      res.type("application/x-ndjson").attachment("weft-assets.jsonl");
-      res.set("X-Weft-Dataset-Total", String(data.total));
-      res.set("X-Weft-Dataset-Skipped", String(data.skipped.length));
+      res.type("application/x-ndjson").attachment("flow-assets.jsonl");
+      res.set("X-Flow-Dataset-Total", String(data.total));
+      res.set("X-Flow-Dataset-Skipped", String(data.skipped.length));
       res.set(
-        "X-Weft-Dataset-Skip-Reasons",
+        "X-Flow-Dataset-Skip-Reasons",
         JSON.stringify(
           data.skipped.reduce((counts, row) => {
             for (const reason of row.reasons)

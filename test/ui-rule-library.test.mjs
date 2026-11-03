@@ -12,7 +12,7 @@ import {
 } from "../shared/rule-templates.mjs";
 
 test("saving the same built-in snapshot twice reuses its library copy without touching applied rules", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-ui-rule-library-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-ui-rule-library-"));
   const store = new Store(root);
   await store.init();
   t.after(async () => {

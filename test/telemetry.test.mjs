@@ -13,7 +13,7 @@ import {
 } from "../observability/tracing.mjs";
 
 test("real OpenTelemetry exports related spans locally; content and error messages never enter the trace", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-otel-test-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-otel-test-"));
   t.after(async () => {
     await closeTracing();
     await rm(root, { recursive: true, force: true });
@@ -22,7 +22,7 @@ test("real OpenTelemetry exports related spans locally; content and error messag
   let id, parentId, childId;
   await traced(
     "agent.turn",
-    { "weft.turn_id": "test-turn", prompt: "PRIVATE PROMPT" },
+    { "flow.turn_id": "test-turn", prompt: "PRIVATE PROMPT" },
     async (span) => {
       id = span.spanContext().traceId;
       parentId = span.spanContext().spanId;
@@ -32,7 +32,7 @@ test("real OpenTelemetry exports related spans locally; content and error messag
       });
       mark(span, "first_output", {
         reply: "PRIVATE REPLY",
-        "weft.preview_chars": 12,
+        "flow.preview_chars": 12,
       });
       await assert.rejects(
         traced("failed.request", {}, async () => {
@@ -60,15 +60,15 @@ test("real OpenTelemetry exports related spans locally; content and error messag
       prompt: "x",
       api_key: "x",
       "ui.elapsed_ms": NaN,
-      "weft.preview_chars": 12,
+      "flow.preview_chars": 12,
     }),
-    { "weft.preview_chars": 12 },
+    { "flow.preview_chars": 12 },
   );
 });
 
 test("optional OTLP export reaches a local collector with real SDK spans", async (t) => {
   const { createServer } = await import("node:http");
-  const root = await mkdtemp(path.join(tmpdir(), "weft-otel-collector-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-otel-collector-"));
   const received = [];
   const server = createServer(async (req, res) => {
     let body = "";
@@ -100,7 +100,7 @@ test("optional OTLP export reaches a local collector with real SDK spans", async
       .some((resource) =>
         resource.resource?.attributes?.some(
           (attr) =>
-            attr.key === "service.name" && attr.value?.stringValue === "weft",
+            attr.key === "service.name" && attr.value?.stringValue === "flow",
         ),
       ),
   );

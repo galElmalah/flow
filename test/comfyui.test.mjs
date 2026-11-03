@@ -57,7 +57,7 @@ async function fixture(
   t,
   { profile = recipe(), kind = profile.kind, custom, Socket = null } = {},
 ) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-comfy-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-comfy-"));
   t.after(() => rm(dataRoot, { recursive: true, force: true }));
   const image = await sharp({
     create: { width: 32, height: 24, channels: 3, background: "#888" },
@@ -90,7 +90,7 @@ async function fixture(
     if (url.pathname === "/models/checkpoints")
       return json(["model.safetensors"]);
     if (url.pathname === "/upload/image")
-      return json({ name: "uploaded.png", subfolder: "weft", type: "input" });
+      return json({ name: "uploaded.png", subfolder: "flow", type: "input" });
     if (url.pathname === "/prompt") {
       posts++;
       return json({ prompt_id: "local_prompt_1" });
@@ -236,7 +236,7 @@ test("image-to-image uploads bytes in profile order and refuses silent dropped r
   const post = JSON.parse(
     f.calls.find((call) => call.route === "/prompt").body,
   );
-  assert.equal(post.prompt["10"].inputs.image, "weft/uploaded.png");
+  assert.equal(post.prompt["10"].inputs.image, "flow/uploaded.png");
   assert.equal(result.metadata.comfyProfile.bindings.images.length, 1);
   f.job.images.push("/files/extra.png");
   await assert.rejects(f.adapter.preflight(f.job), /exactly 1 source/);

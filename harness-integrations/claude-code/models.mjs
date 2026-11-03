@@ -46,7 +46,7 @@ export function claudeModelsFromInitialization(report) {
 
 const cache = new Map();
 export async function claudeTextModels({
-  executable = process.env.WEFT_CLAUDE_BIN || "claude",
+  executable = process.env.FLOW_CLAUDE_BIN || "claude",
   timeoutMs = 5000,
   now = Date.now(),
   read = requestClaudeControl,

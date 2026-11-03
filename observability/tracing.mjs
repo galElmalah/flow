@@ -13,20 +13,20 @@ import { ROOT_CONTEXT, trace, SpanStatusCode } from "@opentelemetry/api";
 const allowed = new Set([
   "gen_ai.request.model",
   "gen_ai.request.reasoning_effort",
-  "weft.session_id",
-  "weft.turn_id",
-  "weft.workflow_id",
-  "weft.project_id",
-  "weft.provider_id",
-  "weft.job_id",
-  "weft.run_id",
-  "weft.status",
-  "weft.phase",
-  "weft.prompt_bytes",
-  "weft.output_bytes",
-  "weft.node_count",
-  "weft.turn_count",
-  "weft.preview_chars",
+  "flow.session_id",
+  "flow.turn_id",
+  "flow.workflow_id",
+  "flow.project_id",
+  "flow.provider_id",
+  "flow.job_id",
+  "flow.run_id",
+  "flow.status",
+  "flow.phase",
+  "flow.prompt_bytes",
+  "flow.output_bytes",
+  "flow.node_count",
+  "flow.turn_count",
+  "flow.preview_chars",
   "http.request.method",
   "http.route",
   "http.response.status_code",
@@ -138,8 +138,8 @@ const scope = new AsyncLocalStorage();
 let runtime;
 export async function initializeTracing({
   dataRoot,
-  otlpEndpoint = process.env.WEFT_OTEL_OTLP_ENDPOINT,
-  enabled = process.env.WEFT_OTEL_ENABLED !== "0",
+  otlpEndpoint = process.env.FLOW_OTEL_OTLP_ENDPOINT,
+  enabled = process.env.FLOW_OTEL_ENABLED !== "0",
 } = {}) {
   if (runtime) return runtime;
   if (!enabled) return null;
@@ -171,18 +171,18 @@ export async function initializeTracing({
   const provider = new NodeTracerProvider({
     spanProcessors: processors,
     resource: resourceFromAttributes({
-      "service.name": "weft",
+      "service.name": "flow",
       "service.version": "0.1.0",
     }),
   });
-  runtime = { provider, local, tracer: provider.getTracer("weft", "0.1.0") };
+  runtime = { provider, local, tracer: provider.getTracer("flow", "0.1.0") };
   return runtime;
 }
 export function startSpan(name, attributes = {}, parent) {
   const parentContext = parent
     ? trace.setSpan(ROOT_CONTEXT, parent)
     : scope.getStore() || ROOT_CONTEXT;
-  return (runtime?.tracer || trace.getTracer("weft")).startSpan(
+  return (runtime?.tracer || trace.getTracer("flow")).startSpan(
     name,
     { attributes: safeAttributes(attributes) },
     parentContext,

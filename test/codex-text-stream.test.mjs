@@ -9,7 +9,7 @@ import {
 } from "../harness-integrations/codex/text-stream.mjs";
 
 async function fixture(t, mode = "success") {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "weft-codex-stream-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "flow-codex-stream-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const executable = path.join(directory, "codex-fixture.mjs");
   await writeFile(
@@ -27,7 +27,7 @@ const note = (method,params) => send({method,params});
 const answer = '{"message":"Hello 🏊 world","edits":[],"focusNodeIds":[]}';
 for await (const line of createInterface({input:process.stdin})) {
  const req = JSON.parse(line);
- await appendFile('received.ndjson',JSON.stringify({args:process.argv.slice(2),authScope:process.env.WEFT_TEST_AUTH_SCOPE,request:req})+'\\n');
+ await appendFile('received.ndjson',JSON.stringify({args:process.argv.slice(2),authScope:process.env.FLOW_TEST_AUTH_SCOPE,request:req})+'\\n');
  if(req.method==='initialize') send({id:req.id,result:{}});
  if(req.method==='config/read') send({id:req.id,result:{config:{mcp_servers:{'unsafe.server':{enabled:true,command:'fixture',tool_timeout_sec:null}}}}});
  if(req.method==='thread/start') send({id:req.id,result:{thread:{id:'thread'},approvalPolicy:'never',sandbox:{type:mode==='unsafe'?'dangerFullAccess':'readOnly'}}});
@@ -248,7 +248,7 @@ test("Codex text jobs use the selected isolated authentication environment", asy
   await runCodexText(f.provider, {
     ...f.context,
     codexExecution: {
-      env: { ...process.env, WEFT_TEST_AUTH_SCOPE: "managed-oauth" },
+      env: { ...process.env, FLOW_TEST_AUTH_SCOPE: "managed-oauth" },
       args: ["-c", 'forced_login_method="chatgpt"'],
     },
   });

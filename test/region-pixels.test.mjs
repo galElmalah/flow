@@ -27,7 +27,7 @@ const source = {
 const mask = Buffer.from([255, 255, 0, 0]);
 const root = path.resolve(import.meta.dirname, "..");
 async function fixtures(t) {
-  const directory = await mkdtemp(path.join(tmpdir(), "weft-region-pixels-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "flow-region-pixels-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const sourcePath = path.join(directory, "source.png");
   const candidatePath = path.join(directory, "candidate.png");

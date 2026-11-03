@@ -7,7 +7,7 @@ import {
   providerFailureFields,
   PROVIDER_NOT_READY,
 } from "../shared/provider-errors.mjs";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 import { jsonRequest } from "../src/studio/ui.mjs";
 
 async function fixture(t) {
@@ -192,7 +192,7 @@ test("scoping a run excludes unrelated blockers and a configured branch can star
 
 test("browser and agent clients preserve actionable provider errors and reject arbitrary settings links", async (t) => {
   const f = await fixture(t);
-  const client = new WeftClient({ url: f.url });
+  const client = new FlowClient({ url: f.url });
   await assert.rejects(
     client.post("/api/runs", { workflowId: f.graph.id }),
     (error) => {

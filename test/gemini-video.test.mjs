@@ -38,7 +38,7 @@ const json = (body, status = 200) =>
   });
 
 async function setup(t, fetcher, options = {}) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-gemini-video-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-gemini-video-"));
   t.after(() => rm(dataRoot, { recursive: true, force: true }));
   const env = { GEMINI_API_KEY: "secret-api-key-never-public", ...options.env };
   const provider = new GeminiVideo({

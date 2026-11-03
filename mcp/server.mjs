@@ -6,8 +6,8 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import {
-  WeftClient,
-  WeftError,
+  FlowClient,
+  FlowError,
   createImageWorkflow,
   createVideoWorkflow,
 } from "../client/index.mjs";
@@ -102,13 +102,13 @@ const failure = (error) => {
 };
 
 export function createMcpServer({
-  url = process.env.WEFT_URL || "http://localhost:4310",
-  projectId = process.env.WEFT_PROJECT,
+  url = process.env.FLOW_URL || "http://localhost:4310",
+  projectId = process.env.FLOW_PROJECT,
   client,
 } = {}) {
   projectManifestSchema.shape.serverUrl.parse(url);
   if (projectId) projectIdSchema.parse(projectId);
-  const weft = client || new WeftClient({ url, projectId });
+  const flow = client || new FlowClient({ url, projectId });
   const server = new McpServer(
     { name: "flow-local", version: "0.1.0" },
     {
@@ -146,10 +146,10 @@ export function createMcpServer({
     );
   };
   const ownGraph = async (workflowId) => {
-    const graph = await weft.workflow(workflowId);
-    if (weft.projectId && graph.projectId !== weft.projectId)
-      throw new WeftError(
-        `Workflow ${workflowId} does not belong to project ${weft.projectId}. Fork it explicitly before using it.`,
+    const graph = await flow.workflow(workflowId);
+    if (flow.projectId && graph.projectId !== flow.projectId)
+      throw new FlowError(
+        `Workflow ${workflowId} does not belong to project ${flow.projectId}. Fork it explicitly before using it.`,
         409,
       );
     return graph;
@@ -166,7 +166,7 @@ export function createMcpServer({
     "Open/reuse the latest persistent conversation for this project (or unassigned workspace). fresh:true starts a new conversation and retains older history. No model inference. Keep the returned ID.",
     agentSessionSchema,
     false,
-    (input) => weft.agentSession(input),
+    (input) => flow.agentSession(input),
     { idempotent: false },
   );
   tool(
@@ -174,7 +174,7 @@ export function createMcpServer({
     "Read saved page-aware messages, truthful text-harness progress and proposed/applied workflow changes within this project's scope.",
     z.object({ sessionId: z.string().uuid() }).strict(),
     true,
-    ({ sessionId }) => weft.agentConversation(sessionId),
+    ({ sessionId }) => flow.agentConversation(sessionId),
   );
   tool(
     "read_agent_trace",
@@ -183,14 +183,14 @@ export function createMcpServer({
       .object({ sessionId: z.string().uuid(), turnId: z.string().uuid() })
       .strict(),
     true,
-    ({ sessionId, turnId }) => weft.agentTrace(sessionId, turnId),
+    ({ sessionId, turnId }) => flow.agentTrace(sessionId, turnId),
   );
   tool(
     "ask_page_agent",
     "Ask the selected text harness to explain or propose changes for an explicit page context. Starts text inference; does not apply graph edits or generate images. Read the workflow's current revision first. Reuse the same message id and payload to retry safely, then read_agent_conversation for progress/result.",
     askAgentSchema.extend({ sessionId: z.string().uuid() }).strict(),
     false,
-    ({ sessionId, ...input }) => weft.askAgent(sessionId, input),
+    ({ sessionId, ...input }) => flow.askAgent(sessionId, input),
     { idempotent: true, openWorld: true },
   );
   for (const [name, action, description] of [
@@ -217,7 +217,7 @@ export function createMcpServer({
         .object({ sessionId: z.string().uuid(), turnId: z.string().uuid() })
         .strict(),
       false,
-      ({ sessionId, turnId }) => weft[action](sessionId, turnId),
+      ({ sessionId, turnId }) => flow[action](sessionId, turnId),
       { idempotent: true },
     );
   tool(
@@ -231,28 +231,28 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (options) => weft.styles(options),
+    (options) => flow.styles(options),
   );
   tool(
     "read_style",
     "Read a reusable style's full prompt, tags, references and reference-generation progress.",
     z.object({ styleId: styleIdSchema }).strict(),
     true,
-    ({ styleId }) => weft.style(styleId),
+    ({ styleId }) => flow.style(styleId),
   );
   tool(
     "create_style",
     "Add your own reusable gallery style, scene, tags and references to local SQLite. Upload images with upload_images first, or reuse a completed image with its real runId/jobId. Optional reference scene, prompt and source attribution. No inference. Supply a unique id for predictable lookup; a duplicate id returns 409.",
     createStyleSchema,
     false,
-    (input) => weft.createStyle(input),
+    (input) => flow.createStyle(input),
   );
   tool(
     "update_style",
     "Edit a custom gallery entry. Send only changed fields; references replaces the saved reference list (empty removes all). Built-in definitions are read-only; add_style_references can attach images to any style. Existing workflow snapshots stay unchanged.",
     updateStyleSchema.extend({ styleId: styleIdSchema }),
     false,
-    ({ styleId, ...changes }) => weft.updateStyle(styleId, changes),
+    ({ styleId, ...changes }) => flow.updateStyle(styleId, changes),
     { idempotent: true },
   );
   tool(
@@ -260,14 +260,14 @@ export function createMcpServer({
     "Save a new project-owned workflow from a style's exact prompt and local reference. The subject remains a separate editable prompt. No inference; plan and run explicitly afterwards.",
     startStyleSchema.extend({ styleId: styleIdSchema }).strict(),
     false,
-    ({ styleId, ...options }) => weft.startStyle(styleId, options),
+    ({ styleId, ...options }) => flow.startStyle(styleId, options),
   );
   tool(
     "set_style_favorite",
     "Set or clear a workspace-wide durable style favorite without changing existing workflows.",
     z.object({ styleId: styleIdSchema, favorite: z.boolean() }).strict(),
     false,
-    ({ styleId, favorite }) => weft.favoriteStyle(styleId, favorite),
+    ({ styleId, favorite }) => flow.favoriteStyle(styleId, favorite),
     { idempotent: true },
   );
   tool(
@@ -280,7 +280,7 @@ export function createMcpServer({
       })
       .strict(),
     false,
-    ({ styleId, references }) => weft.styleReferences(styleId, references),
+    ({ styleId, references }) => flow.styleReferences(styleId, references),
     { idempotent: true },
   );
   tool(
@@ -288,7 +288,7 @@ export function createMcpServer({
     "Idempotently bind completed images from a catalog reference run using each job's records.fields.styleId. Safe during an active run; unfinished jobs remain pending. Project-scoped connections may import only their own runs.",
     z.object({ runId: id }).strict(),
     false,
-    ({ runId }) => weft.importStyleRun(runId),
+    ({ runId }) => flow.importStyleRun(runId),
     { idempotent: true },
   );
   tool(
@@ -296,29 +296,29 @@ export function createMcpServer({
     "List built-in image rules, presets and reusable custom rules in the local workspace library. Copy full rule snapshots with enabled:true into prompt/template/prompt-generate/generate node.data.rules. Enabled rules follow downstream branches and appear in both text and image job prompts.",
     z.object({}).strict(),
     true,
-    () => weft.ruleTemplates(),
+    () => flow.ruleTemplates(),
   );
   tool(
     "save_rule_template",
     "Save a reusable rule {id,title,group?,text} to the workspace-wide local library, shared across projects. Cannot overwrite built-ins. Existing workflow snapshots stay unchanged. Does not enable rules or start inference.",
     ruleTemplateSchema.strict(),
     false,
-    (rule) => weft.saveRuleTemplate(rule),
+    (rule) => flow.saveRuleTemplate(rule),
     { idempotent: true },
   );
   const scopedGraph = (graph) => {
     if (
-      weft.projectId &&
+      flow.projectId &&
       graph.projectId !== undefined &&
-      graph.projectId !== weft.projectId
+      graph.projectId !== flow.projectId
     )
-      throw new WeftError(
-        `Workflow must belong to project ${weft.projectId}.`,
+      throw new FlowError(
+        `Workflow must belong to project ${flow.projectId}.`,
         409,
       );
     return validateGraph({
       ...graph,
-      ...(weft.projectId && { projectId: weft.projectId }),
+      ...(flow.projectId && { projectId: flow.projectId }),
     }).graph;
   };
   tool(
@@ -327,10 +327,10 @@ export function createMcpServer({
     z.object({}).strict(),
     true,
     async () => ({
-      api: await weft.guide(),
-      providers: await weft.providers(),
-      projectId: weft.projectId || null,
-      workflowSchema: await weft.schema(),
+      api: await flow.guide(),
+      providers: await flow.providers(),
+      projectId: flow.projectId || null,
+      workflowSchema: await flow.schema(),
     }),
   );
   tool(
@@ -338,14 +338,14 @@ export function createMcpServer({
     "Inspect local SAM 2.1 model readiness. Segmentation stays on this machine.",
     z.object({}).strict(),
     true,
-    () => weft.editorStatus(),
+    () => flow.editorStatus(),
   );
   tool(
     "setup_image_editor",
     "Install local SAM 2.1 with uv/Python and download official weights. Poll image_editor_status. No image or subscription inference.",
     z.object({}).strict(),
     false,
-    () => weft.setupEditorModel(),
+    () => flow.setupEditorModel(),
     { idempotent: true },
   );
   tool(
@@ -353,14 +353,14 @@ export function createMcpServer({
     "List persistent image region editors in this project's scope.",
     z.object({}).strict(),
     true,
-    () => weft.imageEditors(),
+    () => flow.imageEditors(),
   );
   tool(
     "open_image_editor",
     "Create/reuse an editor for a local image URL. Completed run/job IDs must match that image. Aligned region/recolor versions inherit masks, stable region IDs, labels, comments and selection from their saved parent snapshot; whole-image generations need fresh segmentation. Does not generate.",
     openEditorSchema,
     false,
-    (input) => weft.openImageEditor(input),
+    (input) => flow.openImageEditor(input),
     { idempotent: true },
   );
   tool(
@@ -368,21 +368,21 @@ export function createMcpServer({
     "Read masks, layer labels/order/visibility/locks, comments, source provenance and edit request manifests.",
     z.object({ editorId: editorIdSchema }).strict(),
     true,
-    ({ editorId }) => weft.imageEditor(editorId),
+    ({ editorId }) => flow.imageEditor(editorId),
   );
   tool(
     "list_image_variations",
     "Read prepared edits, live progress and completed versions across this image's version family, including descendant edits in the same project. Outputs include immediate-parent lineage and full gallery inputs; safe to poll after send_image_edit. Legacy reference-guided variations do not guarantee mask precision.",
     z.object({ editorId: editorIdSchema }).strict(),
     true,
-    ({ editorId }) => weft.imageVariations(editorId),
+    ({ editorId }) => flow.imageVariations(editorId),
   );
   tool(
     "name_image_regions",
     "Name unnamed SAM regions with a vision-capable text harness (default Codex). Sends original and exact mask crops for text/vision inference, never image generation. Preserves manual names. Poll read_image_editor.naming for durable progress; cached names are reused.",
     nameRegionsSchema.extend({ editorId: editorIdSchema }),
     false,
-    ({ editorId, ...input }) => weft.nameImageRegions(editorId, input),
+    ({ editorId, ...input }) => flow.nameImageRegions(editorId, input),
     { idempotent: true },
   );
   tool(
@@ -390,7 +390,7 @@ export function createMcpServer({
     "Stop an editor's region naming task. Keeps masks and names already saved.",
     z.object({ editorId: editorIdSchema }).strict(),
     false,
-    ({ editorId }) => weft.cancelImageNaming(editorId),
+    ({ editorId }) => flow.cancelImageNaming(editorId),
     { idempotent: true },
   );
   tool(
@@ -398,21 +398,21 @@ export function createMcpServer({
     "Queue local SAM 2.1 automatic segmentation, or add a missing region with point:{x,y} in normalized 0..1 coordinates. Poll read_image_editor until ready/failed.",
     segmentSchema.extend({ editorId: editorIdSchema }),
     false,
-    ({ editorId, ...input }) => weft.segmentImage(editorId, input),
+    ({ editorId, ...input }) => flow.segmentImage(editorId, input),
   );
   tool(
     "patch_image_editor",
     "With current revision, update one layer, reorder all layer IDs, add a region comment or resolve/reopen a comment. Conflicts require rereading. Same operations as UI.",
     z.object({ editorId: editorIdSchema, change: editorPatchSchema }).strict(),
     false,
-    ({ editorId, change }) => weft.patchImageEditor(editorId, change),
+    ({ editorId, change }) => flow.patchImageEditor(editorId, change),
   );
   tool(
     "prepare_image_edit",
     "Prepare an immutable image-version request without inference. mode:whole (default) regenerates the complete image, using selected regions and comments as guidance without hard mask compositing; regions/instructions are optional. mode:recolor changes selected regions locally using hex color and strength 0..1; count must be 1. Explicit mode:region is an advanced hard-mask compositor and may leave visible seams at imperfect mask boundaries. Saves source, masks, labels and comment snapshot. Call send_image_edit to dispatch; create a new request for another attempt.",
     editRequestSchema.safeExtend({ editorId: editorIdSchema }),
     false,
-    ({ editorId, ...input }) => weft.prepareImageEdit(editorId, input),
+    ({ editorId, ...input }) => flow.prepareImageEdit(editorId, input),
   );
   tool(
     "send_image_edit",
@@ -421,7 +421,7 @@ export function createMcpServer({
       .object({ editorId: editorIdSchema, requestId: z.string().uuid() })
       .strict(),
     false,
-    ({ editorId, requestId }) => weft.sendImageEdit(editorId, requestId),
+    ({ editorId, requestId }) => flow.sendImageEdit(editorId, requestId),
     { idempotent: true },
   );
   tool(
@@ -434,7 +434,7 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (input) => weft.projects(input),
+    (input) => flow.projects(input),
   );
   tool(
     "create_project",
@@ -442,9 +442,9 @@ export function createMcpServer({
     projectInputSchema,
     false,
     (input) => {
-      if (weft.projectId && input.id !== weft.projectId)
-        throw new WeftError(`Project must be ${weft.projectId}.`, 409);
-      return weft.createProject(input);
+      if (flow.projectId && input.id !== flow.projectId)
+        throw new FlowError(`Project must be ${flow.projectId}.`, 409);
+      return flow.createProject(input);
     },
     { idempotent: true },
   );
@@ -456,9 +456,9 @@ export function createMcpServer({
       .strict(),
     false,
     ({ projectId, changes }) => {
-      if (weft.projectId && projectId !== weft.projectId)
-        throw new WeftError(`Project must be ${weft.projectId}.`, 409);
-      return weft.updateProject(projectId, changes);
+      if (flow.projectId && projectId !== flow.projectId)
+        throw new FlowError(`Project must be ${flow.projectId}.`, 409);
+      return flow.updateProject(projectId, changes);
     },
     { idempotent: true },
   );
@@ -470,7 +470,7 @@ export function createMcpServer({
       .strict(),
     false,
     async ({ paths }) =>
-      weft.upload(
+      flow.upload(
         await Promise.all(
           paths.map(async (path) => ({
             name: basename(path),
@@ -484,35 +484,35 @@ export function createMcpServer({
     "List generated images and videos in this connection's project, with exact prompts, input records, seeds and source/run IDs. kind distinguishes image/video. Includes completed outputs only; no semantic ranking.",
     z.object({}).strict(),
     true,
-    () => weft.gallery(),
+    () => flow.gallery(),
   );
   tool(
     "workflow_results",
     "Get the most recent completed/active output jobs grouped by node for a saved workflow in this project.",
     z.object({ workflowId: id }).strict(),
     true,
-    ({ workflowId }) => weft.workflowResults(workflowId),
+    ({ workflowId }) => flow.workflowResults(workflowId),
   );
   tool(
     "run_download_url",
     "Return a project-validated local ZIP download URL. The archive contains completed images, MP4 videos and the exact run manifest. inspect_run also returns that manifest as JSON; no image bytes are embedded in MCP output.",
     z.object({ runId: id }).strict(),
     true,
-    ({ runId }) => weft.downloadTarget(runId),
+    ({ runId }) => flow.downloadTarget(runId),
   );
   tool(
     "search_status",
     "Inspect local embedding model and image index readiness without querying or generating.",
     z.object({}).strict(),
     true,
-    () => weft.searchStatus(),
+    () => flow.searchStatus(),
   );
   tool(
     "retry_search_index",
     "Retry local embedding/index setup after an error. May download model files; never invokes an inference provider.",
     z.object({}).strict(),
     false,
-    () => weft.searchRetry(),
+    () => flow.searchRetry(),
     { idempotent: true, openWorld: true },
   );
   tool(
@@ -520,14 +520,14 @@ export function createMcpServer({
     "Read the public provider configuration example. Actual private keys and stored connections are never exported.",
     z.object({}).strict(),
     true,
-    () => weft.providerExample(),
+    () => flow.providerExample(),
   );
   tool(
     "reload_providers",
     "Reload installed harness/configuration metadata and report readiness. Affects the workspace-wide provider catalog.",
     z.object({}).strict(),
     false,
-    () => weft.reloadProviders(),
+    () => flow.reloadProviders(),
     { idempotent: true },
   );
   tool(
@@ -535,14 +535,14 @@ export function createMcpServer({
     "Read subscription usage percentages, quota windows and reset times per harness. Codex image/text share one account. Unavailable is not zero; stale results are marked. Read-only, no inference or billing calls.",
     z.object({ refresh: z.boolean().optional() }).strict(),
     true,
-    (input) => weft.harnessUsage(input),
+    (input) => flow.harnessUsage(input),
   );
   tool(
     "read_local_models",
     "Read local Ollama/ComfyUI runtime installation, reachability, downloaded weights, setup progress and saved media profiles. No inference.",
     z.object({ runtime: localRuntimeSchema.optional() }).strict(),
     true,
-    ({ runtime }) => weft.localModels(runtime),
+    ({ runtime }) => flow.localModels(runtime),
   );
   tool(
     "configure_local_runtime",
@@ -551,7 +551,7 @@ export function createMcpServer({
       .object({ runtime: localRuntimeSchema, config: localRuntimeConfigSchema })
       .strict(),
     false,
-    ({ runtime, config }) => weft.configureLocalRuntime(runtime, config),
+    ({ runtime, config }) => flow.configureLocalRuntime(runtime, config),
     { idempotent: true },
   );
   tool(
@@ -559,7 +559,7 @@ export function createMcpServer({
     "Set up a bundled local model preset: managed ComfyUI, pinned hash-verified weights and its generation profile. MOSS SFT BF16/INT8 supported. Downloads many GB; no inference. Poll read_local_models for durable progress; cancel with local_runtime_action. Mac inference remains experimental.",
     z.object({ presetId: localModelPresetIdSchema }).strict(),
     false,
-    ({ presetId }) => weft.installLocalModel(presetId),
+    ({ presetId }) => flow.installLocalModel(presetId),
     { idempotent: true, openWorld: true },
   );
   tool(
@@ -572,7 +572,7 @@ export function createMcpServer({
       })
       .strict(),
     false,
-    ({ runtime, action }) => weft.localModelAction(runtime, action),
+    ({ runtime, action }) => flow.localModelAction(runtime, action),
     { idempotent: true, openWorld: true },
   );
   tool(
@@ -602,7 +602,7 @@ export function createMcpServer({
       })
       .strict(),
     false,
-    ({ runtime, input }) => weft.localModelAction(runtime, "pull", input),
+    ({ runtime, input }) => flow.localModelAction(runtime, "pull", input),
     { idempotent: true, openWorld: true },
   );
   tool(
@@ -610,7 +610,7 @@ export function createMcpServer({
     "Save an API-format ComfyUI image/video workflow with explicit prompt, seed, image and final-output bindings. Does not install custom-node code or generate.",
     z.object({ profile: comfyProfileSchema }).strict(),
     false,
-    ({ profile }) => weft.saveLocalProfile(profile),
+    ({ profile }) => flow.saveLocalProfile(profile),
     { idempotent: true },
   );
   tool(
@@ -618,7 +618,7 @@ export function createMcpServer({
     "Create a core checkpoint text-to-image or image-to-image recipe. Checkpoint must exist in the local ComfyUI runtime before generation.",
     z.object({ recipe: comfyCheckpointRecipeSchema }).strict(),
     false,
-    ({ recipe }) => weft.createLocalCheckpointProfile(recipe),
+    ({ recipe }) => flow.createLocalCheckpointProfile(recipe),
     { idempotent: true },
   );
   tool(
@@ -626,14 +626,14 @@ export function createMcpServer({
     "Check profile nodes, model filenames, bindings and endpoint before local inference. Does not generate.",
     z.object({ profileId: id }).strict(),
     true,
-    ({ profileId }) => weft.validateLocalProfile(profileId),
+    ({ profileId }) => flow.validateLocalProfile(profileId),
   );
   tool(
     "remove_local_profile",
     "Remove a local saved ComfyUI recipe. Historical run snapshots retain their exact submitted graph.",
     z.object({ profileId: id }).strict(),
     false,
-    ({ profileId }) => weft.removeLocalProfile(profileId),
+    ({ profileId }) => flow.removeLocalProfile(profileId),
     { destructive: true },
   );
   tool(
@@ -641,42 +641,42 @@ export function createMcpServer({
     "Read Codex auth source (harness, oauth or api-key), sign-in/device-code progress and readiness. Never returns credentials.",
     z.object({}).strict(),
     true,
-    () => weft.codexConnection(),
+    () => flow.codexConnection(),
   );
   tool(
     "configure_codex",
     "Select the existing local Codex harness, isolated ChatGPT OAuth sign-in, or private API-key login. API billing applies to API-key mode. Does not replace the user's global CLI login; does not run inference.",
     codexConnectionSchema,
     false,
-    (input) => weft.configureCodex(input),
+    (input) => flow.configureCodex(input),
   );
   tool(
     "start_codex_login",
     "Start/reuse Codex device-code sign-in after selecting oauth mode. Returns only the official sign-in URL and one-time code. The user completes sign-in. Poll read_codex_connection.",
     z.object({}).strict(),
     false,
-    () => weft.startCodexLogin(),
+    () => flow.startCodexLogin(),
   );
   tool(
     "cancel_codex_login",
     "Cancel Flow's pending Codex sign-in without changing the user's local harness login.",
     z.object({}).strict(),
     false,
-    () => weft.cancelCodexLogin(),
+    () => flow.cancelCodexLogin(),
   );
   tool(
     "read_fal_connection",
     "Read fal image/video API setup without exposing the key. Includes Seedance/Seedream models; configured does not prove inference access.",
     z.object({}).strict(),
     true,
-    () => weft.falConnection(),
+    () => flow.falConnection(),
   );
   tool(
     "configure_fal",
     "Configure a private workspace fal API key. Omit apiKey to keep, string to replace, null to clear. Does not generate or verify billing.",
     z.object({ connection: falConnectionSchema }).strict(),
     false,
-    ({ connection }) => weft.configureFal(connection),
+    ({ connection }) => flow.configureFal(connection),
     { idempotent: true, destructive: true },
   );
   tool(
@@ -684,14 +684,14 @@ export function createMcpServer({
     "Read native xAI image/video setup without exposing keys. Grok consumer subscription is not proof of API entitlement.",
     z.object({}).strict(),
     true,
-    () => weft.grokConnection(),
+    () => flow.grokConnection(),
   );
   tool(
     "configure_grok",
     "Configure a private workspace-wide xAI API key. Omit apiKey to keep, string to replace, null to clear. Does not generate or verify billing.",
     z.object({ connection: grokConnectionSchema }).strict(),
     false,
-    ({ connection }) => weft.configureGrok(connection),
+    ({ connection }) => flow.configureGrok(connection),
     { idempotent: true, destructive: true },
   );
   tool(
@@ -706,21 +706,21 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (input) => weft.assets(input),
+    (input) => flow.assets(input),
   );
   tool(
     "read_asset",
     "Read one immutable asset occurrence and its revisioned annotations in project scope.",
     z.object({ assetId: assetIdSchema }).strict(),
     true,
-    ({ assetId }) => weft.asset(assetId),
+    ({ assetId }) => flow.asset(assetId),
   );
   tool(
     "read_asset_lineage",
     "Read the exact prompt/settings/source hashes and ancestry, including cross-run sources and generated prompt assets when known.",
     z.object({ assetId: assetIdSchema }).strict(),
     true,
-    ({ assetId }) => weft.assetLineage(assetId),
+    ({ assetId }) => flow.assetLineage(assetId),
   );
   tool(
     "annotate_asset",
@@ -729,7 +729,7 @@ export function createMcpServer({
       .object({ assetId: assetIdSchema, annotations: assetAnnotationsSchema })
       .strict(),
     false,
-    ({ assetId, annotations }) => weft.annotateAsset(assetId, annotations),
+    ({ assetId, annotations }) => flow.annotateAsset(assetId, annotations),
     { idempotent: false },
   );
   tool(
@@ -743,21 +743,21 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (input) => weft.datasetTarget(input),
+    (input) => flow.datasetTarget(input),
   );
   tool(
     "read_gemini_video_connection",
     "Read Gemini video API setup and authentication readiness without exposing credentials or generating. Coding Gemini CLI sign-in and Flow credits do not authorize this API automatically.",
     z.object({}).strict(),
     true,
-    () => weft.geminiVideoConnection(),
+    () => flow.geminiVideoConnection(),
   );
   tool(
     "configure_gemini_video",
     "Configure workspace-wide Gemini video API authentication. Keys are write-only: omit to keep, string to replace, null to clear; oauth-adc uses standard Google Cloud ADC, oauth-token uses the server environment. This is separate API billing, not Flow credit access. Does not generate.",
     z.object({ connection: geminiVideoConnectionSchema }).strict(),
     false,
-    ({ connection }) => weft.configureGeminiVideo(connection),
+    ({ connection }) => flow.configureGeminiVideo(connection),
     { idempotent: true, destructive: true },
   );
   tool(
@@ -771,7 +771,7 @@ export function createMcpServer({
       .strict(),
     false,
     ({ connectionId, connection }) =>
-      weft.saveProviderConnection(connection, connectionId),
+      flow.saveProviderConnection(connection, connectionId),
     { destructive: true },
   );
   tool(
@@ -779,7 +779,7 @@ export function createMcpServer({
     "Remove a workspace-wide managed BYOK connection. Existing workflow references stay intact but will require a configured provider to run. This affects every project using the connection.",
     z.object({ connectionId: id }).strict(),
     false,
-    ({ connectionId }) => weft.removeProviderConnection(connectionId),
+    ({ connectionId }) => flow.removeProviderConnection(connectionId),
     { destructive: true },
   );
   tool(
@@ -787,7 +787,7 @@ export function createMcpServer({
     "Test a managed compatible endpoint's /models listing. Sends its stored key only to its configured base URL. Does not invoke image or text inference and does not prove model inference compatibility.",
     z.object({ connectionId: id }).strict(),
     false,
-    ({ connectionId }) => weft.testProviderConnection(connectionId),
+    ({ connectionId }) => flow.testProviderConnection(connectionId),
     { idempotent: true, openWorld: true },
   );
   tool(
@@ -795,14 +795,14 @@ export function createMcpServer({
     "List saved workflows in this MCP connection's project, or the workspace when unbound.",
     z.object({ archived: archiveFilterSchema.optional() }).strict(),
     true,
-    (input) => weft.workflows(weft.projectId, input),
+    (input) => flow.workflows(flow.projectId, input),
   );
   tool(
     "set_workflows_archived",
     "Archive or restore workflows atomically in this connection's project. Archived workflows leave normal lists, history and search; images and recorded runs remain recoverable. Active runs and project defaults must be resolved first.",
     archiveWorkflowsSchema.omit({ projectId: true }),
     false,
-    ({ ids, archived, reason }) => weft.archiveWorkflows(ids, archived, reason),
+    ({ ids, archived, reason }) => flow.archiveWorkflows(ids, archived, reason),
     { idempotent: true },
   );
   tool(
@@ -811,7 +811,7 @@ export function createMcpServer({
     archiveProjectSchema.extend({ projectId: projectIdSchema }),
     false,
     ({ projectId, archived, reason }) =>
-      weft.archiveProject(projectId, archived, reason),
+      flow.archiveProject(projectId, archived, reason),
     { idempotent: true },
   );
   tool(
@@ -826,7 +826,7 @@ export function createMcpServer({
     "Create a new saved graph without starting inference. IDs must be new; the graph uses the canonical workflow schema.",
     z.object({ workflow: workflowSchema.strict() }).strict(),
     false,
-    ({ workflow }) => weft.createWorkflow(scopedGraph(workflow)),
+    ({ workflow }) => flow.createWorkflow(scopedGraph(workflow)),
   );
   tool(
     "create_image_workflow",
@@ -856,9 +856,9 @@ export function createMcpServer({
       .strict(),
     false,
     (input) =>
-      weft.createWorkflow(
+      flow.createWorkflow(
         scopedGraph(
-          createImageWorkflow({ ...input, projectId: weft.projectId }),
+          createImageWorkflow({ ...input, projectId: flow.projectId }),
         ),
       ),
   );
@@ -887,9 +887,9 @@ export function createMcpServer({
       .strict(),
     false,
     (input) =>
-      weft.createWorkflow(
+      flow.createWorkflow(
         scopedGraph(
-          createVideoWorkflow({ ...input, projectId: weft.projectId }),
+          createVideoWorkflow({ ...input, projectId: flow.projectId }),
         ),
       ),
   );
@@ -900,7 +900,7 @@ export function createMcpServer({
     false,
     async ({ workflow }) => {
       await ownGraph(workflow.id);
-      return weft.saveWorkflow(scopedGraph(workflow));
+      return flow.saveWorkflow(scopedGraph(workflow));
     },
     { idempotent: true, destructive: true },
   );
@@ -911,7 +911,7 @@ export function createMcpServer({
     false,
     async ({ workflowId, ...options }) => {
       await ownGraph(workflowId);
-      return weft.organizeWorkflow(workflowId, options);
+      return flow.organizeWorkflow(workflowId, options);
     },
   );
   tool(
@@ -928,15 +928,15 @@ export function createMcpServer({
     async ({ workflowId, name, runId }) => {
       let workflow;
       if (runId) {
-        const run = await weft.inspect(runId);
+        const run = await flow.inspect(runId);
         if (run.workflowId !== workflowId)
-          throw new WeftError(
+          throw new FlowError(
             `Run ${runId} belongs to workflow ${run.workflowId}, not ${workflowId}.`,
             409,
           );
         workflow = { ...run.graph, id: run.workflowId };
       }
-      return weft.fork(workflowId, { name, workflow });
+      return flow.fork(workflowId, { name, workflow });
     },
   );
   tool(
@@ -946,7 +946,7 @@ export function createMcpServer({
     true,
     async ({ workflowId, options }) => {
       await ownGraph(workflowId);
-      return weft.plan(workflowId, options);
+      return flow.plan(workflowId, options);
     },
   );
   tool(
@@ -961,7 +961,7 @@ export function createMcpServer({
       .strict(),
     true,
     ({ workflowId, nodeId, itemId }) =>
-      weft.previewPromptItem(workflowId, nodeId, itemId),
+      flow.previewPromptItem(workflowId, nodeId, itemId),
   );
   tool(
     "run_workflow",
@@ -976,7 +976,7 @@ export function createMcpServer({
     false,
     async ({ workflowId, options, concurrency }) => {
       await ownGraph(workflowId);
-      return weft.run(workflowId, options, { concurrency });
+      return flow.run(workflowId, options, { concurrency });
     },
     { openWorld: true },
   );
@@ -985,14 +985,14 @@ export function createMcpServer({
     "List run summaries for this connection's project.",
     z.object({}).strict(),
     true,
-    () => weft.runs(),
+    () => flow.runs(),
   );
   tool(
     "inspect_run",
     "Inspect a durable run, job states, exact inputs, outputs, errors and provenance.",
     z.object({ runId: id }).strict(),
     true,
-    ({ runId }) => weft.inspect(runId),
+    ({ runId }) => flow.inspect(runId),
   );
   tool(
     "wait_run",
@@ -1007,12 +1007,12 @@ export function createMcpServer({
     async ({ runId, timeoutSeconds }) => {
       try {
         return {
-          run: await weft.wait(runId, { timeout: timeoutSeconds }),
+          run: await flow.wait(runId, { timeout: timeoutSeconds }),
           timedOut: false,
         };
       } catch (error) {
         if (!error.message.startsWith("Timed out waiting for run")) throw error;
-        return { run: await weft.inspect(runId), timedOut: true };
+        return { run: await flow.inspect(runId), timedOut: true };
       }
     },
   );
@@ -1027,8 +1027,8 @@ export function createMcpServer({
       .strict(),
     false,
     async ({ runId, action }) => {
-      await weft.inspect(runId);
-      return weft.control(runId, action);
+      await flow.inspect(runId);
+      return flow.control(runId, action);
     },
     { destructive: true, openWorld: true },
   );
@@ -1051,11 +1051,11 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (input) => weft.searchImages(input),
+    (input) => flow.searchImages(input),
   );
   tool(
     "viewer_url",
-    "Return a validated local viewer URL for a workflow, node, run, image gallery style library (styles:true), or projects page (projects:true). Does not open the OS browser. Use CLI `weft open --styles` to launch the style library.",
+    "Return a validated local viewer URL for a workflow, node, run, image gallery style library (styles:true), or projects page (projects:true). Does not open the OS browser. Use CLI `flow open --styles` to launch the style library.",
     z
       .object({
         workflowId: id.optional(),
@@ -1068,7 +1068,7 @@ export function createMcpServer({
       })
       .strict(),
     true,
-    (input) => weft.viewer(input),
+    (input) => flow.viewer(input),
   );
   return server;
 }

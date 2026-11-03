@@ -14,7 +14,7 @@ would add indirection without a second deployable service or a separate release 
 ## Caller path
 
 ```text
-consuming-repository/.weft-project.json
+consuming-repository/flow.project.json
   → CLI or client/index.mjs
   → server/routes/{projects,workflows,runs}.mjs
   → shared schema + project ownership validation
@@ -96,7 +96,7 @@ monochrome canvas and running-state border.
 
 ### Image region editing
 
-`image-tools/segmentation/` owns the pinned, optional local SAM 2.1 Python runtime (Hiera Large by default; `WEFT_SAM_MODEL=tiny` is available).
+`image-tools/segmentation/` owns the pinned, optional local SAM 2.1 Python runtime (Hiera Large by default; `FLOW_SAM_MODEL=tiny` is available).
 The Node adapter is isolated from server/UI dependencies. `shared/image-editor.mjs`
 owns API contracts and selection/brief semantics. `server/image-editor/service.mjs`
 coordinates revision-checked SQLite metadata, serialized segmentation, mask exports

@@ -50,7 +50,7 @@ test("settings links resolve each submenu without loading workflow state", async
 });
 
 test("SAM status distinguishes partial weights, runtime, checkpoint and verification", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-sam-status-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-sam-status-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const model = new Sam2(root);
   assert.equal((await model.status()).ready, false);
@@ -71,7 +71,7 @@ test("SAM status distinguishes partial weights, runtime, checkpoint and verifica
 });
 
 test("model download reports actual bytes and retries an unsuccessful transfer", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-model-download-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-model-download-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const file = path.join(root, "weights.part");
   const progress = [];

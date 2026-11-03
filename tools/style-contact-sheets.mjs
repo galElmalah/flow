@@ -2,10 +2,10 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 
 // QA sheets only: original reference images stay untouched.
-const client = new WeftClient();
+const client = new FlowClient();
 const { styles, categories } = await client.styles();
 const directory = path.resolve(
   import.meta.dirname,

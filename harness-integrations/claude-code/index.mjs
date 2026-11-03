@@ -7,7 +7,7 @@ import { jsonLines, textSnapshots } from "../shared/stream.mjs";
 export const provider = {
   id: "claude-code",
   name: "Claude Code",
-  executable: process.env.WEFT_CLAUDE_BIN || "claude",
+  executable: process.env.FLOW_CLAUDE_BIN || "claude",
   acceptsImages: true,
   setup: "Run claude auth login",
   description: "Shape image prompts with your Claude Code sign-in.",

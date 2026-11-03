@@ -22,7 +22,7 @@ all processes use the single local platform and shared scheduler.
 ```json
 {
   "mcpServers": {
-    "weft": {
+    "flow": {
       "command": "node",
       "args": [
         "/absolute/path/to/flow/cli/flow.mjs",
@@ -31,8 +31,8 @@ all processes use the single local platform and shared scheduler.
         "quoture"
       ],
       "env": {
-        "WEFT_URL": "http://localhost:4310",
-        "WEFT_PROJECT": "quoture"
+        "FLOW_URL": "http://localhost:4310",
+        "FLOW_PROJECT": "quoture"
       }
     }
   }
@@ -42,13 +42,13 @@ all processes use the single local platform and shared scheduler.
 For a host that uses TOML configuration:
 
 ```toml
-[mcp_servers.weft]
+[mcp_servers.flow]
 command = "node"
 args = ["/absolute/path/to/flow/cli/flow.mjs", "mcp", "--project", "quoture"]
 
-[mcp_servers.weft.env]
-WEFT_URL = "http://localhost:4310"
-WEFT_PROJECT = "quoture"
+[mcp_servers.flow.env]
+FLOW_URL = "http://localhost:4310"
+FLOW_PROJECT = "quoture"
 ```
 
 Direct `mcp/server.mjs` reads the two environment variables above and requires

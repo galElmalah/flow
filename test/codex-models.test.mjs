@@ -6,7 +6,7 @@ import path from "node:path";
 import { codexTextModels } from "../harness-integrations/codex/models.mjs";
 
 test("Codex model discovery exposes listed model metadata without account data", async (t) => {
-  const home = await mkdtemp(path.join(tmpdir(), "weft-models-"));
+  const home = await mkdtemp(path.join(tmpdir(), "flow-models-"));
   t.after(() => rm(home, { recursive: true, force: true }));
   assert.deepEqual(await codexTextModels(home), []);
   const file = path.join(home, "models_cache.json");

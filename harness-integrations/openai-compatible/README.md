@@ -10,7 +10,7 @@ This is a direct HTTP integration; no Pi or other CLI dependency is needed.
 Create a connection in provider settings or through the provider-connection API with
 its base URL (including `/v1` if required), model IDs, declared text/image capabilities
 and optional API key. The key is write-only to callers and stored in owner-only
-`.weft/connections.json`; it never belongs in workflow JSON, project manifests or run
+`.flow/connections.json`; it never belongs in workflow JSON, project manifests or run
 metadata. Editing uses explicit `keep`, `replace` or `clear` key actions. Changing the
 base URL requires a replacement or removal to prevent sending a retained key elsewhere.
 The file-based image API configuration also supports keys from a named server environment

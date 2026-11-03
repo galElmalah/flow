@@ -3,17 +3,17 @@ import { readFile, writeFile, stat, readdir } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { createHash } from "node:crypto";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const directory = path.resolve(
-  process.env.WEFT_BENCHMARK_DIR ||
+  process.env.FLOW_BENCHMARK_DIR ||
     path.join(root, "docs/benchmarks/codex-2026-10-29"),
 );
 const experiment = JSON.parse(
   await readFile(path.join(directory, "experiment.json"), "utf8"),
 );
-const client = new WeftClient({ projectId: "quoture" });
+const client = new FlowClient({ projectId: "quoture" });
 const identity = await client.request("/api/server");
 const nativeRoot =
   path.join(os.homedir(), ".codex", "generated_images") + path.sep;

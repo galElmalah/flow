@@ -35,7 +35,7 @@ export function OllamaSettings({ provider }) {
             disabled={!provider.ready || !model}
             onClick={() =>
               window.dispatchEvent(
-                new CustomEvent("weft:agent-select-model", {
+                new CustomEvent("flow:agent-select-model", {
                   detail: { providerId: "ollama", model },
                 }),
               )

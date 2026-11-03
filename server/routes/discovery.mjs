@@ -2,6 +2,7 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { workflowSchema } from "../../shared/graph.mjs";
+import { flowFileSchema } from "../../shared/flow-file.mjs";
 import { projectSchema } from "../../shared/projects.mjs";
 import { agentContextSchema, askAgentSchema } from "../../shared/agent.mjs";
 import { summarize } from "../store.mjs";
@@ -12,12 +13,14 @@ export function registerDiscoveryRoutes(
 ) {
   app.get("/api", (_, res) =>
     res.json({
-      application: "weft",
+      application: "flow",
       version: 2,
       storage: store.storageInfo(),
       workflowSchema: "/api/schema/workflow",
+      workflowFileSchema: "/api/schema/flow",
+      workflowFileExtension: ".flow.json",
       projectSchema: "/api/schema/project",
-      projectManifest: ".weft-project.json",
+      projectManifest: "flow.project.json",
       integrations: "harness-integrations/",
       codexAuthentication: {
         settings: "/settings/providers",
@@ -99,7 +102,7 @@ export function registerDiscoveryRoutes(
       },
       pageAgent: {
         trace:
-          "GET /api/agent/sessions/:id/turns/:turnId/trace; CLI weft agent trace SESSION TURN --json",
+          "GET /api/agent/sessions/:id/turns/:turnId/trace; CLI flow agent trace SESSION TURN --json",
         browserTiming:
           "POST /api/agent/sessions/:id/turns/:turnId/timing {elapsedMs,prepareMs,acceptedMs}; numeric first-paint observation only",
         create: "POST /api/agent/sessions {projectId?}",
@@ -138,7 +141,7 @@ export function registerDiscoveryRoutes(
         prepare:
           "POST /api/image-editors/:id/requests {revision,regionIds,instructions?,providerId?,count?}",
         send: "POST /api/image-editors/:id/requests/:requestId/send {} (idempotent; starts agent generation)",
-        viewer: "weft open --editor ID",
+        viewer: "flow open --editor ID",
         note: "Masks/comments persist independently from original runs. Preparation creates a workflow, not inference. Binary mask white=edit, black=preserve; default Codex reference guidance is not strict inpainting.",
       },
       assets: {
@@ -155,7 +158,7 @@ export function registerDiscoveryRoutes(
           "node.data.modes: [{id,label,providerId,model?,count?,ratio?,quality?,image?,video?,seed?}]",
         expansion:
           "Same input context × compatible modes × copies; output jobs retain mode and comparison group/input/copy identities. --count applies to every mode; --provider/model overrides are rejected for explicit modes.",
-        cli: "weft workflow create --modes modes.json --count 4; weft assets; weft asset lineage ID; weft asset annotate ID --from labels.json; weft dataset export --mode all --output data.jsonl",
+        cli: "flow workflow create --modes modes.json --count 4; flow assets; flow asset lineage ID; flow asset annotate ID --from labels.json; flow dataset export --mode all --output data.jsonl",
         fal: "GET/PUT /api/providers/fal. Native fal-image/fal-video use private FAL_KEY credentials. Seedance 2.0/2.5 video, Seedream 5.0 Flash and FLUX.1 schnell images; same comparison modes, queue and lineage. CLI providers fal|configure-fal; MCP read_fal_connection/configure_fal.",
         grok: "GET/PUT /api/providers/grok. Native grok-image/grok-video use private xAI API credentials; consumer subscription does not prove API entitlement.",
       },
@@ -163,7 +166,7 @@ export function registerDiscoveryRoutes(
         guide: "/api/guide/video",
         nodeTypes: ["video-generate", "video-output"],
         create:
-          "CLI: weft workflow create --media video --name NAME --prompt TEXT --resolution 720p; MCP create_video_workflow; client createVideoWorkflow()",
+          "CLI: flow workflow create --media video --name NAME --prompt TEXT --resolution 720p; MCP create_video_workflow; client createVideoWorkflow()",
         connection:
           "GET /api/providers/gemini-video; PUT /api/providers/gemini-video {authMode:api-key|oauth-adc|oauth-token,apiKey?:string|null,quotaProject?}",
         outputs:
@@ -444,6 +447,7 @@ export function registerDiscoveryRoutes(
       ],
     }),
   );
+  app.get("/api/schema/flow", (_, res) => res.json(z.toJSONSchema(flowFileSchema)));
   app.get("/api/schema/workflow", (_, res) =>
     res.json(z.toJSONSchema(workflowSchema)),
   );

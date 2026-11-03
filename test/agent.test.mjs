@@ -10,7 +10,7 @@ import { ProjectService } from "../server/projects.mjs";
 import { AgentConversations } from "../server/agent/service.mjs";
 import { registerAgentRoutes } from "../server/routes/agent.mjs";
 import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { applyAgentEdits, agentAnswerSchema } from "../shared/agent.mjs";
 
 const graph = () => ({
@@ -71,8 +71,8 @@ async function waitReady(client, id, turnId) {
 }
 
 test("durable app agent API scopes context, prepares, applies, and conditionally undoes without inference", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-agent-"));
-  const store = new Store(path.join(root, ".weft"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-agent-"));
+  const store = new Store(path.join(root, ".flow"));
   await store.init();
   const projects = new ProjectService(store);
   for (const id of ["sport", "other"]) {
@@ -133,8 +133,8 @@ test("durable app agent API scopes context, prepares, applies, and conditionally
     await rm(root, { recursive: true, force: true });
   });
   const url = `http://127.0.0.1:${server.address().port}`;
-  const client = new WeftClient({ url, projectId: "sport" }),
-    other = new WeftClient({ url, projectId: "other" });
+  const client = new FlowClient({ url, projectId: "sport" }),
+    other = new FlowClient({ url, projectId: "other" });
   const session = await client.agentSession();
   assert.equal((await client.agentSession()).id, session.id);
   assert.equal(session.projectId, "sport");
@@ -357,8 +357,8 @@ test("agent edit contracts preserve untouched fields and reject invalid graphs a
 });
 
 test("agent apply and Undo tolerate only viewport saves while preserving the latest viewport", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-agent-pan-"));
-  const store = new Store(path.join(root, ".weft"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-agent-pan-"));
+  const store = new Store(path.join(root, ".flow"));
   await store.init();
   const projects = new ProjectService(store);
   await mkdir(path.join(root, "sport"));
@@ -478,7 +478,7 @@ test("agent apply and Undo tolerate only viewport saves while preserving the lat
 });
 
 test("non-Codex thinking choices survive the agent API and reach the selected adapter", async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "weft-agent-thinking-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "flow-agent-thinking-"));
   const store = new Store(directory);
   await store.init();
   const projects = new ProjectService(store);

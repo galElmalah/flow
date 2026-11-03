@@ -21,7 +21,7 @@ import {
 import { ConnectionStore } from "../harness-integrations/openai-compatible/connections.mjs";
 
 async function directory(t) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "weft-integrations-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "flow-integrations-"));
   t.after(() => rm(root, { force: true, recursive: true }));
   return root;
 }
@@ -74,7 +74,7 @@ test("CLI installation is distinct from verified sign-in", async () => {
     assert.match(installed.status, /sign-in not verified/);
     const missing = await harnessStatus({
       ...provider,
-      executable: "/weft-missing-harness",
+      executable: "/flow-missing-harness",
     });
     assert.equal(missing.ready, false);
     assert.equal(missing.installed, false);

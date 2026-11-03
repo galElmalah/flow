@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
-export const codexBin = process.env.WEFT_CODEX_BIN || "codex";
+export const codexBin = process.env.FLOW_CODEX_BIN || "codex";
 export async function codexStatus({
   env = process.env,
   args = [],
@@ -49,7 +49,7 @@ export async function codexStatus({
       signedIn: false,
       imageGeneration: false,
       ready: false,
-      auth: "Codex CLI not found. Set WEFT_CODEX_BIN or install Codex.",
+      auth: "Codex CLI not found. Set FLOW_CODEX_BIN or install Codex.",
       error: e.code,
     };
   }

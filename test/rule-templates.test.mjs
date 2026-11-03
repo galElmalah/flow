@@ -15,7 +15,7 @@ import {
   mergeRules,
   ruleConflicts,
 } from "../shared/rule-templates.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { registerRuleTemplateRoutes } from "../server/routes/rule-templates.mjs";
 
 const rule = (id, enabled = true) => ({
@@ -153,7 +153,7 @@ test("skin-tone conflicts refer only to actual upstream subject instructions", (
 });
 
 test("custom library HTTP writes survive database reopen without changing applied snapshots", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-rules-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-rules-"));
   const store = new Store(root);
   await store.init();
   let server;
@@ -172,7 +172,7 @@ test("custom library HTTP writes survive database reopen without changing applie
   );
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   const catalog = await client.ruleTemplates();

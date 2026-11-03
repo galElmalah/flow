@@ -21,7 +21,7 @@ async function seedFixture(url) {
 
 const root = path.resolve(import.meta.dirname, "..");
 async function temporary(t) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-server-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-server-"));
   const reservation = http.createServer();
   await new Promise((resolve) => reservation.listen(0, "127.0.0.1", resolve));
   const url = `http://127.0.0.1:${reservation.address().port}`;
@@ -37,13 +37,13 @@ test("background server starts, survives its launcher, reuses its identity, and 
   const config = await temporary(t);
   const { stdout } = await promisify(execFile)(
     process.execPath,
-    [path.join(root, "cli/weft.mjs"), "serve", "--url", config.url, "--json"],
+    [path.join(root, "cli/flow.mjs"), "serve", "--url", config.url, "--json"],
     {
       cwd: root,
       env: {
         ...process.env,
-        WEFT_DATA_DIR: config.dataRoot,
-        WEFT_CODEX_BIN: path.join(config.dataRoot, "no-codex-installed"),
+        FLOW_DATA_DIR: config.dataRoot,
+        FLOW_CODEX_BIN: path.join(config.dataRoot, "no-codex-installed"),
       },
     },
   );
@@ -87,7 +87,7 @@ test("lifecycle commands refuse another workspace and an unrelated HTTP service"
   service.on("request", (req, res) =>
     res.end(
       JSON.stringify({
-        application: "weft",
+        application: "flow",
         root: "/another/workspace",
         dataDirectory: config.dataRoot,
       }),
@@ -103,7 +103,7 @@ test("an agent discovers, forks, edits, plans, generates locally, waits and rest
   const invoke = async (...args) => {
     const { stdout } = await promisify(execFile)(
       process.execPath,
-      [path.join(root, "cli/weft.mjs"), ...args, "--url", config.url, "--json"],
+      [path.join(root, "cli/flow.mjs"), ...args, "--url", config.url, "--json"],
       { cwd: root },
     );
     return JSON.parse(stdout);
@@ -223,10 +223,10 @@ test("project agents discover context, create owned workflows, fork across proje
   const invokeAt = async (cwd, ...args) => {
     const { stdout } = await promisify(execFile)(
       process.execPath,
-      [path.join(root, "cli/weft.mjs"), ...args, "--json"],
+      [path.join(root, "cli/flow.mjs"), ...args, "--json"],
       {
         cwd,
-        env: { ...process.env, WEFT_URL: config.url },
+        env: { ...process.env, FLOW_URL: config.url },
       },
     );
     return JSON.parse(stdout);
@@ -247,7 +247,7 @@ test("project agents discover context, create owned workflows, fork across proje
   assert.equal(init.project.id, "quote-app");
   assert.equal(init.project.root, await realpath(projectRoot));
   const manifest = JSON.parse(
-    await readFile(path.join(projectRoot, ".weft-project.json"), "utf8"),
+    await readFile(path.join(projectRoot, "flow.project.json"), "utf8"),
   );
   assert.deepEqual(manifest, {
     version: 1,
@@ -255,11 +255,12 @@ test("project agents discover context, create owned workflows, fork across proje
     serverUrl: config.url,
     defaultWorkflowId: "paper-studies",
   });
+  assert.match(await readFile(path.join(projectRoot, ".gitignore"), "utf8"), /^flow\.project\.json$/m);
   assert.equal((await invokeAt(nested, "project", "inspect")).id, "quote-app");
   const contextual = await promisify(execFile)(
     process.execPath,
-    [path.join(root, "cli/weft.mjs"), "project", "inspect", "--json"],
-    { cwd: nested, env: { ...process.env, WEFT_URL: "" } },
+    [path.join(root, "cli/flow.mjs"), "project", "inspect", "--json"],
+    { cwd: nested, env: { ...process.env, FLOW_URL: "" } },
   );
   assert.equal(
     JSON.parse(contextual.stdout).id,
@@ -353,7 +354,7 @@ test("project agents discover context, create owned workflows, fork across proje
   const copiedRoot = path.join(config.dataRoot, "copied-app");
   await mkdir(copiedRoot);
   await writeFile(
-    path.join(copiedRoot, ".weft-project.json"),
+    path.join(copiedRoot, "flow.project.json"),
     JSON.stringify(manifest),
   );
   await assert.rejects(
@@ -502,7 +503,7 @@ test("verified shutdown tolerates a slow health response while resources drain",
   const script = `
     const http = require('node:http');
     const config = JSON.parse(process.argv[1]);
-    const info = { application: 'weft', root: config.root,
+    const info = { application: 'flow', root: config.root,
       dataDirectory: config.dataRoot, pid: process.pid,
       instanceId: 'slow-shutdown-fixture', activeJobs: 0 };
     let stopping = false;

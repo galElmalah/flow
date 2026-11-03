@@ -158,8 +158,8 @@ export class StyleLibrary {
       try {
         const ranked = await this.search.search({
           query: search.trim(),
-          scope: this.store.projects.has("weft-styles")
-            ? "project:weft-styles"
+          scope: this.store.projects.has("flow-styles")
+            ? "project:flow-styles"
             : "all",
           limit: 200,
         });

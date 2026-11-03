@@ -17,7 +17,7 @@ const deferred = () => {
 };
 
 test("concurrent retries share one replacement worker and close leaves no worker alive", async (t) => {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-search-lifecycle-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-search-lifecycle-"));
   const search = new GallerySearch({ store: emptyStore, dataRoot });
   const workers = [];
   const start = search.start.bind(search);

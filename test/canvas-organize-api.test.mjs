@@ -10,11 +10,11 @@ import { Store } from "../server/store.mjs";
 import { ProjectService } from "../server/projects.mjs";
 import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
 import { registerProjectRoutes } from "../server/routes/projects.mjs";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 
 const exec = promisify(execFile);
 async function fixture(t) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-organize-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-organize-"));
   const store = new Store(path.join(root, "data"));
   await store.init();
   const projects = new ProjectService(store);
@@ -38,7 +38,7 @@ async function fixture(t) {
     await rm(root, { recursive: true, force: true });
   });
   const url = `http://127.0.0.1:${server.address().port}`;
-  const client = new WeftClient({ url, projectId: "qa" });
+  const client = new FlowClient({ url, projectId: "qa" });
   const graph = createImageWorkflow({
     id: "canvas",
     projectId: "qa",
@@ -89,7 +89,7 @@ test("organize previews, saves one revision and protects concurrent edits/projec
     client.organizeWorkflow(graph.id, { revision: 0 }),
     (e) => e.status === 409,
   );
-  const foreign = new WeftClient({ url, projectId: "other" });
+  const foreign = new FlowClient({ url, projectId: "other" });
   await assert.rejects(
     foreign.organizeWorkflow(graph.id, { revision: 1 }),
     (e) => e.status === 409,
@@ -121,7 +121,7 @@ test("CLI organize uses the same scoped operation and --plan never saves", async
         await exec(
           process.execPath,
           [
-            "cli/weft.mjs",
+            "cli/flow.mjs",
             "workflow",
             "organize",
             graph.id,

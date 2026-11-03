@@ -97,6 +97,7 @@ import { validateGraph, outputType, inputTypes } from "../shared/graph.mjs";
 import { StudioContext } from "./studio/context.jsx";
 import { subscribeWorkspaceEvents } from "./studio/workspace-events.mjs";
 import { jsonRequest, download, cls } from "./studio/ui.mjs";
+import { toFlowFile, fromFlowFile, flowFileName } from "../shared/flow-file.mjs";
 import {
   accents,
   icons,
@@ -167,7 +168,7 @@ export default function App() {
   const [leftMenu, setLeftMenu] = useState(() => {
     let saved;
     try {
-      saved = JSON.parse(localStorage.getItem("weft:left-menu"));
+      saved = JSON.parse(localStorage.getItem("flow:left-menu"));
     } catch {
       /* Use the default layout when storage is unavailable. */
     }
@@ -191,7 +192,7 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(
-        "weft:left-menu",
+        "flow:left-menu",
         JSON.stringify({ ...leftMenu, library }),
       );
     } catch {
@@ -338,7 +339,7 @@ export default function App() {
   const updateConcurrency = (value) => {
     setConcurrency(value);
     try {
-      localStorage.setItem("weft:parallel-jobs", String(value));
+      localStorage.setItem("flow:parallel-jobs", String(value));
     } catch {}
   };
   const flow = useReactFlow();
@@ -602,7 +603,7 @@ export default function App() {
         },
         { replace: target.history === "replace" },
       );
-      localStorage.setItem("weft:last-workflow", g.id);
+      localStorage.setItem("flow:last-workflow", g.id);
       setNodes(
         g.nodes.map((node) => ({
           ...node,
@@ -678,7 +679,7 @@ export default function App() {
         setRuns(data.runs);
         let savedParallel;
         try {
-          savedParallel = Number(localStorage.getItem("weft:parallel-jobs"));
+          savedParallel = Number(localStorage.getItem("flow:parallel-jobs"));
         } catch {}
         setConcurrency(
           [1, 2, 4, 8, 16, 32, 64, 128].includes(savedParallel)
@@ -719,7 +720,7 @@ export default function App() {
         const initial =
           target?.workflow ||
           choices.find(
-            (g) => g.id === localStorage.getItem("weft:last-workflow"),
+            (g) => g.id === localStorage.getItem("flow:last-workflow"),
           ) ||
           choices[0];
         if (initial)
@@ -753,13 +754,13 @@ export default function App() {
     return subscribeWorkspaceEvents(`/api/events?${streamQuery}`, {
       onConnection: (connected) =>
         window.dispatchEvent(
-          new CustomEvent("weft:agent-connection", { detail: connected }),
+          new CustomEvent("flow:agent-connection", { detail: connected }),
         ),
       onMessage: (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "agent") {
           window.dispatchEvent(
-            new CustomEvent("weft:agent-session", { detail: data.session }),
+            new CustomEvent("flow:agent-session", { detail: data.session }),
           );
           return;
         }
@@ -1464,7 +1465,7 @@ export default function App() {
   };
   async function importWorkflow(file) {
     try {
-      const data = JSON.parse(await file.text());
+      const data = fromFlowFile(JSON.parse(await file.text()));
       data.id = crypto.randomUUID();
       const g = await jsonRequest("/api/workflows/" + data.id, {
         method: "PUT",
@@ -1576,7 +1577,7 @@ export default function App() {
       if (!graph.nodes.length) return;
       event.clipboardData.setData(
         "text/plain",
-        JSON.stringify({ type: "weft-subgraph", version: 1, graph }),
+        JSON.stringify({ type: "flow-subgraph", version: 1, graph }),
       );
       event.preventDefault();
     };
@@ -1596,7 +1597,7 @@ export default function App() {
       } catch {
         return;
       }
-      if (value?.type !== "weft-subgraph") return;
+      if (value?.type !== "flow-subgraph") return;
       event.preventDefault();
       try {
         const { graph } = validateGraph({
@@ -1994,8 +1995,8 @@ export default function App() {
   );
   const exportGraph = () =>
     download(
-      graphForSave(workflow, nodes, edges, flow.getViewport()),
-      `${workflow?.name || "workflow"}.json`,
+      toFlowFile(graphForSave(workflow, nodes, edges, flow.getViewport())),
+      flowFileName(workflow?.name || "workflow"),
     );
   const canvasControls = (
     <>
@@ -2708,7 +2709,7 @@ export default function App() {
                       draggable={!viewingRun}
                       disabled={Boolean(viewingRun) || !workflow}
                       onDragStart={(e) => {
-                        e.dataTransfer.setData("application/weft-node", type);
+                        e.dataTransfer.setData("application/flow-node", type);
                         e.dataTransfer.effectAllowed = "move";
                       }}
                       onClick={() => addNode(type)}
@@ -2751,11 +2752,11 @@ export default function App() {
                   }
                   onDragStart={(e) => {
                     e.dataTransfer.setData(
-                      "application/weft-node",
+                      "application/flow-node",
                       nodeForProvider(provider),
                     );
                     e.dataTransfer.setData(
-                      "application/weft-provider",
+                      "application/flow-provider",
                       provider.id,
                     );
                   }}
@@ -2965,14 +2966,14 @@ export default function App() {
                 onDrop={(e) => {
                   if (viewingRun) return;
                   e.preventDefault();
-                  const type = e.dataTransfer.getData("application/weft-node");
+                  const type = e.dataTransfer.getData("application/flow-node");
                   if (type)
                     addNode(
                       type,
                       flow.screenToFlowPosition({ x: e.clientX, y: e.clientY }),
                       (() => {
                         const id = e.dataTransfer.getData(
-                          "application/weft-provider",
+                          "application/flow-provider",
                         );
                         const p = providers.find((p) => p.id === id);
                         return p
@@ -4183,7 +4184,7 @@ export default function App() {
         <input
           ref={importInput}
           type="file"
-          accept="application/json,.json"
+          accept="application/json,.flow.json,.flow,.json"
           hidden
           onChange={(e) =>
             e.target.files[0] && importWorkflow(e.target.files[0])

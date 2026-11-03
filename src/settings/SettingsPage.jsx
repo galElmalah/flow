@@ -113,7 +113,7 @@ export function SettingsPage({
             onReload={onReload}
             onChange={onChange}
             onExample={onExample}
-            configPath={`${health?.dataDirectory || ".weft"}/providers.json`}
+            configPath={`${health?.dataDirectory || ".flow"}/providers.json`}
           />
         )}
       </div>

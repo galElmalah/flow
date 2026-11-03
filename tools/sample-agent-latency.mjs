@@ -1,7 +1,7 @@
 import { parseArgs } from "node:util";
 import { writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 const { values } = parseArgs({
   options: {
     url: { type: "string", default: "http://localhost:4310" },
@@ -23,7 +23,7 @@ if (
   throw new Error(
     "Use --project ID --workflow ID --samples 1..20 [--out report.json]. This uses real text inference, never image generation.",
   );
-const client = new WeftClient({ url: values.url, projectId: values.project });
+const client = new FlowClient({ url: values.url, projectId: values.project });
 const server = await client.request("/api/server");
 if (!server.telemetry?.enabled)
   throw new Error(

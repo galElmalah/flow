@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, rename, readdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, readdir, stat, copyFile, chmod } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { builtInRules, ruleTemplateSchema } from "../shared/rule-templates.mjs";
@@ -12,10 +12,31 @@ export class Store {
     this.writes = new Map();
   }
   async init() {
+    await mkdir(this.root, { recursive: true, mode: 0o700 });
+    await chmod(this.root, 0o700);
     for (const name of ["workflows", "runs", "uploads"])
       await mkdir(path.join(this.root, name), { recursive: true });
-    this.databasePath = path.join(this.root, "weft.sqlite");
+    this.databasePath = path.join(this.root, "flow.sqlite");
+    const legacyDatabase = path.join(this.root, "weft.sqlite");
+    const present = async (file) => Boolean(await stat(file).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+      return null;
+    }));
+    if (await present(legacyDatabase) || await present(legacyDatabase + "-wal") || await present(legacyDatabase + "-shm")) {
+      if (await present(legacyDatabase) && await present(this.databasePath))
+        throw new Error("Both legacy and Flow databases exist. Resolve the storage conflict before starting.");
+      const backup = path.join(this.root, "migration-backup", "database");
+      await mkdir(backup, { recursive: true, mode: 0o700 });
+      for (const suffix of ["", "-wal", "-shm"]) {
+        if (!(await present(legacyDatabase + suffix))) continue;
+        if (await present(this.databasePath + suffix))
+          throw new Error("Conflicting database sidecars found; neither database was opened.");
+        await copyFile(legacyDatabase + suffix, path.join(backup, "legacy.sqlite" + suffix));
+        await rename(legacyDatabase + suffix, this.databasePath + suffix);
+      }
+    }
     this.db = new DatabaseSync(this.databasePath);
+    await chmod(this.databasePath, 0o600);
     const version = this.db.prepare("PRAGMA user_version").get().user_version;
     if (version > 3) {
       this.db.close();

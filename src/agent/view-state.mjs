@@ -1,4 +1,4 @@
-const key = (projectId) => `weft:agent-view:${projectId || "unassigned"}`;
+const key = (projectId) => `flow:agent-view:${projectId || "unassigned"}`;
 export function readAgentView(storage, projectId) {
   try {
     const value = JSON.parse(storage.getItem(key(projectId)) || "{}");

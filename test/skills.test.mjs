@@ -161,7 +161,7 @@ test("skills CLI runs offline independently of a consuming project manifest, and
   const options = await fixture(t);
   const cwd = path.join(options.directory, "consumer");
   await mkdir(cwd);
-  await writeFile(path.join(cwd, ".weft-project.json"), "not JSON");
+  await writeFile(path.join(cwd, "flow.project.json"), "not JSON");
   const command = path.resolve(import.meta.dirname, "../cli/flow.mjs");
   const { stdout } = await exec(
     process.execPath,

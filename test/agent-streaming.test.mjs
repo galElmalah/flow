@@ -16,7 +16,7 @@ import { Store } from "../server/store.mjs";
 import { ProjectService } from "../server/projects.mjs";
 import { ProviderRegistry } from "../harness-integrations/registry.mjs";
 import { registerAgentRoutes } from "../server/routes/agent.mjs";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 import { restoreAgentSession } from "../src/agent/view-state.mjs";
 import { initializeTracing, closeTracing } from "../observability/tracing.mjs";
 
@@ -92,7 +92,7 @@ test("stream redaction withholds split secrets, including JSON-escaped values an
 });
 
 test("public agent snapshots grow before HTTP provider completion; private edits stay gated and escaped keys are scrubbed", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-agent-stream-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-agent-stream-"));
   await initializeTracing({ dataRoot: root });
   t.after(closeTracing);
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -138,7 +138,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
     providerServer.closeAllConnections();
     providerServer.close();
   });
-  const store = new Store(path.join(root, ".weft"));
+  const store = new Store(path.join(root, ".flow"));
   await store.init();
   const projects = new ProjectService(store);
   await mkdir(path.join(root, "qa"));
@@ -156,7 +156,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
   );
   const registry = new ProviderRegistry({
     root: path.resolve(import.meta.dirname, ".."),
-    dataRoot: path.join(root, ".weft"),
+    dataRoot: path.join(root, ".flow"),
     definitions: [],
     codexHealth: async () => ({ ready: false }),
   });
@@ -172,7 +172,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
     store,
     projects,
     providers: registry,
-    dataRoot: path.join(root, ".weft"),
+    dataRoot: path.join(root, ".flow"),
     assetPath: () => {
       throw new Error("No images expected");
     },
@@ -189,7 +189,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
     server.closeAllConnections();
     server.close();
   });
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
     projectId: "qa",
   });
@@ -212,7 +212,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
   assert.ok(!JSON.stringify(partial).includes(secret));
   const newer = await client.agentSession({ fresh: true });
   assert.notEqual(newer.id, session.id);
-  const refreshedClient = new WeftClient({ url: client.url, projectId: "qa" });
+  const refreshedClient = new FlowClient({ url: client.url, projectId: "qa" });
   const recovered = await restoreAgentSession(refreshedClient, {
     sessionId: session.id,
   });
@@ -243,7 +243,7 @@ test("public agent snapshots grow before HTTP provider completion; private edits
   assert.ok(observed.spans.some((s) => s.name === "agent.browser.observed"));
   assert.ok(!JSON.stringify(observed.spans).includes(secret));
   await assert.rejects(
-    new WeftClient({ url: client.url, projectId: "foreign" }).agentTrace(
+    new FlowClient({ url: client.url, projectId: "foreign" }).agentTrace(
       session.id,
       accepted.turn.id,
     ),

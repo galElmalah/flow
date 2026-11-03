@@ -146,7 +146,7 @@ export function ProviderPicker({
         <span>
           <a href="/settings/local-models">Set up local models ↗</a>, add a
           compatible API in Settings, or a custom local harness in{" "}
-          <code>.weft/providers.json</code>, then reload providers in settings.
+          <code>.flow/providers.json</code>, then reload providers in settings.
         </span>
       </div>
     </>

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { fromFlowFile } from "../../shared/flow-file.mjs";
 import { validateGraph } from "../../shared/graph.mjs";
 import {
   organizeGraph,
@@ -15,7 +16,7 @@ export function registerWorkflowRoutes(
   { store, projects, assetPath, search },
 ) {
   function prepare(input) {
-    const { graph } = validateGraph(input);
+    const { graph } = validateGraph(fromFlowFile(input));
     projects.assertWorkflow(graph);
     projects.assertActive(graph);
     for (const node of graph.nodes)
@@ -89,7 +90,8 @@ export function registerWorkflowRoutes(
   });
   app.post("/api/workflows", async (req, res, next) => {
     try {
-      const graph = prepare({ ...req.body, id: req.body.id ?? randomUUID() });
+      const body = Object.hasOwn(req.body, "format") ? fromFlowFile(req.body) : req.body;
+      const graph = prepare({ ...body, id: body.id ?? randomUUID() });
       if (store.workflows.has(graph.id))
         throw Object.assign(
           new Error(
@@ -107,9 +109,10 @@ export function registerWorkflowRoutes(
   });
   app.put("/api/workflows/:id", async (req, res, next) => {
     try {
-      if (req.body.id !== req.params.id)
+      const body = Object.hasOwn(req.body, "format") ? fromFlowFile(req.body) : req.body;
+      if (body.id !== req.params.id)
         throw new Error("Workflow ID does not match.");
-      const graph = prepare(req.body);
+      const graph = prepare(body);
       projects.assertReassignment(graph);
       const previous = store.workflows.get(graph.id);
       if (previous && graph.revision !== (previous.revision || 0))

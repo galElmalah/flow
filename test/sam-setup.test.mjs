@@ -13,14 +13,14 @@ import { tmpdir } from "node:os";
 import express from "express";
 import { Sam2 } from "../image-tools/segmentation/sam2.mjs";
 import { registerImageEditorRoutes } from "../server/routes/image-editors.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { shouldDetectRegions } from "../src/image-editor/model-state.mjs";
 
 async function environment(
   t,
   { missingUv = false, missingPython = false } = {},
 ) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-sam-setup-test-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-sam-setup-test-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   let downloads = 0,
     loads = 0,
@@ -79,7 +79,7 @@ test("empty SAM setup API installs once, verifies checkpoint loading, and surviv
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   assert.equal(

@@ -8,7 +8,7 @@ import { Store } from "../server/store.mjs";
 import { starter } from "../server/defaults.mjs";
 
 async function temporary(t) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-db-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-db-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
@@ -60,7 +60,7 @@ test("SQLite imports existing JSON once, preserves lineage and prompts, and rema
   await second.init();
   assert.equal(second.workflows.get(graph.id).name, "New database version");
   assert.deepEqual(second.runs.get(run.id), run);
-  const db = new DatabaseSync(path.join(root, "weft.sqlite"), {
+  const db = new DatabaseSync(path.join(root, "flow.sqlite"), {
     readOnly: true,
   });
   assert.equal(

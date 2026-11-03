@@ -26,10 +26,10 @@ function execute(command, args, { signal, env, onProgress, onEvent } = {}) {
       const lines = pending.split("\n");
       pending = lines.pop().slice(-8000);
       for (const line of lines) {
-        if (!line.startsWith("WEFT_SAM_PROGRESS ")) continue;
+        if (!line.startsWith("FLOW_SAM_PROGRESS ")) continue;
         let event;
         try {
-          event = JSON.parse(line.slice("WEFT_SAM_PROGRESS ".length));
+          event = JSON.parse(line.slice("FLOW_SAM_PROGRESS ".length));
         } catch {
           continue;
         }
@@ -52,14 +52,14 @@ export class Sam2 {
   constructor(
     dataRoot,
     {
-      variant = process.env.WEFT_SAM_MODEL || "large",
+      variant = process.env.FLOW_SAM_MODEL || "large",
       executeCommand = execute,
       download = downloadCheckpoint,
     } = {},
   ) {
     this.variant = variant;
     if (!["tiny", "large"].includes(this.variant))
-      throw new Error("WEFT_SAM_MODEL must be tiny or large.");
+      throw new Error("FLOW_SAM_MODEL must be tiny or large.");
     this.directory = path.join(dataRoot, "models", "sam2");
     this.python = path.join(
       this.directory,

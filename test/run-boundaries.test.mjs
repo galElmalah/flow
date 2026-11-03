@@ -20,7 +20,7 @@ const edge = (source, target) => ({
 });
 
 test("scoped runs validate only planned seed assets and invalid requests leave concurrency unchanged", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-run-boundary-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-run-boundary-"));
   const seed = path.join(root, "seed.png");
   await writeFile(seed, "fixture");
   const workflow = {

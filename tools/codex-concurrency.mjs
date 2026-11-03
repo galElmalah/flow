@@ -14,15 +14,15 @@ import { promisify } from "node:util";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 import { summarizePhase } from "./lib/concurrency-metrics.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const directory = path.resolve(
-  process.env.WEFT_BENCHMARK_DIR ||
+  process.env.FLOW_BENCHMARK_DIR ||
     path.join(root, "docs/benchmarks/codex-2026-10-29"),
 );
-const client = new WeftClient({ projectId: "quoture" });
+const client = new FlowClient({ projectId: "quoture" });
 const sourceId = "14563c65-065a-4d12-a4cf-fd010126abed";
 const manifestFile = path.join(directory, "experiment.json");
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");

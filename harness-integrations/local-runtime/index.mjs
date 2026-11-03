@@ -1045,7 +1045,7 @@ export class RuntimeManager {
       await this.verifyHash(temporary, input.sha256);
       signal.throwIfAborted();
       await rename(temporary, destination);
-      await this.atomic(destination + ".weft.json", {
+      await this.atomic(destination + ".flow.json", {
         filename: input.filename,
         folder: input.folder,
         sha256: input.sha256.toLowerCase(),
@@ -1074,7 +1074,7 @@ export class RuntimeManager {
           continue;
         const file = path.join(directory, entry.name),
           current = await fileState(file),
-          receipt = await json(file + ".weft.json").catch(() => null);
+          receipt = await json(file + ".flow.json").catch(() => null);
         results.push({
           id: entry.name,
           folder,

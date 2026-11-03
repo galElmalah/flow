@@ -7,12 +7,12 @@ import express from "express";
 import { Store } from "../server/store.mjs";
 import { ProjectService } from "../server/projects.mjs";
 import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 
 // Exercise the same HTTP boundary used by App, CLI and an inline assistant.
 test("workflow revisions reject stale and concurrent writes while forks start a new revision history", async (t) => {
   const directory = await mkdtemp(
-    path.join(tmpdir(), "weft-workflow-revision-"),
+    path.join(tmpdir(), "flow-workflow-revision-"),
   );
   const store = new Store(directory);
   await store.init();
@@ -30,7 +30,7 @@ test("workflow revisions reject stale and concurrent writes while forks start a 
     await store.close();
     await rm(directory, { recursive: true, force: true });
   });
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   const initial = await client.createWorkflow({

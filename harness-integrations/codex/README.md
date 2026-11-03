@@ -1,6 +1,6 @@
 # Codex
 
-- `status.mjs`: executable selection (`WEFT_CODEX_BIN` or `codex`), version, ChatGPT
+- `status.mjs`: executable selection (`FLOW_CODEX_BIN` or `codex`), version, ChatGPT
   sign-in (ChatGPT or API key) and native image-generation feature check.
 - `text.mjs` / `text-stream.mjs`: `codex-text` prompt generation through a bounded
   app-server process and one ephemeral read-only thread. Shell/image tools, inherited

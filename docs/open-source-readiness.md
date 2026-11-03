@@ -4,12 +4,14 @@ The GitHub repository remains private. This checklist does not authorize changin
 
 Completed preparation:
 
+- Full Git history scanned with checksum-verified Gitleaks; no credentials found. CI scans future pushes and pull requests.
+- Canonical Flow names: `flow.project.json`, `*.flow.json`, `.flow/flow.sqlite`, `FLOW_*` and `FlowClient`. A tested upgrade preserves legacy workspace data and registered project pointers.
 - Separate source repository with ignored workspace data, credentials, model weights and private development evidence.
 - MIT source license, contributor instructions, security guidance and third-party notices.
 - CI for behavior tests, architecture checks, production build and release-file checks.
 - Synthetic graph fixtures instead of tests reading private project exports.
 - Lockfile-backed installation and pinned direct dependency versions.
-- Fresh GitHub clone verified on macOS: dependency installation, all 354 tests, production build, release checks, empty-workspace startup, direct viewer routes and four local-processing jobs. No development data or provider account was required for the trial.
+- Fresh source checkout verified on macOS: dependency installation, all 362 tests, production build, release checks, empty-workspace startup, project registration, Flow-file export/import, viewer URLs and four local-processing jobs. Managed skills were installed twice in an isolated user directory. No development data or provider account was required for the trial.
 
 Before making the repository public:
 
@@ -23,4 +25,4 @@ Before making the repository public:
 - Enable private vulnerability reporting and configure branch protection on GitHub.
 - Review the complete Git history for secrets before changing visibility. The local release check is a safeguard, not a full secret scanner.
 
-Do not ship `.weft/`, provider credentials, consuming-project manifests, generated runs or downloaded model weights. Keep the npm package private until a package release is explicitly planned.
+Do not ship `.flow/`, provider credentials, consuming-project manifests, generated runs or downloaded model weights. Keep the npm package private until a package release is explicitly planned.

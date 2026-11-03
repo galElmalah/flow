@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import { HarnessUsage, publicUsage } from "../harness-integrations/usage.mjs";
 import { registerProviderRoutes } from "../server/routes/providers.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { usageIsStale } from "../shared/harness-usage.mjs";
 
 const unavailable = async () => ({
@@ -142,7 +142,7 @@ test("usage endpoint and client expose read-only quota without provider credenti
   const server = app.listen(0, "127.0.0.1");
   await new Promise((done) => server.once("listening", done));
   t.after(() => new Promise((done) => server.close(done)));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   const report = await client.harnessUsage({ refresh: true });

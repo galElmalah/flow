@@ -69,7 +69,7 @@ test("semantic projection preserves full source tails, provenance and gallery el
 });
 
 test("durable vector search filters before top-k, updates ownership without reembedding, excludes stale versions and late writes", async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), "weft-search-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "flow-search-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const file = path.join(dir, "vectors.sqlite");
   let index = new VectorIndex(file, "test-model-v1", 2);

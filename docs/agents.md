@@ -6,7 +6,7 @@ Use the local Flow server for planning, prompt generation, image generation, run
 
 ## Discover a project
 
-A consuming repository has a `.weft-project.json` pointer:
+A consuming repository has a `flow.project.json` pointer:
 
 ```json
 {
@@ -19,7 +19,7 @@ A consuming repository has a `.weft-project.json` pointer:
 
 There are no keys, prompts, image bytes or duplicate workflow graphs in this file. SQLite owns project metadata, saved workflows and run history. The project root is the manifest's directory; the platform canonicalizes and registers it. A project ID cannot silently change roots. If a repository moves, register a new project explicitly or use `--project ID` to work across directories with the existing registered project.
 
-The CLI finds the nearest manifest while walking upward from its current directory, or from `--root PATH`. It uses that project's server and fetches the registered project's current default workflow. The manifest's default is a bootstrap hint for registration; it never overrides a newer server default. `--project`, `--url`, `WEFT_URL` and explicit `--workflow` can override context. Selecting another project does not reuse the original project's default workflow. Manifest discovery also verifies that its containing repository matches the registered canonical project root. A copied or misplaced manifest fails; an explicit `--project` intentionally allows work across directories. Server-side ownership checks reject cross-project runs and run controls. Project roots do not become harness working directories; harnesses run in isolated job folders.
+The CLI finds the nearest manifest while walking upward from its current directory, or from `--root PATH`. It uses that project's server and fetches the registered project's current default workflow. The manifest's default is a bootstrap hint for registration; it never overrides a newer server default. `--project`, `--url`, `FLOW_URL` and explicit `--workflow` can override context. Selecting another project does not reuse the original project's default workflow. Manifest discovery also verifies that its containing repository matches the registered canonical project root. A copied or misplaced manifest fails; an explicit `--project` intentionally allows work across directories. Server-side ownership checks reject cross-project runs and run controls. Project roots do not become harness working directories; harnesses run in isolated job folders.
 
 `serve`, `stop` and `restart` always manage the Flow installation's server/data directory, regardless of the consuming current directory. Start the existing server rather than creating another database inside the consuming project.
 
@@ -28,13 +28,13 @@ The CLI finds the nearest manifest while walking upward from its current directo
 Run the CLI by its absolute path when outside the installation, or use its installed `flow` executable:
 
 ```sh
-node /absolute/path/to/weft/cli/flow.mjs serve --json
-node /absolute/path/to/weft/cli/flow.mjs project init \
+node /absolute/path/to/flow/cli/flow.mjs serve --json
+node /absolute/path/to/flow/cli/flow.mjs project init \
   --project my-app --name "My app" --root /absolute/path/to/my-app --json
 
 # Reconnect a checked-in manifest to an existing local server:
-node /absolute/path/to/weft/cli/flow.mjs project register \
-  --from /absolute/path/to/my-app/.weft-project.json --json
+node /absolute/path/to/flow/cli/flow.mjs project register \
+  --from /absolute/path/to/my-app/flow.project.json --json
 ```
 
 `project init --workflow EXISTING_ID` explicitly attaches an unowned saved workflow and makes it the project's default. A workflow owned by another project must be forked explicitly first. Registration is idempotent for the same project ID and canonical root. Project initialization writes only its manifest and platform metadata.
@@ -122,7 +122,7 @@ flow open WORKFLOW_ID --project my-app --print-url --json
 `--print-url` validates the same targets and returns a receipt with `url` and `opened: false`, without launching a browser. Receipts also include selected IDs and server reuse status. URLs are local HTTP origins only, with encoded query values. Use the receipt to link a human to the exact canvas context; opening the viewer never starts inference.
 
 ```js
-const target = await weft.viewer({
+const target = await flow.viewer({
   workflowId: "my-studies",
   nodeId: "brief",
   // runId: "saved-run-id", gallery: true,
@@ -136,13 +136,13 @@ console.log(target.url); // Validated URL only; no browser launch.
 import {
   FlowClient,
   createImageWorkflow,
-} from "/absolute/path/to/weft/client/index.mjs";
+} from "/absolute/path/to/flow/client/index.mjs";
 
 const flow = new FlowClient({
   url: "http://localhost:4310",
   projectId: "my-app",
 });
-const graph = await weft.createWorkflow(
+const graph = await flow.createWorkflow(
   createImageWorkflow({
     name: "Scene studies",
     prompt: "A restrained engraving of a quiet academy",
@@ -150,10 +150,10 @@ const graph = await weft.createWorkflow(
     model: "native",
   }),
 );
-const plan = await weft.plan(graph.id, { count: 10 });
+const plan = await flow.plan(graph.id, { count: 10 });
 // Review plan.total, plan.textJobs and plan.imageJobs before running.
-const run = await weft.run(graph.id, { count: 10 }, { concurrency: 4 });
-const finished = await weft.wait(run.id, { timeout: 600 });
+const run = await flow.run(graph.id, { count: 10 }, { concurrency: 4 });
+const finished = await flow.wait(run.id, { timeout: 600 });
 if (finished.status !== "completed")
   throw new Error(`Run ${finished.id}: ${finished.status}`);
 ```
@@ -175,7 +175,7 @@ flow search "classical thinker beside ruined columns" \
 Search uses the discovered project's whole image history. The manifest's default workflow does not narrow search. Pass `--workflow ID`, `--run ID`, or `--provider ID` to narrow results. `--count` limits search results to 1–200, with a default of 100. Search does not start generation.
 
 ```js
-const result = await weft.searchImages(
+const result = await flow.searchImages(
   {
     query: "friendship on a difficult journey",
     workflowId: "quoture-10-studies",
@@ -186,21 +186,21 @@ const result = await weft.searchImages(
 );
 for (const image of result.items)
   console.log(image.output, image.similarity, image.searchExcerpt);
-const status = await weft.searchStatus();
-if (status.state === "error") await weft.searchRetry();
+const status = await flow.searchStatus();
+if (status.state === "error") await flow.searchRetry();
 ```
 
 A project-bound client always searches `project:ID`. Use `workflowId` to narrow that project. Explicit `all`, `unassigned`, foreign project, or `workflow:ID` scopes fail instead of replacing the project restriction. An unbound client accepts `scope: "all"`, `"unassigned"`, `"project:ID"`, or `"workflow:ID"`. Project, workflow, run, and provider restrictions apply before ranking and the result limit.
 
 The response contains `items`, `total`, and `index`. Each result preserves the gallery image's inputs and source provenance, with `similarity` and `searchExcerpt` added. The index state is `loading`, `indexing`, `ready`, or `error`; inspect `indexed`, `total`, and any `error` before treating an empty result as a completed search. Results can be partial while indexing continues.
 
-Embeddings run locally with a MiniLM model. The model files download on first use and remain cached in `.weft/models`. Derived vectors persist in `.weft/search.sqlite` and rebuild from the authoritative run history when needed. Search requires no provider API key and sends no prompts to a hosted embedding service. It searches image-associated text, rather than analyzing image pixels.
+Embeddings run locally with a MiniLM model. The model files download on first use and remain cached in `.flow/models`. Derived vectors persist in `.flow/search.sqlite` and rebuild from the authoritative run history when needed. Search requires no provider API key and sends no prompts to a hosted embedding service. It searches image-associated text, rather than analyzing image pixels.
 
 The HTTP interface is `POST /api/gallery/search` with `{query, scope, workflowId?, runId?, providerId?, limit?}`. Inspect index readiness with `GET /api/search/status`; retry a failed index with `POST /api/search/retry`.
 
 ## Quoture
 
-The local Quoture repository is `/absolute/path/to/your-project`. Its `.weft-project.json` points to project `quoture` and workflow `quoture-10-studies`. Keep its mandatory artwork-role and source-review policies. The shared canvas has independently runnable quote (`collection`) and category/journey (`cover-collection`) flows, with distinct templates and image ratios. Generate studies through local Flow; preserve returned originals, exact record IDs, prompts and run manifests. Selection, registration, native exports and Simulator checks remain explicit Quoture steps after review.
+The local Quoture repository is `/absolute/path/to/your-project`. Its `flow.project.json` points to project `quoture` and workflow `quoture-10-studies`. Keep its mandatory artwork-role and source-review policies. The shared canvas has independently runnable quote (`collection`) and category/journey (`cover-collection`) flows, with distinct templates and image ratios. Generate studies through local Flow; preserve returned originals, exact record IDs, prompts and run manifests. Selection, registration, native exports and Simulator checks remain explicit Quoture steps after review.
 
 ## Complete canvas and provider operations
 
@@ -323,7 +323,7 @@ but does not clutter ordinary project cards or the workflow quick switcher.
 
 Open any image inspector, then **Edit image regions**. SAM 2.1 runs locally; cached SVG contours handle hover and Shift-selection without more inference.
 Automatic masks may miss blurred or small objects: **Pick missing region** adds a
-point-guided mask. The default checkpoint is Hiera Large; set `WEFT_SAM_MODEL=tiny` before starting the
+point-guided mask. The default checkpoint is Hiera Large; set `FLOW_SAM_MODEL=tiny` before starting the
 server for a smaller model. SAM proposes pixel regions, not semantic object names. Rename the
 mask layers to make comments useful to an agent. Layers contain visible pixels only;
 they do not reconstruct occluded content or a layered source document.
@@ -388,7 +388,7 @@ Editor documents use revision checks: on HTTP 409, reread and reapply the intend
 change. Do not blindly resend a prepare request after losing its response; inspect
 `requests` first. Region detection serializes local GPU work, persists queue state,
 and marks an interrupted detection failed after restart. Comments, layers, masks and
-prepared edit workflows survive restarts. Assets live under `.weft/editors/`; never
+prepared edit workflows survive restarts. Assets live under `.flow/editors/`; never
 edit its documents or SQLite directly.
 
 Click a region to open its comment composer directly on the image. Shift-click adds or removes

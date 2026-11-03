@@ -171,7 +171,7 @@ export function registerRunRoutes(
     if (!run) return res.sendStatus(404);
     try {
       projects.assertWorkflow(run, req.query.projectId);
-      res.attachment(`weft-${run.id}.json`).json(run);
+      res.attachment(`flow-${run.id}.json`).json(run);
     } catch (error) {
       next(error);
     }
@@ -202,7 +202,7 @@ export function registerRunRoutes(
     } catch (error) {
       return next(error);
     }
-    res.attachment(`weft-${run.id}.zip`);
+    res.attachment(`flow-${run.id}.zip`);
     const archive = new ZipArchive({ zlib: { level: 1 } });
     archive.on("error", (error) => {
       if (res.headersSent) res.destroy(error);

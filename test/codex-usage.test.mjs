@@ -92,7 +92,7 @@ test("Codex legacy quotas retain zero and distinguish missing usage from zero", 
 });
 
 async function fixture(t, reply, { wait = false } = {}) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "weft-codex-usage-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "flow-codex-usage-"));
   t.after(() => rm(root, { force: true, recursive: true }));
   const script = path.join(root, "server.mjs");
   const log = path.join(root, "methods.json");
@@ -170,7 +170,7 @@ test("Codex usage bounds stalled processes and handles a missing CLI", async (t)
   assert.equal(actual.status, "error");
   assert.match(actual.message, /timed out/);
   assert.equal(
-    (await readCodexUsage({ executable: "/does-not-exist/weft-codex" })).status,
+    (await readCodexUsage({ executable: "/does-not-exist/flow-codex" })).status,
     "unavailable",
   );
 });

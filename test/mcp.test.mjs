@@ -223,14 +223,14 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
   });
   await new Promise((resolve) => api.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise((resolve) => api.close(resolve)));
-  const client = new Client({ name: "weft-test-agent", version: "1.0.0" });
+  const client = new Client({ name: "flow-test-agent", version: "1.0.0" });
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [entry],
     env: {
       ...process.env,
-      WEFT_URL: `http://127.0.0.1:${api.address().port}`,
-      WEFT_PROJECT: "qa",
+      FLOW_URL: `http://127.0.0.1:${api.address().port}`,
+      FLOW_PROJECT: "qa",
     },
     stderr: "pipe",
   });
@@ -879,13 +879,13 @@ test("agent CLI exposes scoped sessions, current workflow context and explicit a
     res.end(JSON.stringify({ error: "Fixture not found" }));
   });
   await new Promise((resolve) => api.listen(0, "127.0.0.1", resolve));
-  const directory = await mkdtemp(join(tmpdir(), "weft-agent-cli-"));
+  const directory = await mkdtemp(join(tmpdir(), "flow-agent-cli-"));
   t.after(async () => {
     await new Promise((resolve) => api.close(resolve));
     await rm(directory, { recursive: true, force: true });
   });
   const url = `http://127.0.0.1:${api.address().port}`;
-  const cli = fileURLToPath(new URL("../cli/weft.mjs", import.meta.url));
+  const cli = fileURLToPath(new URL("../cli/flow.mjs", import.meta.url));
   const invoke = async (...args) =>
     JSON.parse(
       (

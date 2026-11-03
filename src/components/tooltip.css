@@ -1,4 +1,4 @@
-.weft-tooltip {
+.flow-tooltip {
   position: fixed;
   z-index: 30000;
   max-width: min(280px, calc(100vw - 16px));

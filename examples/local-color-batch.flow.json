@@ -1,0 +1,89 @@
+{
+  "format": "flow",
+  "version": 1,
+  "workflow": {
+    "revision": 0,
+    "id": "local-color-batch",
+    "name": "100 color studies · local harness",
+    "nodes": [
+      {
+        "id": "seed",
+        "type": "image",
+        "position": {
+          "x": 0,
+          "y": 65
+        },
+        "data": {
+          "label": "Seed image",
+          "images": [
+            "/assets/paper-seed.png"
+          ]
+        }
+      },
+      {
+        "id": "prompt",
+        "type": "prompt",
+        "position": {
+          "x": 0,
+          "y": 445
+        },
+        "data": {
+          "label": "Art direction",
+          "text": "An abstract study of light and color. Soft, flowing gradients with rich paper grain. Let warm apricot melt into electric blue and lavender. Tactile, atmospheric, beautifully imperfect.\n\nPreserve the mood of the reference. No text, no objects."
+        }
+      },
+      {
+        "id": "output",
+        "type": "output",
+        "position": {
+          "x": 900,
+          "y": 65
+        },
+        "data": {
+          "label": "Output collection"
+        }
+      },
+      {
+        "id": "color-lab",
+        "type": "generate",
+        "position": {
+          "x": 480,
+          "y": 65
+        },
+        "data": {
+          "label": "Local color lab",
+          "count": 100,
+          "seed": 8000,
+          "ratio": "1:1",
+          "quality": "high",
+          "preview": "/assets/paper-seed.png",
+          "providerId": "local-color",
+          "model": "color-study"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "seed-lab",
+        "source": "seed",
+        "target": "color-lab",
+        "sourceHandle": "image",
+        "targetHandle": "image"
+      },
+      {
+        "id": "prompt-lab",
+        "source": "prompt",
+        "target": "color-lab",
+        "sourceHandle": "text",
+        "targetHandle": "text"
+      },
+      {
+        "id": "lab-output",
+        "source": "color-lab",
+        "target": "output",
+        "sourceHandle": "image",
+        "targetHandle": "image"
+      }
+    ]
+  }
+}

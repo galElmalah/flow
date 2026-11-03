@@ -21,7 +21,7 @@ async function setup(
   fetcher,
   { env = { XAI_API_KEY: secret }, kind = "image" } = {},
 ) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-grok-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-grok-"));
   t.after(() => rm(dataRoot, { recursive: true, force: true }));
   const grok = new GrokMedia({
     dataRoot,

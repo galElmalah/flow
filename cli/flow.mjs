@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, appendFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { toFlowFile, fromFlowFile } from "../shared/flow-file.mjs";
 import {
   agentContextSchema,
   agentSessionSchema,
@@ -9,7 +10,7 @@ import {
 } from "../shared/agent.mjs";
 import { basename, resolve, join } from "node:path";
 import { realpath } from "node:fs/promises";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import {
   loadWorkflow,
   owned,
@@ -91,7 +92,7 @@ const { values, positionals: args } = parseArgs({
 });
 let base =
   values.url ||
-  process.env.WEFT_URL ||
+  process.env.FLOW_URL ||
   `http://localhost:${values.port || process.env.PORT || 4310}`;
 let client;
 const request = (...args) => client.request(...args);
@@ -172,12 +173,29 @@ async function registerProject({
       ? { defaultWorkflowId: project.defaultWorkflowId }
       : {}),
   };
-  if (writeManifest)
+  if (writeManifest) {
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    const ignorePath = join(projectRoot, ".gitignore");
+    const ignore = await readFile(ignorePath, "utf8").catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+      return "";
+    });
+    if (!ignore.split(/\r?\n/).includes(manifestName))
+      await appendFile(ignorePath, `\n# Local Flow project pointer\n${manifestName}\n`);
+  }
   return { project, manifestPath, manifest };
 }
 try {
   const [command, id] = args;
+  if (command === "migrate") {
+    const { migrateInstallation } = await import("./migration.mjs");
+    print(await migrateInstallation({
+      root: resolve(import.meta.dirname, ".."),
+      url: values.url || process.env.FLOW_URL || `http://localhost:${values.port || process.env.PORT || 4310}`,
+      plan: Boolean(values.plan),
+    }));
+    process.exit(0);
+  }
   if (command === "skills") {
     const { manageSkills } = await import("./skills.mjs");
     const result = await manageSkills({
@@ -192,14 +210,14 @@ try {
     : await findProjectContext(values.root || process.cwd());
   base =
     values.url ||
-    process.env.WEFT_URL ||
+    process.env.FLOW_URL ||
     (values.port
       ? `http://localhost:${values.port}`
       : context?.manifest.serverUrl) ||
     `http://localhost:${process.env.PORT || 4310}`;
   const projectId = values.project || context?.manifest.projectId;
   let defaultWorkflowId;
-  client = new WeftClient({ url: base, projectId });
+  client = new FlowClient({ url: base, projectId });
   if (
     values.timeout !== undefined &&
     (!Number.isFinite(Number(values.timeout)) || Number(values.timeout) <= 0)
@@ -207,7 +225,7 @@ try {
     throw new Error("Timeout must be a positive number of seconds.");
   if (values.help || !command || command === "help") {
     console.log(
-      `Flow · local image and video workflow CLI\n\n  flow skills install|status               Install/check bundled user-wide agent skills\n  flow serve                               Start the local server in the background\n  flow stop                                Stop this workspace’s idle server\n  flow restart                             Restart this workspace’s server\n  flow mcp [--project ID]                   Serve MCP tools over stdio\n  flow status                              Check Codex login and image generation\n  flow open [WORKFLOW_ID]                   Open the local viewer; project default if omitted\n  flow providers [reload]                   List or reload configured providers\n  flow local status [ollama|comfyui]        Inspect local runtime, models and setup progress\n  flow local setup|start ollama --wait      Install/start a managed local engine (also comfyui)\n  flow local pull ollama --model NAME --wait Download local text weights\n  flow local pull comfyui --from weights.json --wait Download hashed local model weights\n  flow local install moss-image-sft --wait Download/setup the bundled MOSS image model\n  flow local profile save --from api-profile.json  Register image/video workflow bindings\n  flow local checkpoint --from recipe.json  Create a core local checkpoint image recipe\n  flow local profile validate PROFILE_ID    Check local nodes, models and bindings\n  flow providers usage --json               Read subscription quotas without inference\n  flow providers codex                      Read Codex harness/OAuth/API-key status\n  flow providers configure-codex --from private.json  Select auth source; key via private file\n  flow providers login-codex                Start ChatGPT device sign-in\n  flow providers cancel-codex-login         Cancel pending sign-in\n  flow providers fal                        Read fal image/video API setup\n  flow providers configure-fal --from private.json  Configure a private fal API key\n  flow providers grok                       Read native xAI image/video connection status\n  flow providers configure-grok --from private.json  Configure a private xAI API key\n  flow providers gemini-video               Read Gemini video API setup, without secrets\n  flow providers configure-video --from private.json  Configure API key or Google ADC auth\n  flow guide --json                         Discover the local API and options\n  flow schema --json                        Workflow JSON Schema\n  flow styles [ID] --search realism         Discover reusable styles and local references\n  flow style create --from style.json [--seed-image ./ref.png]  Add your own gallery style\n  flow style update ID --from changes.json   Edit a custom gallery entry\n  flow style start ID --subject "A scene"  Create a style workflow without inference\n  flow style favorite ID [--unfavorite]     Set a durable style favorite\n  flow style import-run RUN_ID              Bind completed catalog reference images\n  flow rules --json                         List built-in rules, presets and custom rules\n  flow rules save --from rule.json          Save a reusable local rule template\n  flow providers create --from connection.json  Create private BYOK connection\n  flow providers save ID --from connection.json  Update connection (write-only key actions)\n  flow providers test|remove ID             Test endpoint models or remove connection\n  flow upload ./seed.png                   Upload references; returns local asset URLs\n  flow assets --project ID                 List generated/reference assets with fingerprints\n  flow asset lineage ASSET_ID               Inspect exact values and ancestry\n  flow asset annotate ID --from labels.json Save revisioned captions, tags and review labels\n  flow dataset export --mode all --output assets.jsonl Export provenance and annotations\n  flow gallery                             List project generated images and videos with all inputs\n  flow results WORKFLOW_ID                  Latest output jobs by node\n  flow manifest RUN_ID --output run.json    Export exact recorded inputs and outputs\n  flow search-status|search-retry           Inspect/recover local semantic index\n  flow agent schema                        Describe page-aware context JSON\n  flow agent session [--from session.json]  Open/reuse this project’s assistant conversation\n  flow agent read SESSION_ID                Read assistant messages and progress\n  flow agent ask [SESSION_ID] --workflow ID --prompt "Change sports"  Request an edit proposal\n  flow agent ask SESSION_ID --from ask.json  Submit a stable message ID and page context\n  flow agent apply|cancel|undo SESSION_ID TURN_ID  Apply/undo draft changes or cancel text inference\n  flow editor open --image /files/...       Create/read per-image region editor\n  flow editor segment ID                   Detect masks with local SAM 2.1; auto-name with vision\n  flow editor name ID [--provider codex-text]  Name remaining regions; preserves manual names\n  flow editor cancel-naming ID             Stop vision naming; keep existing masks/names\n  flow editor patch ID --from change.json   Edit layers or add/resolve region comments\n  flow editor prepare ID --from edit.json   Prepare region/recolor/whole version; no inference\n  flow editor send EDITOR_ID REQUEST_ID     Queue prepared image version; idempotent\n  flow editor list|status|setup|inspect|variations ID   Discover editors or install local model\n  flow open --editor ID                     Open the image region editor\n  flow projects [--search NAME]             Search registered local projects\n  flow project update [ID] --name NAME --workflow ID | --clear-default\n  flow project init --project ID --root PATH [--workflow ID]\n  flow project register --from PATH/.weft-project.json\n  flow project archive|restore ID           Archive or restore a local project\n  flow workflow archive|restore ID          Archive or restore a workflow\n  flow project inspect [ID]                 Inspect a registered project\n  flow workflows [--project ID]             List project workflows\n  flow workflow create --name "Studies" --prompt "A scene" --seed-image ./seed.png\n  flow workflow create --media video --name "Motion studies" --prompt "A cyclist accelerates" --resolution 720p\n  flow workflow organize ID [--plan]  Arrange cards; --geometry FILE supplies measured bounds\n  flow workflow <id> --json                 Inspect nodes, edges and fork lineage\n  flow fork <id> --name "My exploration"    Save an independent workflow fork (optional --run RUN_ID snapshot)\n  flow import --from flow.json              Validate and save a workflow\n  flow prompt-set preview WORKFLOW_ID --node SET_ID --items SCENE_ID  Inspect a scene without inference\n  flow plan --workflow paper-studies        Preview jobs without inference\n  flow wait <run-id> --json                 Wait for completion; single JSON result\n  flow run --workflow paper-studies         Run a saved workflow\n  flow run --seed-image ./seed.png --prompt "Your brief" --count 100 --concurrency 4 --wait\n  flow run --from ./workflow.json --seed 42  Run an exported workflow\n  flow search "meaning" --project ID       Search generated images by meaning\n  flow search "meaning" --workflow ID --provider codex --count 20 --json\n  flow runs                                List run history\n  flow inspect <run-id>                     Show jobs and outputs\n  flow pause|resume|retry|cancel <run-id>    Control a run\n  flow download <run-id> --output images.zip  Download all completed images and videos\n  flow export <workflow-id> --output flow.json\n\nOptions: --prompts FILE (scene array on workflow creation) --prompt-set SET_ID --items ID,ID (scoped plan/run)\n         --node NODE_ID (run a node or output flow) --records CSV_OR_JSON --template TEMPLATE_FILE --plan (preview without inference)\n         --modes modes.json (named providers/models/copies on one generator)\n         --media image|video --resolution RESOLUTION --duration SECONDS --video-mode text|image|reference\n         --seed N  --count N (copies per variation)  --concurrency 1–128\n         --seed-image PATH (repeatable)  --prompt TEXT  --provider ID --model ID  --prompt-provider ID --prompt-model ID --prompt-instructions TEXT  --wait  --json\n         --timeout SECONDS (wait limit; default 3600)\n         editor prepare: --mode region|recolor|whole --regions ID,ID --prompt TEXT --color "#RRGGBB" --strength 0–1\n         agent ask: --reasoning inherit|off|on|minimal|low|medium|high|xhigh|max (provider/model support varies)\n         projects/workflows: --archived (recoverable archived items)\n         styles: [STYLE_ID] --search TEXT --category NAME --favorites\n         style start ID: --subject TEXT --project ID --name NAME\n         open: --project ID --node ID --run ID --gallery | --styles | --projects --print-url (no browser launch)\n         search: --workflow ID --run ID --provider ID --count 1–200 (default 100) --scope all|unassigned|project:ID|workflow:ID (unbound only)\n         --project ID --root PATH (discover project manifest); --id ID --name NAME --ratio RATIO --quality QUALITY\n         --url http://localhost:4310  --port N  --force (interrupt active jobs on stop)\n\nStart the local server: npm run build && node cli/flow.mjs serve\nSeed behavior depends on the provider. Codex uses variation labels; Local color lab supports deterministic seeds.\n`,
+      `Flow · local image and video workflow CLI\n\n  flow skills install|status               Install/check bundled user-wide agent skills\n  flow migrate [--plan]                    Upgrade local data and project pointers to Flow\n  flow serve                               Start the local server in the background\n  flow stop                                Stop this workspace’s idle server\n  flow restart                             Restart this workspace’s server\n  flow mcp [--project ID]                   Serve MCP tools over stdio\n  flow status                              Check Codex login and image generation\n  flow open [WORKFLOW_ID]                   Open the local viewer; project default if omitted\n  flow providers [reload]                   List or reload configured providers\n  flow local status [ollama|comfyui]        Inspect local runtime, models and setup progress\n  flow local setup|start ollama --wait      Install/start a managed local engine (also comfyui)\n  flow local pull ollama --model NAME --wait Download local text weights\n  flow local pull comfyui --from weights.json --wait Download hashed local model weights\n  flow local install moss-image-sft --wait Download/setup the bundled MOSS image model\n  flow local profile save --from api-profile.json  Register image/video workflow bindings\n  flow local checkpoint --from recipe.json  Create a core local checkpoint image recipe\n  flow local profile validate PROFILE_ID    Check local nodes, models and bindings\n  flow providers usage --json               Read subscription quotas without inference\n  flow providers codex                      Read Codex harness/OAuth/API-key status\n  flow providers configure-codex --from private.json  Select auth source; key via private file\n  flow providers login-codex                Start ChatGPT device sign-in\n  flow providers cancel-codex-login         Cancel pending sign-in\n  flow providers fal                        Read fal image/video API setup\n  flow providers configure-fal --from private.json  Configure a private fal API key\n  flow providers grok                       Read native xAI image/video connection status\n  flow providers configure-grok --from private.json  Configure a private xAI API key\n  flow providers gemini-video               Read Gemini video API setup, without secrets\n  flow providers configure-video --from private.json  Configure API key or Google ADC auth\n  flow guide --json                         Discover the local API and options\n  flow schema --json                        Workflow JSON Schema\n  flow styles [ID] --search realism         Discover reusable styles and local references\n  flow style create --from style.json [--seed-image ./ref.png]  Add your own gallery style\n  flow style update ID --from changes.json   Edit a custom gallery entry\n  flow style start ID --subject "A scene"  Create a style workflow without inference\n  flow style favorite ID [--unfavorite]     Set a durable style favorite\n  flow style import-run RUN_ID              Bind completed catalog reference images\n  flow rules --json                         List built-in rules, presets and custom rules\n  flow rules save --from rule.json          Save a reusable local rule template\n  flow providers create --from connection.json  Create private BYOK connection\n  flow providers save ID --from connection.json  Update connection (write-only key actions)\n  flow providers test|remove ID             Test endpoint models or remove connection\n  flow upload ./seed.png                   Upload references; returns local asset URLs\n  flow assets --project ID                 List generated/reference assets with fingerprints\n  flow asset lineage ASSET_ID               Inspect exact values and ancestry\n  flow asset annotate ID --from labels.json Save revisioned captions, tags and review labels\n  flow dataset export --mode all --output assets.jsonl Export provenance and annotations\n  flow gallery                             List project generated images and videos with all inputs\n  flow results WORKFLOW_ID                  Latest output jobs by node\n  flow manifest RUN_ID --output run.json    Export exact recorded inputs and outputs\n  flow search-status|search-retry           Inspect/recover local semantic index\n  flow agent schema                        Describe page-aware context JSON\n  flow agent session [--from session.json]  Open/reuse this project’s assistant conversation\n  flow agent read SESSION_ID                Read assistant messages and progress\n  flow agent ask [SESSION_ID] --workflow ID --prompt "Change sports"  Request an edit proposal\n  flow agent ask SESSION_ID --from ask.json  Submit a stable message ID and page context\n  flow agent apply|cancel|undo SESSION_ID TURN_ID  Apply/undo draft changes or cancel text inference\n  flow editor open --image /files/...       Create/read per-image region editor\n  flow editor segment ID                   Detect masks with local SAM 2.1; auto-name with vision\n  flow editor name ID [--provider codex-text]  Name remaining regions; preserves manual names\n  flow editor cancel-naming ID             Stop vision naming; keep existing masks/names\n  flow editor patch ID --from change.json   Edit layers or add/resolve region comments\n  flow editor prepare ID --from edit.json   Prepare region/recolor/whole version; no inference\n  flow editor send EDITOR_ID REQUEST_ID     Queue prepared image version; idempotent\n  flow editor list|status|setup|inspect|variations ID   Discover editors or install local model\n  flow open --editor ID                     Open the image region editor\n  flow projects [--search NAME]             Search registered local projects\n  flow project update [ID] --name NAME --workflow ID | --clear-default\n  flow project init --project ID --root PATH [--workflow ID]\n  flow project register --from PATH/flow.project.json\n  flow project archive|restore ID           Archive or restore a local project\n  flow workflow archive|restore ID          Archive or restore a workflow\n  flow project inspect [ID]                 Inspect a registered project\n  flow workflows [--project ID]             List project workflows\n  flow workflow create --name "Studies" --prompt "A scene" --seed-image ./seed.png\n  flow workflow create --media video --name "Motion studies" --prompt "A cyclist accelerates" --resolution 720p\n  flow workflow organize ID [--plan]  Arrange cards; --geometry FILE supplies measured bounds\n  flow workflow <id> --json                 Inspect nodes, edges and fork lineage\n  flow fork <id> --name "My exploration"    Save an independent workflow fork (optional --run RUN_ID snapshot)\n  flow import --from campaign.flow.json              Validate and save a workflow\n  flow prompt-set preview WORKFLOW_ID --node SET_ID --items SCENE_ID  Inspect a scene without inference\n  flow plan --workflow paper-studies        Preview jobs without inference\n  flow wait <run-id> --json                 Wait for completion; single JSON result\n  flow run --workflow paper-studies         Run a saved workflow\n  flow run --seed-image ./seed.png --prompt "Your brief" --count 100 --concurrency 4 --wait\n  flow run --from ./workflow.json --seed 42  Run an exported workflow\n  flow search "meaning" --project ID       Search generated images by meaning\n  flow search "meaning" --workflow ID --provider codex --count 20 --json\n  flow runs                                List run history\n  flow inspect <run-id>                     Show jobs and outputs\n  flow pause|resume|retry|cancel <run-id>    Control a run\n  flow download <run-id> --output images.zip  Download all completed images and videos\n  flow export <workflow-id> --output campaign.flow.json\n\nOptions: --prompts FILE (scene array on workflow creation) --prompt-set SET_ID --items ID,ID (scoped plan/run)\n         --node NODE_ID (run a node or output flow) --records CSV_OR_JSON --template TEMPLATE_FILE --plan (preview without inference)\n         --modes modes.json (named providers/models/copies on one generator)\n         --media image|video --resolution RESOLUTION --duration SECONDS --video-mode text|image|reference\n         --seed N  --count N (copies per variation)  --concurrency 1–128\n         --seed-image PATH (repeatable)  --prompt TEXT  --provider ID --model ID  --prompt-provider ID --prompt-model ID --prompt-instructions TEXT  --wait  --json\n         --timeout SECONDS (wait limit; default 3600)\n         editor prepare: --mode region|recolor|whole --regions ID,ID --prompt TEXT --color "#RRGGBB" --strength 0–1\n         agent ask: --reasoning inherit|off|on|minimal|low|medium|high|xhigh|max (provider/model support varies)\n         projects/workflows: --archived (recoverable archived items)\n         styles: [STYLE_ID] --search TEXT --category NAME --favorites\n         style start ID: --subject TEXT --project ID --name NAME\n         open: --project ID --node ID --run ID --gallery | --styles | --projects --print-url (no browser launch)\n         search: --workflow ID --run ID --provider ID --count 1–200 (default 100) --scope all|unassigned|project:ID|workflow:ID (unbound only)\n         --project ID --root PATH (discover project manifest); --id ID --name NAME --ratio RATIO --quality QUALITY\n         --url http://localhost:4310  --port N  --force (interrupt active jobs on stop)\n\nStart the local server: npm run build && node cli/flow.mjs serve\nSeed behavior depends on the provider. Codex uses variation labels; Local color lab supports deterministic seeds.\n`,
     );
     process.exit(0);
   }
@@ -217,7 +235,7 @@ try {
     viewerServer = await startServer({
       url: base,
       root,
-      dataRoot: resolve(process.env.WEFT_DATA_DIR || resolve(root, ".weft")),
+      dataRoot: resolve(process.env.FLOW_DATA_DIR || resolve(root, ".flow")),
     });
   }
   let registeredProject;
@@ -262,7 +280,7 @@ try {
     const config = {
       url: base,
       root,
-      dataRoot: resolve(process.env.WEFT_DATA_DIR || resolve(root, ".weft")),
+      dataRoot: resolve(process.env.FLOW_DATA_DIR || resolve(root, ".flow")),
       force: values.force,
     };
     if (command !== "serve") {
@@ -619,13 +637,13 @@ try {
         : context;
       if (!selected)
         throw new Error(
-          "Provide --from .weft-project.json or run from a registered project directory.",
+          "Provide --from flow.project.json or run from a registered project directory.",
         );
       if (values.project && values.project !== selected.manifest.projectId)
         throw new Error("Explicit project does not match the manifest.");
-      if (!values.url && !process.env.WEFT_URL && !values.port) {
+      if (!values.url && !process.env.FLOW_URL && !values.port) {
         base = selected.manifest.serverUrl;
-        client = new WeftClient({
+        client = new FlowClient({
           url: base,
           projectId: selected.manifest.projectId,
         });
@@ -716,9 +734,9 @@ try {
     }
     print(await client.fork(id, { name: values.name, workflow: snapshot }));
   } else if (command === "import") {
-    if (!values.from) throw new Error("Provide --from workflow.json.");
+    if (!values.from) throw new Error("Provide --from workflow.flow.json.");
     const graph = owned(
-      JSON.parse(await readFile(resolve(values.from), "utf8")),
+      fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))),
       client.projectId,
     );
     print(await client.saveWorkflow(graph));
@@ -921,15 +939,15 @@ try {
     print(await client.control(id, command));
   else if (command === "download") {
     if (!id) throw new Error("Provide a run ID.");
-    const target = resolve(values.output || `weft-${id}.zip`);
+    const target = resolve(values.output || `flow-${id}.zip`);
     await writeFile(target, await client.download(id));
     print("Saved " + target);
   } else if (command === "export") {
     const graph = await loadWorkflow(client, id);
     if (values.output) {
-      await writeFile(resolve(values.output), JSON.stringify(graph, null, 2));
+      await writeFile(resolve(values.output), JSON.stringify(toFlowFile(graph), null, 2) + "\n");
       print("Saved " + resolve(values.output));
-    } else print(graph);
+    } else print(toFlowFile(graph));
   } else if (command === "prompt-set" && id === "preview") {
     const workflowId = args[2] || values.workflow;
     if (

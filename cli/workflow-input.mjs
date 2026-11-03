@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { fromFlowFile } from "../shared/flow-file.mjs";
 import { basename, resolve } from "node:path";
 import { parseRecords } from "../shared/records.mjs";
 import { createImageWorkflow, createVideoWorkflow } from "../client/index.mjs";
@@ -120,7 +121,7 @@ export async function prepareWorkflow(
           : {}),
     });
   let workflow = values.from
-    ? owned(JSON.parse(await readFile(resolve(values.from), "utf8")), projectId)
+    ? owned(fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))), projectId)
     : await loadWorkflow(client, workflowId);
   if (modes) {
     const targets = workflow.nodes.filter(

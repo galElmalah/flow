@@ -44,7 +44,7 @@ export async function runCommand(
         cwd: directory,
         stdio: ["pipe", "pipe", "pipe"],
         detached: process.platform !== "win32",
-        env: { ...process.env, WEFT_JOB_INPUT: input, WEFT_JOB_OUTPUT: output },
+        env: { ...process.env, FLOW_JOB_INPUT: input, FLOW_JOB_OUTPUT: output },
       });
       let stderr = "",
         killTimer,

@@ -30,7 +30,7 @@ async function wait(store, id) {
   assert.fail("queue did not finish");
 }
 async function fixture(t) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-assets-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-assets-"));
   let store = new Store(root);
   await store.init();
   for (const id of ["one", "two"])
@@ -330,7 +330,7 @@ test("historical assets are explicitly partial and dataset HTTP exports scoped J
     `${base}/api/assets/dataset?projectId=one&mode=training`,
   );
   assert.equal(await training.text(), "");
-  assert.equal(training.headers.get("X-Weft-Dataset-Skipped"), "1");
+  assert.equal(training.headers.get("X-Flow-Dataset-Skipped"), "1");
 });
 
 test("generated prompt assets and provider-operation receipts survive restart with original lineage", async (t) => {

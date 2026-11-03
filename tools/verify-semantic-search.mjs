@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
-import { WeftClient } from "../client/index.mjs";
-const client = new WeftClient({ projectId: "quoture" });
+import { FlowClient } from "../client/index.mjs";
+const client = new FlowClient({ projectId: "quoture" });
 const before = await client.runs();
 const gallery = await client.request("/api/gallery");
 const cases = [
@@ -84,7 +84,7 @@ const report = {
   noGenerationRunsCreated: true,
 };
 await writeFile(
-  new URL("../.weft/probes/semantic-verification.json", import.meta.url),
+  new URL("../.flow/probes/semantic-verification.json", import.meta.url),
   JSON.stringify(report, null, 2),
 );
 console.log(JSON.stringify(report, null, 2));

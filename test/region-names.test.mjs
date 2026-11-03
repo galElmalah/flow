@@ -10,7 +10,7 @@ import { Store } from "../server/store.mjs";
 import { ProjectService } from "../server/projects.mjs";
 import { ImageEditors } from "../server/image-editor/service.mjs";
 import { registerImageEditorRoutes } from "../server/routes/image-editors.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { needsRegionName } from "../shared/image-editor.mjs";
 import {
   parseRegionNames,
@@ -26,7 +26,7 @@ const deferred = () => {
 };
 
 test("vision names persist, preserve concurrent manual renames, cache successful names and expose cancel/retry through the scoped API", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-region-names-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-region-names-"));
   const store = new Store(root);
   await store.init();
   const projects = new ProjectService(store);
@@ -133,11 +133,11 @@ test("vision names persist, preserve concurrent manual renames, cache successful
   );
   const server = app.listen(0, "127.0.0.1");
   await new Promise((r) => server.once("listening", r));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
     projectId: "photos",
   });
-  const foreign = new WeftClient({ url: client.url, projectId: "other" });
+  const foreign = new FlowClient({ url: client.url, projectId: "other" });
   t.after(async () => {
     gate.resolve();
     await editors.close();
@@ -288,7 +288,7 @@ test("region names require exact stable IDs and preserve explicitly manual gener
 });
 
 test("large source images produce aligned contact sheets without compositing an original-size mask onto a thumbnail", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-contact-sheet-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-contact-sheet-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const width = 600,
     height = 300;

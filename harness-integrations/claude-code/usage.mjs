@@ -8,10 +8,10 @@ export const CLAUDE_USAGE_MAX_AGE_MS = 10 * 60 * 1000;
 
 export function claudeUsageFile() {
   return (
-    process.env.WEFT_CLAUDE_USAGE_FILE ||
+    process.env.FLOW_CLAUDE_USAGE_FILE ||
     path.join(
       process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache"),
-      "weft",
+      "flow",
       "claude-usage.json",
     )
   );
@@ -133,7 +133,7 @@ export function claudeControlUsage(report, { now = Date.now() } = {}) {
 }
 
 export async function readClaudeUsage({
-  executable = process.env.WEFT_CLAUDE_BIN || "claude",
+  executable = process.env.FLOW_CLAUDE_BIN || "claude",
   timeoutMs = 10000,
   live = true,
   ...options
@@ -144,7 +144,7 @@ export async function readClaudeUsage({
         await requestClaudeControl({
           executable,
           timeoutMs,
-          prefix: "weft-usage",
+          prefix: "flow-usage",
           request: { subtype: "get_usage", skip_behaviors: true },
         }),
         options,

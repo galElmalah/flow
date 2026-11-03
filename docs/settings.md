@@ -43,7 +43,7 @@ ChatGPT security settings if required. Codex handles token refresh. API-key mode
 the key to `codex login --with-api-key` over stdin and uses API billing.
 
 Managed OAuth and API-key modes use separate private Codex homes under
-`.weft/private/codex/`. They never replace the global CLI login. Keys are write-only;
+`.flow/private/codex/`. They never replace the global CLI login. Keys are write-only;
 public status contains only the mode, readiness and sign-in progress. Native image
 generation still depends on the selected CLI/account capability; it never falls back
 to another provider. Configure a compatible image API separately when needed.

@@ -19,7 +19,7 @@ const deferred = () => {
   return { promise, resolve };
 };
 async function temporary(t) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "weft-text-stream-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "flow-text-stream-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   return directory;
 }

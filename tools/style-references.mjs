@@ -3,15 +3,15 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 import { builtInStyles } from "../shared/styles/catalog.mjs";
 
 // Run twice safely: an existing reference batch is inspected, never resubmitted.
 const root = path.resolve(import.meta.dirname, "..");
-const client = new WeftClient({ projectId: "weft-styles" });
+const client = new FlowClient({ projectId: "flow-styles" });
 const workflowFlag = process.argv.indexOf("--workflow");
 const workflowId =
-  workflowFlag < 0 ? "weft-style-library-180" : process.argv[workflowFlag + 1];
+  workflowFlag < 0 ? "flow-style-library-180" : process.argv[workflowFlag + 1];
 if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId || ""))
   throw new Error("Provide a valid --workflow ID.");
 const receiptDirectory = path.join(
@@ -30,8 +30,8 @@ if (!project) {
   if (!execute)
     throw new Error("Use --execute to register the style-library project.");
   project = await client.createProject({
-    id: "weft-styles",
-    name: "Weft · style library",
+    id: "flow-styles",
+    name: "Flow · style library",
     root,
   });
 }
@@ -58,7 +58,7 @@ if (!workflow) {
   }
   workflow = createImageWorkflow({
     id: workflowId,
-    name: `Weft · ${candidates.length} original style references`,
+    name: `Flow · ${candidates.length} original style references`,
     projectId: project.id,
     prompt:
       "Create one original visual style reference. Follow the specific medium, composition and lighting in the record's brief. One image, no swatch grid, captions, signatures or watermark.",
@@ -189,7 +189,7 @@ const receipt = {
     return counts;
   }, {}),
   provenance:
-    "Original AI-generated images through Weft's local Codex native-image harness using the signed-in ChatGPT account.",
+    "Original AI-generated images through Flow's local Codex native-image harness using the signed-in ChatGPT account.",
   verified,
 };
 await writeFile(

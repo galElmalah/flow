@@ -60,7 +60,7 @@ function graph() {
   };
 }
 async function root(t) {
-  const dir = await mkdtemp(path.join(tmpdir(), "weft-prompts-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "flow-prompts-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   return dir;
 }
@@ -139,7 +139,7 @@ test("text failures block descendants; image references pass through AI prompt n
 });
 test("compatible connection persists write-only credentials, supports text and redacts upstream errors", async (t) => {
   const dir = await root(t),
-    secret = "weft-canary-private-key";
+    secret = "flow-canary-private-key";
   let body, auth;
   const server = http.createServer(async (req, res) => {
     let input = "";

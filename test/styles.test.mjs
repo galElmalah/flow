@@ -13,11 +13,11 @@ import { ProjectService } from "../server/projects.mjs";
 import { registerStyleRoutes } from "../server/routes/styles.mjs";
 import { StyleLibrary } from "../server/styles.mjs";
 import { builtInStyles } from "../shared/styles/catalog.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { planWorkflow } from "../server/graph.mjs";
 
 async function fixture(t) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-styles-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-styles-"));
   const store = new Store(root);
   await store.init();
   const projects = new ProjectService(store);
@@ -57,7 +57,7 @@ async function fixture(t) {
     root,
     store,
     services,
-    client: new WeftClient({
+    client: new FlowClient({
       url: `http://127.0.0.1:${server.address().port}`,
       projectId: "qa",
     }),
@@ -73,7 +73,7 @@ test("style discovery, favorites and starting a saved project workflow preserve 
     builtInStyles.length,
   );
   assert.equal(catalog.searchMode, "browse");
-  const cli = fileURLToPath(new URL("../cli/weft.mjs", import.meta.url));
+  const cli = fileURLToPath(new URL("../cli/flow.mjs", import.meta.url));
   const execute = promisify(execFile);
   const cliCatalog = JSON.parse(
     (
@@ -266,7 +266,7 @@ test("reference jobs expose progress and idempotent bindings validate actual com
     [url],
   );
   assert.deepEqual(workflow.nodes[0].data.style.referenceUrls, [url]);
-  const foreign = new WeftClient({ url: client.url, projectId: "foreign" });
+  const foreign = new FlowClient({ url: client.url, projectId: "foreign" });
   await assert.rejects(
     foreign.importStyleRun(runId),
     (error) => error.status === 409,
@@ -412,7 +412,7 @@ test("custom styles accept arbitrary local references, editable baselines and du
   assert.equal((await client.style(input.id)).prompt, "Soft graphite.");
   const file = path.join(root, "style.json");
   await writeFile(file, JSON.stringify({ ...input, id: "cli-custom" }));
-  const cli = fileURLToPath(new URL("../cli/weft.mjs", import.meta.url));
+  const cli = fileURLToPath(new URL("../cli/flow.mjs", import.meta.url));
   const execute = promisify(execFile);
   const created = JSON.parse(
     (

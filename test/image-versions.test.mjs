@@ -47,8 +47,8 @@ function assertOnlyMaskChanged(before, after, mask) {
 }
 
 test("queued image versions preserve outside pixels, frozen editable regions and a durable project family", async (t) => {
-  const temporary = await mkdtemp(path.join(tmpdir(), "weft-versions-"));
-  const dataRoot = path.join(temporary, ".weft");
+  const temporary = await mkdtemp(path.join(tmpdir(), "flow-versions-"));
+  const dataRoot = path.join(temporary, ".flow");
   let store = new Store(dataRoot);
   await store.init();
   let projects = new ProjectService(store);
@@ -460,7 +460,7 @@ test("image-version request modes reject ambiguous or invalid local recolors", (
 });
 
 test("CLI exposes image-version modes, color and strength in scoped prepare requests", async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), "weft-version-cli-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "flow-version-cli-"));
   const requests = [];
   const editorId = "a".repeat(32);
   const api = http.createServer(async (request, response) => {
@@ -485,7 +485,7 @@ test("CLI exposes image-version modes, color and strength in scoped prepare requ
         await execute(
           process.execPath,
           [
-            path.join(root, "cli/weft.mjs"),
+            path.join(root, "cli/flow.mjs"),
             "editor",
             "prepare",
             editorId,

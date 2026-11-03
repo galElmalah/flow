@@ -6,9 +6,9 @@ Open **Provider connection settings** to see installed CLI accounts and add comp
 
 For a compatible connection, enter the API base URL and one model ID per line in the text or image field. Flow sends text requests to `/chat/completions`, image generation to `/images/generations`, and reference edits to `/images/edits` with multipart `image[]` fields. Endpoint support varies. Flow does not translate vendor-specific protocols. The base URL includes any required prefix such as `/v1`.
 
-The key field is write-only. Saved keys use owner-only `.weft/connections.json`; this file is outside the served output routes. Keep the field blank to preserve the key, enter a replacement to rotate it, or select **Remove saved key**. Changing the base URL requires a replacement or removal. **Test** sends a bounded `GET /models` request and reports reachability, not verified generation support.
+The key field is write-only. Saved keys use owner-only `.flow/connections.json`; this file is outside the served output routes. Keep the field blank to preserve the key, enter a replacement to rotate it, or select **Remove saved key**. Changing the base URL requires a replacement or removal. **Test** sends a bounded `GET /models` request and reports reachability, not verified generation support.
 
-CLI accounts use their own sign-in. Install and sign in to each CLI before reloading providers. The model value `default` uses that CLI's configured default; enter a model ID to override it. `WEFT_PI_BIN`, `WEFT_GEMINI_BIN`, `WEFT_CLAUDE_BIN`, and `WEFT_CODEX_BIN` select executable paths. Gemini CLI prompt nodes currently accept text only. Pi, Codex, and Claude prompt adapters support reference images, subject to the selected model's vision support. Claude references are limited to 5 MB per image.
+CLI accounts use their own sign-in. Install and sign in to each CLI before reloading providers. The model value `default` uses that CLI's configured default; enter a model ID to override it. `FLOW_PI_BIN`, `FLOW_GEMINI_BIN`, `FLOW_CLAUDE_BIN`, and `FLOW_CODEX_BIN` select executable paths. Gemini CLI prompt nodes currently accept text only. Pi, Codex, and Claude prompt adapters support reference images, subject to the selected model's vision support. Claude references are limited to 5 MB per image.
 
 Generated prompts are durable queue jobs. A text result can feed several image jobs or another text generator. Retrying failed descendants reuses completed prompts. Model-generated lines remain one prompt; use **Prompt variations** for explicit fan-out.
 
@@ -29,7 +29,7 @@ Choose providers from the generator's engine button, the left library, or the Ta
 
 ## Add a command harness
 
-Create `.weft/providers.json` with a `providers` array. Use an absolute executable path, or an executable on the server's PATH:
+Create `.flow/providers.json` with a `providers` array. Use an absolute executable path, or an executable on the server's PATH:
 
 ```json
 {
@@ -80,7 +80,7 @@ Every invocation receives the same request through stdin and through `request.js
 }
 ```
 
-The same paths are available as `WEFT_JOB_INPUT` and `WEFT_JOB_OUTPUT` environment variables. Each job has a separate working directory. The harness must save a real raster image to the requested output path and exit with code zero. Flow decodes and normalizes it to PNG before marking the job complete. A successful process exit without a fresh image is a failure. Stdout/stderr are recorded in `command.log`.
+The same paths are available as `FLOW_JOB_INPUT` and `FLOW_JOB_OUTPUT` environment variables. Each job has a separate working directory. The harness must save a real raster image to the requested output path and exit with code zero. Flow decodes and normalizes it to PNG before marking the job complete. A successful process exit without a fresh image is a failure. Stdout/stderr are recorded in `command.log`.
 
 A wrapper can invoke another agent CLI, a local diffusion engine, or a service SDK. That wrapper handles the tool's own authentication and output protocol. Its `models` list defines the choices exposed in the editor. Set `seeded: true` only when the wrapper's engine actually uses the supplied seed reproducibly.
 
@@ -130,6 +130,6 @@ node cli/flow.mjs run --seed-image ./public/assets/paper-seed.png \
 
 Without a `--provider` override, a workflow keeps each node's configured provider. `--model` overrides model selection for the run; it must belong to the chosen provider's configured model list. Completed outputs and their provenance stay with the run snapshot, even if you later change the canvas.
 
-`examples/mixed-providers.json` is the two-branch Codex/local workflow exercised in the editor. `examples/local-color-batch.json` runs 100 local color studies from the bundled reference without AI inference. Use `--count 1` to reduce either example before running it.
+`examples/mixed-providers.flow.json` is the two-branch Codex/local workflow exercised in the editor. `examples/local-color-batch.flow.json` runs 100 local color studies from the bundled reference without AI inference. Use `--count 1` to reduce either example before running it.
 
-`examples/layered-color-studies.json` demonstrates a two-stage pipeline: three local color studies flow through a prompt into three duotone finishing jobs. Each finishing job receives its own parent image. Run it with `node cli/flow.mjs run --from examples/layered-color-studies.json --concurrency 3 --wait`.
+`examples/layered-color-studies.flow.json` demonstrates a two-stage pipeline: three local color studies flow through a prompt into three duotone finishing jobs. Each finishing job receives its own parent image. Run it with `node cli/flow.mjs run --from examples/layered-color-studies.flow.json --concurrency 3 --wait`.

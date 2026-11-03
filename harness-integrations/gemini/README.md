@@ -2,7 +2,7 @@
 
 `index.mjs` owns provider `gemini-cli`, headless invocation and final JSON parsing.
 Install Gemini CLI, configure enterprise Code Assist or API-key access, then reload providers.
-`WEFT_GEMINI_BIN` overrides the executable.
+`FLOW_GEMINI_BIN` overrides the executable.
 
 Google moved personal free/AI Pro/Ultra coding access to Antigravity CLI on June 18,
 2026. This adapter does not silently switch executables or authentication. Google’s

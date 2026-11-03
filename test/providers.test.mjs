@@ -21,7 +21,7 @@ import { Store } from "../server/store.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 const noCodex = async () => ({ ready: false, auth: "Test: no Codex sign-in" });
 async function setup(t, definitions = []) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-providers-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-providers-"));
   const registry = new ProviderRegistry({
     root,
     dataRoot,

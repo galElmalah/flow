@@ -21,7 +21,7 @@ also contain `turn.timing` with trace/span IDs and elapsed server milestones.
 
 ## Storage and export
 
-The default exporter writes private JSONL spans beneath `.weft/telemetry/`. It rotates
+The default exporter writes private JSONL spans beneath `.flow/telemetry/`. It rotates
 at 10 MiB and keeps the current file plus two previous files. File permissions are
 0600 and the directory starts at 0700. Detailed spans expire with rotation; conversation
 milestones remain in SQLite. No collector or cloud account is required.
@@ -32,9 +32,9 @@ attributes are allowlisted IDs, counts, phases, numeric durations, route templat
 status codes and configured model/reasoning labels. Errors record a failure status,
 not exception messages/stacks. Export writes are asynchronous and outside model waits.
 
-Set `WEFT_OTEL_ENABLED=0` before restarting an idle server to disable SDK export.
+Set `FLOW_OTEL_ENABLED=0` before restarting an idle server to disable SDK export.
 For an optional local OTLP collector, set
-`WEFT_OTEL_OTLP_ENDPOINT=http://localhost:4318/v1/traces` before startup. Only loopback
+`FLOW_OTEL_OTLP_ENDPOINT=http://localhost:4318/v1/traces` before startup. Only loopback
 collector URLs without URL credentials are accepted. The service name is `flow`.
 The exporter is tested against an actual local HTTP collector fixture. External
 telemetry export is not enabled.
@@ -43,7 +43,7 @@ telemetry export is not enabled.
 
 ```sh
 node tools/sample-agent-latency.mjs --project PROJECT_ID --workflow WORKFLOW_ID \
-  --samples 5 --out /tmp/weft-latency.json
+  --samples 5 --out /tmp/flow-latency.json
 ```
 
 This command uses real Codex text inference for short read-only questions. It never

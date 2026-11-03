@@ -2,18 +2,18 @@ import { providerFailureFields } from "../shared/provider-errors.mjs";
 import { resolveViewer } from "./viewer.mjs";
 const encoded = (id) => encodeURIComponent(id);
 
-export class WeftError extends Error {
+export class FlowError extends Error {
   constructor(message, status) {
     super(message);
-    this.name = "WeftError";
+    this.name = "FlowError";
     this.status = status;
   }
 }
 
 /** A small local HTTP client. All durable writes go through the platform. */
-export class WeftClient {
+export class FlowClient {
   constructor({
-    url = process.env.WEFT_URL || "http://localhost:4310",
+    url = process.env.FLOW_URL || "http://localhost:4310",
     projectId,
     fetch: transport = globalThis.fetch,
   } = {}) {
@@ -34,7 +34,7 @@ export class WeftClient {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw Object.assign(
-        new WeftError(data.error || response.statusText, response.status),
+        new FlowError(data.error || response.statusText, response.status),
         providerFailureFields(data),
       );
     }
@@ -105,7 +105,7 @@ export class WeftClient {
       options.projectId !== undefined &&
       options.projectId !== this.projectId
     )
-      throw new WeftError(
+      throw new FlowError(
         `Workflow must belong to project ${this.projectId}.`,
         409,
       );
@@ -129,7 +129,7 @@ export class WeftClient {
       input.projectId !== undefined &&
       input.projectId !== this.projectId
     )
-      throw new WeftError(
+      throw new FlowError(
         "Agent conversation belongs to another project.",
         409,
       );
@@ -197,7 +197,7 @@ export class WeftClient {
   }
   openImageEditor(input) {
     if (this.projectId && input.projectId && input.projectId !== this.projectId)
-      throw new WeftError(
+      throw new FlowError(
         "Image editor project does not match this client.",
         409,
       );
@@ -291,7 +291,7 @@ export class WeftClient {
   }
   archiveProject(id, archived = true, reason) {
     if (this.projectId && this.projectId !== id)
-      throw new WeftError("Project does not match this connection.", 409);
+      throw new FlowError("Project does not match this connection.", 409);
     return this.post(`/api/projects/${encoded(id)}/archive`, {
       archived,
       reason,
@@ -327,7 +327,7 @@ export class WeftClient {
       existing?.projectId &&
       existing.projectId !== this.projectId
     )
-      throw new WeftError(
+      throw new FlowError(
         `Workflow ${graph.id} belongs to project ${existing.projectId}, not ${this.projectId}. Fork explicitly before editing it.`,
         409,
       );
@@ -336,17 +336,17 @@ export class WeftClient {
       ? graph.projectId
       : (this.projectId ?? existing?.projectId);
     if (this.projectId && projectId && projectId !== this.projectId)
-      throw new WeftError(
+      throw new FlowError(
         `Workflow belongs to project ${projectId}, not ${this.projectId}. Fork explicitly to change projects.`,
         409,
       );
     if (existing?.projectId && projectId && existing.projectId !== projectId)
-      throw new WeftError(
+      throw new FlowError(
         `Workflow ${graph.id} belongs to project ${existing.projectId}. Fork explicitly to change projects.`,
         409,
       );
     if (existing && !existing.projectId && this.projectId && !explicitOwner)
-      throw new WeftError(
+      throw new FlowError(
         "Assign an unowned workflow explicitly with projectId before saving it in a project.",
         409,
       );
@@ -388,7 +388,7 @@ export class WeftClient {
       signal,
     });
     if (this.projectId && run.projectId !== this.projectId)
-      throw new WeftError(
+      throw new FlowError(
         `Run ${id} belongs to ${run.projectId || "the unassigned workspace"}, not project ${this.projectId}.`,
         409,
       );
@@ -434,7 +434,7 @@ export class WeftClient {
   }
   localModelAction(runtime, action, input = {}) {
     if (!["setup", "start", "stop", "pull", "cancel"].includes(action))
-      throw new WeftError("Choose setup, start, stop, pull or cancel.", 400);
+      throw new FlowError("Choose setup, start, stop, pull or cancel.", 400);
     return this.post(`/api/local-models/${encoded(runtime)}/${action}`, input);
   }
   localProfiles() {
@@ -521,10 +521,10 @@ export class WeftClient {
     const jsonl = await response.text();
     return {
       jsonl,
-      total: Number(response.headers.get("X-Weft-Dataset-Total") || 0),
-      skipped: Number(response.headers.get("X-Weft-Dataset-Skipped") || 0),
+      total: Number(response.headers.get("X-Flow-Dataset-Total") || 0),
+      skipped: Number(response.headers.get("X-Flow-Dataset-Skipped") || 0),
       skipReasons: JSON.parse(
-        response.headers.get("X-Weft-Dataset-Skip-Reasons") || "{}",
+        response.headers.get("X-Flow-Dataset-Skip-Reasons") || "{}",
       ),
     };
   }
@@ -534,7 +534,7 @@ export class WeftClient {
   async workflowResults(id) {
     const graph = await this.workflow(id);
     if (this.projectId && graph.projectId !== this.projectId)
-      throw new WeftError(
+      throw new FlowError(
         `Workflow ${id} does not belong to project ${this.projectId}.`,
         409,
       );
@@ -559,7 +559,7 @@ export class WeftClient {
       ? `project:${this.projectId}`
       : undefined;
     if (projectScope && scope !== undefined && scope !== projectScope)
-      throw new WeftError(
+      throw new FlowError(
         `Search belongs to project ${this.projectId}. Use workflowId to narrow that project; another scope would replace its ownership restriction.`,
         409,
       );
@@ -634,6 +634,8 @@ export class WeftClient {
   }
 }
 export { createImageWorkflow, createVideoWorkflow } from "./workflows.mjs";
-
-// Public names for Flow; existing client imports remain compatible.
-export { WeftClient as FlowClient, WeftError as FlowError };
+export {
+  toFlowFile,
+  fromFlowFile,
+  flowFileName,
+} from "../shared/flow-file.mjs";

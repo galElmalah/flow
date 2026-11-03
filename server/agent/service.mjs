@@ -90,8 +90,8 @@ export class AgentConversations {
     return traced(
       "agent.persist",
       {
-        "weft.session_id": session.id,
-        "weft.turn_count": session.turns.length,
+        "flow.session_id": session.id,
+        "flow.turn_count": session.turns.length,
       },
       () => {
         session.updatedAt = now();
@@ -294,11 +294,11 @@ export class AgentConversations {
     if (session.turns.length >= 100)
       throw fail("This conversation has reached its 100-message limit.");
     const span = startSpan("agent.turn", {
-      "weft.session_id": id,
-      "weft.turn_id": parsed.id,
-      "weft.workflow_id": parsed.context.workflowId,
-      "weft.project_id": session.projectId,
-      "weft.provider_id": parsed.providerId,
+      "flow.session_id": id,
+      "flow.turn_id": parsed.id,
+      "flow.workflow_id": parsed.context.workflowId,
+      "flow.project_id": session.projectId,
+      "flow.provider_id": parsed.providerId,
     });
     const started = performance.now();
     let resolved;
@@ -350,7 +350,7 @@ export class AgentConversations {
       this.active.delete(`${session.id}/${turn.id}`);
       this.jobs.delete(task);
       const final = this.get(id).turns.find((t) => t.id === turn.id);
-      span.setAttribute("weft.status", final.status);
+      span.setAttribute("flow.status", final.status);
       if (["failed", "cancelled", "interrupted"].includes(final.status))
         span.setStatus({ code: 2 });
       span.end();
@@ -385,7 +385,7 @@ export class AgentConversations {
       this.save(current);
       if (previewText)
         milestone("previewPersisted", {
-          "weft.preview_chars": previewText.length,
+          "flow.preview_chars": previewText.length,
         });
       lastPreviewAt = Date.now();
     };
@@ -417,7 +417,7 @@ export class AgentConversations {
       const brief = this.brief(session, turn);
       const result = await traced(
         "agent.provider",
-        { "weft.prompt_bytes": Buffer.byteLength(brief) },
+        { "flow.prompt_bytes": Buffer.byteLength(brief) },
         () =>
           this.providers.run({
             job: {

@@ -577,7 +577,7 @@ export function ImageTray({
           <a
             className="primary-button"
             href={image.output}
-            download={`${recordIdentity(job) || `weft-${job.seed ?? "reference"}`}.${video ? "mp4" : "png"}`}
+            download={`${recordIdentity(job) || `flow-${job.seed ?? "reference"}`}.${video ? "mp4" : "png"}`}
           >
             <Download size={14} />
             Download {medium.toLowerCase()}

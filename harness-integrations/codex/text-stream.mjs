@@ -54,7 +54,7 @@ export async function runCodexText(provider, context) {
   await mkdir(directory, { recursive: true });
   const command = invocation(context);
   const sessionSpan = startSpan("codex.session", {
-    "weft.provider_id": provider.id,
+    "flow.provider_id": provider.id,
   });
   onProgress?.(`Writing with ${provider.name}…`);
   return new Promise((resolve, reject) => {
@@ -427,7 +427,7 @@ export async function runCodexText(provider, context) {
       method: "initialize",
       params: {
         clientInfo: {
-          name: "weft_text",
+          name: "flow_text",
           title: "Flow text harness",
           version: "0.1.0",
         },

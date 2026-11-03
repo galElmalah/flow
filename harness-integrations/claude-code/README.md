@@ -1,7 +1,7 @@
 # Claude Code
 
 `index.mjs` owns provider `claude-code`, invocation, image blocks, final-result parsing,
-and the bounded `claude auth status --json` check. Set `WEFT_CLAUDE_BIN` to override
+and the bounded `claude auth status --json` check. Set `FLOW_CLAUDE_BIN` to override
 the executable. Authenticate with `claude auth login`.
 
 This integration generates prompt text. It accepts reference images when the selected

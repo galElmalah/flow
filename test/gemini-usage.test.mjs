@@ -7,7 +7,7 @@ import { readGeminiUsage } from "../harness-integrations/gemini/usage.mjs";
 
 test("missing Gemini CLI reports unavailable without inventing account usage", async () => {
   const result = await readGeminiUsage({
-    executable: "/nonexistent/weft-gemini-usage-test",
+    executable: "/nonexistent/flow-gemini-usage-test",
   });
   assert.equal(result.status, "unavailable");
   assert.deepEqual(result.windows, []);
@@ -16,7 +16,7 @@ test("missing Gemini CLI reports unavailable without inventing account usage", a
 });
 
 test("Gemini usage checks never start a prompt or execute slash commands headlessly", async (t) => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "weft-gemini-usage-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "flow-gemini-usage-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const executable = path.join(directory, "gemini");
   const marker = path.join(directory, "executed");

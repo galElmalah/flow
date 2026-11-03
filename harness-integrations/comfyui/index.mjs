@@ -531,7 +531,7 @@ export class ComfyMedia {
           form.append(
             "image",
             new Blob([data], { type: mime }),
-            `weft-${randomUUID()}.${metadata.format}`,
+            `flow-${randomUUID()}.${metadata.format}`,
           );
           form.append("type", "input");
           form.append("overwrite", "false");

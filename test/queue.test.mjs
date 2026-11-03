@@ -15,7 +15,7 @@ async function waitFor(fn) {
   }
 }
 async function setup(t, adapter, concurrency = 4) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-test-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-test-"));
   const store = new Store(root);
   await store.init();
   const queue = new Queue(store, {

@@ -19,7 +19,7 @@ function localUrl(value) {
     );
   return url;
 }
-async function inspect(url, stopping = false) {
+async function inspect(url, stopping = false, allowLegacy = false) {
   let response;
   try {
     response = await fetch(new URL("/api/server", url), {
@@ -32,13 +32,13 @@ async function inspect(url, stopping = false) {
       (stopping && ["ECONNRESET", "UND_ERR_SOCKET"].includes(error.cause?.code))
     )
       return null;
-    throw new Error("Could not verify the local server: " + error.message);
+    throw new Error("Could not verify the local server: " + error.message, { cause: error });
   }
   let info;
   try {
     info = await response.json();
   } catch {}
-  if (!response.ok || info?.application !== "weft")
+  if (!response.ok || !(info?.application === "flow" || (allowLegacy && info?.application === "weft")))
     throw new Error(
       "This port is already serving an unrecognized app. No process was changed.",
     );
@@ -97,7 +97,7 @@ export async function startServer({ url: address, root, dataRoot }) {
           env: {
             ...process.env,
             PORT: url.port || "80",
-            WEFT_DATA_DIR: dataRoot,
+            FLOW_DATA_DIR: dataRoot,
           },
         },
       );
@@ -141,11 +141,12 @@ export async function stopServer({
   root,
   dataRoot,
   force = false,
+  allowLegacy = false,
 }) {
   const url = localUrl(address);
   root = path.resolve(root);
   dataRoot = path.resolve(dataRoot);
-  const info = await inspect(url);
+  const info = await inspect(url, false, allowLegacy);
   if (!info) return { stopped: true, alreadyStopped: true, url: url.origin };
   sameWorkspace(info, root, dataRoot);
   const owned = JSON.parse(
@@ -167,10 +168,18 @@ export async function stopServer({
   process.kill(info.pid, "SIGTERM");
   const deadline = Date.now() + 9000;
   while (Date.now() < deadline) {
-    const current = await inspect(url, true);
-    if (!current || current.instanceId !== info.instanceId)
-      return { stopped: true, alreadyStopped: false, url: url.origin };
+    try {
+      const current = await inspect(url, true, allowLegacy);
+      if (!current || current.instanceId !== info.instanceId)
+        return { stopped: true, alreadyStopped: false, url: url.origin };
+    } catch (error) {
+      if (error.cause?.name !== "TimeoutError") throw error;
+    }
     await wait(100);
   }
+  // A suspended client may resume after the server has already finished draining.
+  const final = await inspect(url, true, allowLegacy);
+  if (!final || final.instanceId !== info.instanceId)
+    return { stopped: true, alreadyStopped: false, url: url.origin };
   throw new Error("The server has not stopped yet. Check server.log.");
 }

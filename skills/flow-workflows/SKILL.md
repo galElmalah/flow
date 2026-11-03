@@ -5,14 +5,18 @@ description: Create, fork, plan and run image or video workflows through the loc
 
 # Flow workflows
 
-Use the installed helper by its absolute path: `node <this-skill-folder>/scripts/flow.mjs ...`. It reaches the Flow installation without depending on shell aliases; keep your working directory in the consuming project so `.weft-project.json` discovery works. Run `--help` for the current command contract.
+Use the installed helper by its absolute path: `node <this-skill-folder>/scripts/flow.mjs ...`. It reaches the Flow installation without depending on shell aliases; keep your working directory in the consuming project so `flow.project.json` discovery works. Run `--help` for the current command contract.
 
 ## Find the project and direction
 
 - `serve --json` starts or reuses the installation server. `projects --search NAME --json` and `workflows --project ID --json` discover saved work.
-- A consuming project's `.weft-project.json` points to its local server and project. `project init --project ID --name NAME --root /absolute/project --json` registers it. Use an explicit project for cross-directory work.
+- A consuming project's `flow.project.json` points to its local server and project. `project init --project ID --name NAME --root /absolute/project --json` registers it. Use an explicit project for cross-directory work.
 - Read `workflow ID --json` before changing a graph. Fork shared or recorded work with `fork ID --project ID --name NAME --json`; use `--run RUN_ID` to fork the historical graph.
 - `guide --json` and `schema --json` describe supported operations. Use HTTP, MCP or the JavaScript client for graph edits; do not edit SQLite or JSON mirrors.
+
+## Save and exchange
+
+Workflow exports are `*.flow.json`: `{format:"flow",version:1,workflow:{...}}`. Use `export ID --output campaign.flow.json` and `import --from campaign.flow.json`; do not rename arbitrary JSON and assume it is converted. `GET /api/schema/flow` describes the file; `schema --json` describes its inner graph. Older plain graph JSON remains readable. Storage and secrets stay in `.flow/`, outside Git.
 
 ## Build and generate
 

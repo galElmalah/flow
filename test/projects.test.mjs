@@ -21,14 +21,14 @@ import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
 import { registerRunRoutes } from "../server/routes/runs.mjs";
 
 async function temporary(t, cleanup = true) {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-projects-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-projects-"));
   if (cleanup) t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
 
 test("v1 SQLite migration preserves workflow documents and historical unowned runs", async (t) => {
   const root = await temporary(t);
-  const old = new DatabaseSync(path.join(root, "weft.sqlite"));
+  const old = new DatabaseSync(path.join(root, "flow.sqlite"));
   old.exec(`
     CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     INSERT INTO metadata (key, value) VALUES ('json_imported', 'already imported');

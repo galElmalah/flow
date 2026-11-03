@@ -11,11 +11,11 @@ import { ProjectService } from "../server/projects.mjs";
 import { registerProjectRoutes } from "../server/routes/projects.mjs";
 import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
 import { registerRunRoutes } from "../server/routes/runs.mjs";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 import { resolveViewerTarget } from "../src/canvas/viewer-target.mjs";
 
 test("project search and recoverable cleanup preserve images, defaults and archive state across restart", async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), "weft-archive-"));
+  const root = await mkdtemp(path.join(tmpdir(), "flow-archive-"));
   const dataRoot = path.join(root, "data");
   let store = new Store(dataRoot);
   await store.init();
@@ -58,7 +58,7 @@ test("project search and recoverable cleanup preserve images, defaults and archi
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const client = new WeftClient({ url });
+  const client = new FlowClient({ url });
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
     await store.close();
@@ -121,7 +121,7 @@ test("project search and recoverable cleanup preserve images, defaults and archi
   );
   assert.equal(store.isWorkflowArchived("trial"), false);
   await assert.rejects(
-    new WeftClient({ url, projectId: "quotes" }).archiveWorkflows([
+    new FlowClient({ url, projectId: "quotes" }).archiveWorkflows([
       "trial",
       "foreign",
     ]),
@@ -139,7 +139,7 @@ test("project search and recoverable cleanup preserve images, defaults and archi
         await promisify(execFile)(
           process.execPath,
           [
-            path.resolve(import.meta.dirname, "../cli/weft.mjs"),
+            path.resolve(import.meta.dirname, "../cli/flow.mjs"),
             ...args,
             "--url",
             url,
@@ -235,7 +235,7 @@ test("project search and recoverable cleanup preserve images, defaults and archi
 });
 
 test("project viewer links need no default graph and reject conflicting targets", async () => {
-  const client = new WeftClient({ url: "http://localhost:4310" });
+  const client = new FlowClient({ url: "http://localhost:4310" });
   assert.equal(
     (await client.viewer({ projects: true })).url,
     "http://localhost:4310/projects",

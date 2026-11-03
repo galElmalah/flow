@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import { registerLocalModelRoutes } from "../server/routes/local-models.mjs";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { localModelPreset } from "../shared/local-model-presets.mjs";
 
 test("local lifecycle API protects active jobs and reports only completed inference at the current endpoint", async (t) => {
@@ -61,7 +61,7 @@ test("local lifecycle API protects active jobs and reports only completed infere
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   await assert.rejects(
@@ -149,7 +149,7 @@ test("MOSS preset install is exposed through the public client and preserves an 
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
-  const client = new WeftClient({
+  const client = new FlowClient({
     url: `http://127.0.0.1:${server.address().port}`,
   });
   await assert.rejects(

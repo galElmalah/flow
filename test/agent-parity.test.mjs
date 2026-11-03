@@ -6,11 +6,11 @@ import { promisify } from "node:util";
 import { mkdtemp, writeFile, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { WeftClient, createImageWorkflow } from "../client/index.mjs";
+import { FlowClient, createImageWorkflow } from "../client/index.mjs";
 
 // Exercise public commands against isolated HTTP state, never the user's platform.
 test("agent CLI covers durable UI actions through the supported API with scoped exports", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "weft-agent-parity-"));
+  const directory = await mkdtemp(join(tmpdir(), "flow-agent-parity-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const requests = [];
   let graph = createImageWorkflow({
@@ -95,7 +95,7 @@ test("agent CLI covers durable UI actions through the supported API with scoped 
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   t.after(() => new Promise((done) => server.close(done)));
   const url = `http://localhost:${server.address().port}`;
-  const cli = resolve(import.meta.dirname, "../cli/weft.mjs");
+  const cli = resolve(import.meta.dirname, "../cli/flow.mjs");
   const run = promisify(execFile);
   const command = async (...args) => {
     const { stdout } = await run(
@@ -176,7 +176,7 @@ test("agent CLI covers durable UI actions through the supported API with scoped 
   );
   assert.equal(snapshotFork.id, "forked");
   assert.equal(requests.at(-1).body.workflow.name, "Recorded snapshot");
-  const client = new WeftClient({ url, projectId: "qa" });
+  const client = new FlowClient({ url, projectId: "qa" });
   assert.equal(
     new TextDecoder().decode(await client.download("run")),
     "test-archive",

@@ -53,7 +53,7 @@ Every existing dropdown uses one component; callers supply existing domain choic
 
 ## Shape
 
-This candidate keeps a disposable `.weft/search.sqlite` database owned by one worker thread. The primary database never stores embeddings or waits for model loading. Main-thread `GallerySearch` owns canonical gallery projection, filter validation and reconciliation with live Store documents. The worker owns the model, its pending inference and the sidecar connection. Neither actor writes the other's state.
+This candidate keeps a disposable `.flow/search.sqlite` database owned by one worker thread. The primary database never stores embeddings or waits for model loading. Main-thread `GallerySearch` owns canonical gallery projection, filter validation and reconciliation with live Store documents. The worker owns the model, its pending inference and the sidecar connection. Neither actor writes the other's state.
 
 Use a real local sentence embedding model through `@huggingface/transformers`, initially a pinned quantized MiniLM sentence transformer. Pin model ID, model revision, dimension, pooling, normalization and extraction version as one `indexVersion` descriptor. Verify the package's current supported Node inference and model file behavior before implementation. First use may download model weights; subsequent inference and persisted vectors remain local. Expose that first download explicitly. There is no API key or semantic synonym substitute.
 

@@ -2,7 +2,7 @@ import { readFile, realpath, stat } from "node:fs/promises";
 import { dirname, resolve, join } from "node:path";
 import { projectManifestSchema } from "../shared/projects.mjs";
 
-export const manifestName = ".weft-project.json";
+export const manifestName = "flow.project.json";
 export async function readProjectManifest(file) {
   const path = resolve(file);
   const manifest = projectManifestSchema.parse(

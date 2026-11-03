@@ -3,7 +3,7 @@ import express from "express";
 import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { copyFile, unlink, writeFile, rename } from "node:fs/promises";
+import { copyFile, unlink, writeFile, rename, stat } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { isMediaJob, mediaKind, mediaArtifact } from "../shared/media.mjs";
 import { Store } from "./store.mjs";
@@ -41,9 +41,12 @@ export const root = path.resolve(
   "..",
 );
 const dataRoot = path.resolve(
-  process.env.WEFT_DATA_DIR || path.join(root, ".weft"),
+  process.env.FLOW_DATA_DIR || path.join(root, ".flow"),
 );
 const port = Number(process.env.PORT || 4310);
+if (!process.env.FLOW_DATA_DIR && !(await stat(dataRoot).catch(() => null)) &&
+    await stat(path.join(root, ".weft")).catch(() => null))
+  throw new Error("Legacy workspace found. Run node cli/flow.mjs migrate --json before starting Flow.");
 await initializeTracing({ dataRoot });
 const store = new Store(dataRoot);
 await store.init();
@@ -132,7 +135,7 @@ const services = {
 };
 const app = express();
 const identity = {
-  application: "weft",
+  application: "flow",
   instanceId: randomUUID(),
   pid: process.pid,
   root,

@@ -1,6 +1,6 @@
 node_modules/
 dist/
-.weft/
+.flow
 .env
 .env.*
 !.env.example
@@ -10,7 +10,7 @@ __pycache__/
 *.pyc
 
 # Local credentials, databases, model weights and agent project pointers.
-.weft-project.json
+flow.project.json
 *.sqlite
 *.sqlite-*
 *.db
@@ -37,3 +37,7 @@ coverage/
 /examples/quoture/*
 !/examples/quoture/shared-workflow.mjs
 !/examples/quoture/README.md
+
+# Legacy data is private during upgrades too.
+.weft
+.weft-project.json

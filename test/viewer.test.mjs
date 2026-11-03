@@ -8,7 +8,7 @@ import http from "node:http";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { EventEmitter } from "node:events";
-import { WeftClient } from "../client/index.mjs";
+import { FlowClient } from "../client/index.mjs";
 import { resolveViewer } from "../client/viewer.mjs";
 import { openViewer, viewerOpener } from "../cli/viewer.mjs";
 import { stopServer } from "../cli/server.mjs";
@@ -80,7 +80,7 @@ test("viewer links encode targets, use current project defaults, and validate ru
     /localhost/,
   );
   assert.equal(
-    (await new WeftClient().viewer()).url,
+    (await new FlowClient().viewer()).url,
     "http://localhost:4310/projects",
   );
 });
@@ -131,7 +131,7 @@ test("viewer opener passes a URL as one argument without a shell and reports lau
 });
 
 test("exposed open CLI starts one installation server, resolves a consuming project, and rejects invalid targets", async (t) => {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-viewer-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-viewer-"));
   const projectRoot = path.join(dataRoot, "project");
   await mkdir(projectRoot);
   const reservation = http.createServer();
@@ -145,14 +145,14 @@ test("exposed open CLI starts one installation server, resolves a consuming proj
   const invoke = async (cwd, ...args) => {
     const { stdout } = await exec(
       process.execPath,
-      [path.join(root, "cli/weft.mjs"), ...args, "--json"],
+      [path.join(root, "cli/flow.mjs"), ...args, "--json"],
       {
         cwd,
         env: {
           ...process.env,
-          WEFT_URL: url,
-          WEFT_DATA_DIR: dataRoot,
-          WEFT_CODEX_BIN: path.join(dataRoot, "no-codex"),
+          FLOW_URL: url,
+          FLOW_DATA_DIR: dataRoot,
+          FLOW_CODEX_BIN: path.join(dataRoot, "no-codex"),
         },
       },
     );
@@ -185,7 +185,7 @@ test("exposed open CLI starts one installation server, resolves a consuming proj
   assert.equal(contextual.workflowId, "paper-studies");
   assert.equal(contextual.projectId, "viewer-app");
   assert.equal(
-    await stat(path.join(projectRoot, ".weft")).catch(() => null),
+    await stat(path.join(projectRoot, ".flow")).catch(() => null),
     null,
   );
   const workflow = await invoke(projectRoot, "workflow", "paper-studies");
@@ -231,7 +231,7 @@ test("exposed open CLI starts one installation server, resolves a consuming proj
     /does not exist/,
   );
   const fork = await invoke(projectRoot, "fork", workflow.id);
-  await new WeftClient({ url, projectId: "viewer-app" }).updateProject(
+  await new FlowClient({ url, projectId: "viewer-app" }).updateProject(
     "viewer-app",
     { defaultWorkflowId: fork.id },
   );
@@ -275,7 +275,7 @@ test("exposed open CLI starts one installation server, resolves a consuming proj
   );
   const help = await exec(
     process.execPath,
-    [path.join(root, "cli/weft.mjs"), "help"],
+    [path.join(root, "cli/flow.mjs"), "help"],
     { cwd: root },
   );
   assert.match(help.stdout, /flow open/);

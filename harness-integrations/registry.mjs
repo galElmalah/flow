@@ -582,7 +582,7 @@ export class ProviderRegistry {
   }
   async run(context) {
     const p = this.get(context.job.providerId);
-    await traced("provider.preflight", { "weft.provider_id": p.id }, () =>
+    await traced("provider.preflight", { "flow.provider_id": p.id }, () =>
       this.preflight([context.job]),
     );
     const token = p.apiKey || (p.apiKeyEnv && process.env[p.apiKeyEnv]);

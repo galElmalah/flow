@@ -184,13 +184,13 @@ export function createCheckpointProfile(input) {
       },
       9: {
         class_type: "SaveImage",
-        inputs: { filename_prefix: "weft", images: ["8", 0] },
+        inputs: { filename_prefix: "flow", images: ["8", 0] },
       },
       ...(imageToImage
         ? {
             10: {
               class_type: "LoadImage",
-              inputs: { image: "weft-input.png" },
+              inputs: { image: "flow-input.png" },
             },
           }
         : {}),

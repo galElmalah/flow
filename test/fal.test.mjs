@@ -10,7 +10,7 @@ import { FalMedia } from "../harness-integrations/fal/index.mjs";
 import { ProviderRegistry } from "../harness-integrations/registry.mjs";
 import { registerProviderRoutes } from "../server/routes/providers.mjs";
 import {
-  WeftClient,
+  FlowClient,
   createImageWorkflow,
   createVideoWorkflow,
 } from "../client/index.mjs";
@@ -46,7 +46,7 @@ async function fixture(
   fetcher,
   { model = "fal-ai/flux/schnell", env = { FAL_KEY: secret } } = {},
 ) {
-  const dataRoot = await mkdtemp(path.join(tmpdir(), "weft-fal-"));
+  const dataRoot = await mkdtemp(path.join(tmpdir(), "flow-fal-"));
   t.after(() => rm(dataRoot, { recursive: true, force: true }));
   const fal = new FalMedia({
     dataRoot,
@@ -366,7 +366,7 @@ test("fal private setup is shared by HTTP, client and CLI, while a configured ke
   await new Promise((done) => server.once("listening", done));
   t.after(() => new Promise((done) => server.close(done)));
   const url = `http://127.0.0.1:${server.address().port}`,
-    client = new WeftClient({ url });
+    client = new FlowClient({ url });
   assert.equal((await client.falConnection()).ready, false);
   const saved = await client.configureFal({ apiKey: secret });
   assert.equal(saved.ready, true);
@@ -393,7 +393,7 @@ test("fal private setup is shared by HTTP, client and CLI, while a configured ke
     { execFile } = await import("node:child_process");
   const { stdout } = await promisify(execFile)(
     process.execPath,
-    ["cli/weft.mjs", "providers", "fal", "--url", url, "--json"],
+    ["cli/flow.mjs", "providers", "fal", "--url", url, "--json"],
     { cwd: root },
   );
   assert.equal(JSON.parse(stdout).ready, false);

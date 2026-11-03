@@ -2,7 +2,7 @@
 
 `index.mjs` owns provider `pi`, noninteractive invocation and plain-text final output.
 Install Pi, configure its provider/model and sign in with `pi`, then reload providers.
-`WEFT_PI_BIN` overrides the executable. `default` uses Pi's configured model; an
+`FLOW_PI_BIN` overrides the executable. `default` uses Pi's configured model; an
 explicit model can use Pi's provider/model selector syntax.
 
 Pi generates text and accepts reference-image attachments when the selected model

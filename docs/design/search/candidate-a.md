@@ -6,7 +6,7 @@ The gallery already stores its source material locally, but its search in `src/A
 
 ## Usage (caller’s view)
 
-The gallery submits meaning plus its existing scopes; it receives existing gallery objects with scores and explicit index state. Empty query still lists scoped images without waiting for a model. One local model download is cached under `.weft/models`; later inference works offline. No prompt or asset leaves the machine.
+The gallery submits meaning plus its existing scopes; it receives existing gallery objects with scores and explicit index state. Empty query still lists scoped images without waiting for a model. One local model download is cached under `.flow/models`; later inference works offline. No prompt or asset leaves the machine.
 
 ```js
 // src/App.jsx: debounced 220 ms; abort previous request; ignore stale completions.
@@ -22,7 +22,7 @@ setSearchState(result.index);
 
 // client/index.mjs: project-bound agent uses the same route and semantics.
 const flow = new FlowClient({ projectId: 'quoture' });
-const { items, index } = await weft.searchGallery({ query: 'quiet friendship beside water' });
+const { items, index } = await flow.searchGallery({ query: 'quiet friendship beside water' });
 // items preserve records, prompt, references, run and project provenance.
 
 // Any existing dropdown: simple typed choice surface, never synthetic DOM events.
@@ -53,7 +53,7 @@ const { items, index } = await weft.searchGallery({ query: 'quiet friendship bes
 
 ### Data first
 
-Keep source SQLite untouched as the authority and add a separate **derived** `.weft/search.sqlite` owned only by the main search service. The worker never opens the Store database and never writes either database. This avoids two actors writing shared state, per separate-before-serializing-shared-state.
+Keep source SQLite untouched as the authority and add a separate **derived** `.flow/search.sqlite` owned only by the main search service. The worker never opens the Store database and never writes either database. This avoids two actors writing shared state, per separate-before-serializing-shared-state.
 
 ```text
 search_documents(

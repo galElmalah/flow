@@ -18,7 +18,7 @@ import {
   CornerUpLeft,
   ArrowUpRight,
 } from "lucide-react";
-import { WeftClient } from "../../client/index.mjs";
+import { FlowClient } from "../../client/index.mjs";
 import { IconButton } from "../components/IconButton.jsx";
 import { HarnessModelPicker } from "./HarnessModelPicker.jsx";
 
@@ -58,7 +58,7 @@ export function AgentDock({
 }) {
   const client = useMemo(
     () =>
-      new WeftClient({
+      new FlowClient({
         url: window.location.origin,
         projectId: projectId || undefined,
       }),
@@ -232,12 +232,12 @@ export function AgentDock({
       setError("");
     };
     const connection = (event) => setConnected(event.detail);
-    window.addEventListener("weft:agent-session", receive);
-    window.addEventListener("weft:agent-connection", connection);
+    window.addEventListener("flow:agent-session", receive);
+    window.addEventListener("flow:agent-connection", connection);
     return () => {
       onStreamSession?.(null);
-      window.removeEventListener("weft:agent-session", receive);
-      window.removeEventListener("weft:agent-connection", connection);
+      window.removeEventListener("flow:agent-session", receive);
+      window.removeEventListener("flow:agent-connection", connection);
     };
   }, [session?.id, projectId, onStreamSession]);
   const apply = async (turn) => {
@@ -315,8 +315,8 @@ export function AgentDock({
       setReasoningEffort("inherit");
       setOpen(true);
     };
-    window.addEventListener("weft:agent-select-model", select);
-    return () => window.removeEventListener("weft:agent-select-model", select);
+    window.addEventListener("flow:agent-select-model", select);
+    return () => window.removeEventListener("flow:agent-select-model", select);
   }, [providers]);
   const send = async (event) => {
     event?.preventDefault();

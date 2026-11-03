@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  WeftClient,
-  WeftError,
+  FlowClient,
+  FlowError,
   createImageWorkflow,
 } from "../client/index.mjs";
 import { prepareWorkflow } from "../cli/workflow-input.mjs";
@@ -10,7 +10,7 @@ import { planWorkflow } from "../server/graph.mjs";
 
 function fixture(graph, projectId) {
   const writes = [];
-  const client = new WeftClient({
+  const client = new FlowClient({
     projectId,
     fetch: async (_url, options = {}) => {
       if (!options.method) return Response.json(graph);
@@ -94,10 +94,10 @@ test("a consuming repository cannot redirect platform discovery to a remote serv
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const { findProjectContext } = await import("../client/project-context.mjs");
-  const directory = await mkdtemp(join(tmpdir(), "weft-local-manifest-"));
+  const directory = await mkdtemp(join(tmpdir(), "flow-local-manifest-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   await writeFile(
-    join(directory, ".weft-project.json"),
+    join(directory, "flow.project.json"),
     JSON.stringify({
       version: 1,
       projectId: "quoture",
@@ -118,7 +118,7 @@ test("semantic search keeps project ownership while narrowing filters and propag
     total: 1,
     index: { state: "ready", indexed: 1, total: 1, model: "local" },
   };
-  const client = new WeftClient({
+  const client = new FlowClient({
     projectId: "quoture",
     fetch: async (url, options) => {
       requests.push({ url, options });
@@ -161,14 +161,14 @@ test("semantic search keeps project ownership while narrowing filters and propag
   ])
     await assert.rejects(
       client.searchImages({ query: "path", scope, workflowId: "studies" }),
-      (error) => error instanceof WeftError && error.status === 409,
+      (error) => error instanceof FlowError && error.status === 409,
     );
   assert.equal(requests.length, 2, "invalid scopes never reach the server");
 });
 
 test("unbound search accepts explicit scopes and exposes index recovery without masking errors", async () => {
   const requests = [];
-  const client = new WeftClient({
+  const client = new FlowClient({
     fetch: async (url, options = {}) => {
       requests.push({ url, options });
       if (url.endsWith("/api/gallery/search")) {
@@ -215,11 +215,11 @@ test("unbound search accepts explicit scopes and exposes index recovery without 
   await assert.rejects(
     client.searchImages({ query: "invalid" }),
     (error) =>
-      error instanceof WeftError &&
+      error instanceof FlowError &&
       error.status === 400 &&
       /too long/.test(error.message),
   );
-  const cancelled = new WeftClient({
+  const cancelled = new FlowClient({
     fetch: (_url, { signal }) => {
       signal.throwIfAborted();
       throw new Error("should not fetch an aborted request");
@@ -241,7 +241,7 @@ test("the search CLI searches the discovered project without its default workflo
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
   const directory = await realpath(
-    await mkdtemp(join(tmpdir(), "weft-search-cli-")),
+    await mkdtemp(join(tmpdir(), "flow-search-cli-")),
   );
   t.after(() => rm(directory, { recursive: true, force: true }));
   const requests = [];
@@ -270,7 +270,7 @@ test("the search CLI searches the discovered project without its default workflo
   t.after(() => new Promise((resolve) => server.close(resolve)));
   const url = `http://localhost:${server.address().port}`;
   await writeFile(
-    join(directory, ".weft-project.json"),
+    join(directory, "flow.project.json"),
     JSON.stringify({
       version: 1,
       projectId: "quoture",
@@ -278,14 +278,14 @@ test("the search CLI searches the discovered project without its default workflo
       defaultWorkflowId: "default-studies",
     }),
   );
-  const cli = resolve(import.meta.dirname, "../cli/weft.mjs");
+  const cli = resolve(import.meta.dirname, "../cli/flow.mjs");
   const run = promisify(execFile);
   const { stdout } = await run(
     process.execPath,
     [cli, "search", "quiet companionship", "--json"],
     {
       cwd: directory,
-      env: { ...process.env, WEFT_URL: url },
+      env: { ...process.env, FLOW_URL: url },
     },
   );
   assert.equal(JSON.parse(stdout).index.state, "ready");
@@ -311,7 +311,7 @@ test("the search CLI searches the discovered project without its default workflo
     ],
     {
       cwd: directory,
-      env: { ...process.env, WEFT_URL: url },
+      env: { ...process.env, FLOW_URL: url },
     },
   );
   assert.deepEqual(requests[1], {
@@ -325,7 +325,7 @@ test("the search CLI searches the discovered project without its default workflo
   await assert.rejects(
     run(process.execPath, [cli, "search", "scene", "--count", "not-a-number"], {
       cwd: directory,
-      env: { ...process.env, WEFT_URL: url },
+      env: { ...process.env, FLOW_URL: url },
     }),
     (error) => /Search result count must be/.test(error.stderr),
   );

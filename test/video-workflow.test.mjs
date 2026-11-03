@@ -11,7 +11,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import {
   createImageWorkflow,
   createVideoWorkflow,
-  WeftClient,
+  FlowClient,
 } from "../client/index.mjs";
 import { validateGraph } from "../shared/graph.mjs";
 import { generationKind, mediaArtifact } from "../shared/media.mjs";
@@ -121,7 +121,7 @@ test("video recipe preserves records, optional prompt writers, typed counts and 
 });
 
 test("accepted video receipt survives shutdown and resume saves the MP4 in normal gallery/history", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "weft-video-queue-"));
+  const root = await mkdtemp(join(tmpdir(), "flow-video-queue-"));
   const store = new Store(root);
   await store.init();
   const receipt = {
@@ -193,7 +193,7 @@ test("accepted video receipt survives shutdown and resume saves the MP4 in norma
 });
 
 test("CLI and MCP create the same video graphs and expose private configuration without exporting keys", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "weft-video-agents-"));
+  const directory = await mkdtemp(join(tmpdir(), "flow-video-agents-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const requests = [];
   const api = createServer(async (request, response) => {
@@ -224,7 +224,7 @@ test("CLI and MCP create the same video graphs and expose private configuration 
   await new Promise((done) => api.listen(0, "127.0.0.1", done));
   t.after(() => new Promise((done) => api.close(done)));
   const url = `http://localhost:${api.address().port}`;
-  const cli = resolve(import.meta.dirname, "../cli/weft.mjs");
+  const cli = resolve(import.meta.dirname, "../cli/flow.mjs");
   const command = async (...args) =>
     JSON.parse(
       (
@@ -289,13 +289,13 @@ test("CLI and MCP create the same video graphs and expose private configuration 
   );
   assert.ok(!JSON.stringify(configured).includes(key));
   assert.equal((await command("providers", "gemini-video")).hasApiKey, true);
-  const client = new WeftClient({ url });
+  const client = new FlowClient({ url });
   assert.equal((await client.geminiVideoConnection()).hasApiKey, true);
 
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [resolve(import.meta.dirname, "../mcp/server.mjs")],
-    env: { ...process.env, WEFT_URL: url, WEFT_PROJECT: "qa" },
+    env: { ...process.env, FLOW_URL: url, FLOW_PROJECT: "qa" },
     stderr: "pipe",
   });
   const mcp = new Client({ name: "video-agent-test", version: "1" });
@@ -339,7 +339,7 @@ test("CLI and MCP create the same video graphs and expose private configuration 
 });
 
 test("page-aware agent sees video counts and can edit the same video node without inference", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "weft-video-context-"));
+  const root = await mkdtemp(join(tmpdir(), "flow-video-context-"));
   const store = new Store(root);
   await store.init();
   const agent = new AgentConversations({

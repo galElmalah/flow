@@ -12,4 +12,4 @@ Output originals and normalized PNG previews are saved through the registry.
 The bundled `local-color` command is deterministic local image processing, not AI
 inference. Its implementation remains a runnable extension example at
 `examples/harnesses/local-color.mjs`. Custom providers are configured in private
-`.weft/providers.json`; built-in IDs are reserved.
+`.flow/providers.json`; built-in IDs are reserved.
