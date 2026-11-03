@@ -10,6 +10,8 @@ const credentials = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
   /\b(?:gh[pousr]_[A-Za-z0-9]{32,}|github_pat_[A-Za-z0-9_]{50,})\b/,
   /\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{32,}\b/,
+  /\bAIza[A-Za-z0-9_-]{35}\b/,
+  /\bxai-[A-Za-z0-9]{40,}\b/,
 ];
 
 for (const file of files) {
@@ -21,7 +23,7 @@ for (const file of files) {
   if (data.includes(0)) continue;
   const text = data.toString("utf8");
   if (credentials.some((pattern) => pattern.test(text))) failures.push(`${file}: possible credential; remove it and rotate it if real`);
-  if (/\/(?:Users\/galelmalah|var\/folders)\//.test(text)) failures.push(`${file}: replace machine-specific paths with portable examples`);
+  if (/\/(?:Users|home)\/[^/\s]+\/|\/var\/folders\//.test(text)) failures.push(`${file}: replace machine-specific paths with portable examples`);
 }
 
 for (const required of ["LICENSE", "CONTRIBUTING.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md", ".github/workflows/ci.yml"]) {

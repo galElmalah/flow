@@ -9,6 +9,7 @@ Completed preparation:
 - CI for behavior tests, architecture checks, production build and release-file checks.
 - Synthetic graph fixtures instead of tests reading private project exports.
 - Lockfile-backed installation and pinned direct dependency versions.
+- Fresh GitHub clone verified on macOS: dependency installation, all 354 tests, production build, release checks, empty-workspace startup, direct viewer routes and four local-processing jobs. No development data or provider account was required for the trial.
 
 Before making the repository public:
 
