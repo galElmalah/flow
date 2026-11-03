@@ -5,7 +5,7 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const files = [...new Set(execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { cwd: root }).toString().split("\0").filter(Boolean))];
 const failures = [];
-const forbidden = /(^|\/)(?:\.weft|node_modules|dist|\.venv)(\/|$)|^docs\/(?:qa|screenshots|benchmarks)\/|\.(?:sqlite(?:-\w+)?|safetensors|ckpt|gguf|pem|key)$|(^|\/)\.env(?:\.(?!example$).*)?$/;
+const forbidden = /(^|\/)(?:\.weft|node_modules|dist|\.venv)(\/|$)|^docs\/(?:qa|screenshots|benchmarks)\/|^examples\/(?:sports-agent|salt-speed)\/|^examples\/quoture\/(?!shared-workflow\.mjs$|README\.md$)|(^|\/)\.weft-project\.json$|\.(?:sqlite(?:-\w+)?|db(?:-\w+)?|safetensors|ckpt|gguf|pt|pth|onnx|pem|key)$|(^|\/)\.env(?:\.(?!example$).*)?$/;
 const credentials = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
   /\b(?:gh[pousr]_[A-Za-z0-9]{32,}|github_pat_[A-Za-z0-9_]{50,})\b/,
