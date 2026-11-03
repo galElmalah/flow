@@ -192,6 +192,8 @@ test("empty runtime state is honest, managed Ollama setup is pinned and isolated
   await manager.stop("ollama");
   const restarted = new RuntimeManager({
     dataRoot,
+    platform: manager.platform,
+    arch: manager.arch,
     fetch: async () => {
       throw new Error("offline");
     },

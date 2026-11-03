@@ -23,7 +23,7 @@ async function inspect(url, stopping = false) {
   let response;
   try {
     response = await fetch(new URL("/api/server", url), {
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(5000),
       headers: { Connection: "close" },
     });
   } catch (error) {

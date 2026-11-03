@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -495,4 +495,40 @@ test("project agents discover context, create owned workflows, fork across proje
     (await invokeAt(nested, "workflow", created.id)).projectId,
     "quote-app",
   );
+});
+
+test("verified shutdown tolerates a slow health response while resources drain", async (t) => {
+  const config = await temporary(t);
+  const script = `
+    const http = require('node:http');
+    const config = JSON.parse(process.argv[1]);
+    const info = { application: 'weft', root: config.root,
+      dataDirectory: config.dataRoot, pid: process.pid,
+      instanceId: 'slow-shutdown-fixture', activeJobs: 0 };
+    let stopping = false;
+    const server = http.createServer((req, res) => {
+      const respond = () => {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify(info));
+      };
+      if (stopping) setTimeout(respond, 1800);
+      else respond();
+    });
+    server.listen(Number(new URL(config.url).port), '127.0.0.1', () => console.log('ready'));
+    process.on('SIGTERM', () => {
+      stopping = true;
+      setTimeout(() => server.close(() => process.exit(0)), 2300);
+    });
+  `;
+  const child = execFile(process.execPath, ["-e", script, JSON.stringify(config)]);
+  t.after(() => { if (child.exitCode === null) child.kill("SIGKILL"); });
+  await new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.stdout.once("data", resolve);
+    child.once("exit", (code) => { if (code) reject(new Error(`Fixture exited ${code}`)); });
+  });
+  await writeFile(path.join(config.dataRoot, "server.json"), JSON.stringify({
+    pid: child.pid, instanceId: "slow-shutdown-fixture",
+  }));
+  assert.equal((await stopServer(config)).stopped, true);
 });
