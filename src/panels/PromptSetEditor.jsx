@@ -38,9 +38,15 @@ export function PromptSetEditor({
     }
   }, [itemId]);
   useEffect(() => {
-    list.current
-      ?.querySelector('[aria-pressed="true"]')
-      ?.scrollIntoView({ block: "nearest" });
+    const container = list.current;
+    const row = container?.querySelector('[aria-pressed="true"]');
+    if (!row) return;
+    const bounds = container.getBoundingClientRect();
+    const selected = row.getBoundingClientRect();
+    if (selected.top < bounds.top)
+      container.scrollTop += selected.top - bounds.top;
+    else if (selected.bottom > bounds.bottom)
+      container.scrollTop += selected.bottom - bounds.bottom;
   }, [item?.id]);
   const itemJobs = item ? promptItemJobs(jobs, node.id, item.id) : [];
   const outputs = itemJobs.filter(

@@ -1699,13 +1699,17 @@ export default function App() {
     setMenu(null);
   };
   const promptMap = promptGuide({ nodes, edges }, plan);
-  const inspectNode = (id) => {
+  const inspectNode = (id, { showHelp = false } = {}) => {
     const node = flow.getNode(id);
     if (!node) return;
     setView("canvas");
     setSelection(id);
     setNodes((items) => items.map((n) => ({ ...n, selected: n.id === id })));
     setPanel("properties");
+    if (showHelp)
+      requestAnimationFrame(() => {
+        document.querySelector(".property-content")?.scrollTo({ top: 0 });
+      });
     setLibrary(false);
     const rail = state.current.leftMenu.collapsed ? 44 : 62;
     const right = window.innerWidth <= 650 ? 280 : 300;

@@ -30,7 +30,7 @@ export function Header({ id, type, label }) {
           aria-label={`About ${nodeNames[type]}: ${label || nodeNames[type]}`}
           onClick={(event) => {
             event.stopPropagation();
-            inspectNode(id);
+            inspectNode(id, { showHelp: true });
           }}
         >
           <Icon size={15} />
