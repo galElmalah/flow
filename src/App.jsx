@@ -80,7 +80,7 @@ import {
 import { copySubgraph, cloneSubgraph } from "./canvas/graph-operations.mjs";
 import { WorkflowSaver } from "./canvas/workflow-saver.mjs";
 import { recordFields, recordTitle } from "../shared/inspection.mjs";
-import { NodeInterface } from "./panels/NodeInterface.jsx";
+import { NodeInterface, NodeExplanation } from "./panels/NodeInterface.jsx";
 import { PromptSetEditor } from "./panels/PromptSetEditor.jsx";
 import { defaultPromptTemplate } from "../shared/prompt-sets.mjs";
 import { overlayJobResults } from "../shared/job-results.mjs";
@@ -97,7 +97,11 @@ import { validateGraph, outputType, inputTypes } from "../shared/graph.mjs";
 import { StudioContext } from "./studio/context.jsx";
 import { subscribeWorkspaceEvents } from "./studio/workspace-events.mjs";
 import { jsonRequest, download, cls } from "./studio/ui.mjs";
-import { toFlowFile, fromFlowFile, flowFileName } from "../shared/flow-file.mjs";
+import {
+  toFlowFile,
+  fromFlowFile,
+  flowFileName,
+} from "../shared/flow-file.mjs";
 import {
   accents,
   icons,
@@ -1880,6 +1884,8 @@ export default function App() {
     (
       nodeNames[t] +
       " " +
+      nodeDescriptions[t] +
+      " " +
       {
         image: "reference import upload",
         prompt: "text description",
@@ -2720,6 +2726,9 @@ export default function App() {
                       </span>
                       <span>
                         <strong>{nodeNames[type]}</strong>
+                        <small className="node-library-description">
+                          {nodeDescriptions[type]}
+                        </small>
                       </span>
                       <Plus size={14} className="library-plus" />
                     </button>
@@ -3614,6 +3623,7 @@ export default function App() {
                     </span>
                     <strong>{nodeNames[selected.type]}</strong>
                   </div>
+                  <NodeExplanation type={selected.type} />
                   <label>
                     Node name
                     <input

@@ -448,6 +448,26 @@ kbd {
   font-size: 9px;
   color: #8d8d8d;
 }
+.library-item .node-library-description {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #aaa;
+  white-space: normal;
+}
+.node-library-list .library-item {
+  align-items: flex-start;
+}
+.node-library-list .library-icon {
+  flex-shrink: 0;
+}
+.node-library-list .library-plus {
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.node-library-list .library-item > span:nth-child(2) {
+  gap: 3px;
+  padding-top: 2px;
+}
 .library-plus {
   margin-left: auto;
   color: #7e7e7e;
@@ -647,6 +667,22 @@ kbd {
 }
 .node-type-icon {
   display: flex;
+}
+.node-type-help {
+  padding: 3px;
+  margin: -3px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: help;
+}
+.node-type-help:hover {
+  background: #292929;
+}
+.node-type-help:focus-visible {
+  outline: 1px solid #ddd;
+  outline-offset: 2px;
 }
 .node-title {
   font-size: 12px;
@@ -3346,6 +3382,24 @@ kbd {
   line-height: 1.75;
   margin: 0 0 20px;
 }
+.node-explanation {
+  margin-bottom: 18px;
+}
+.node-explanation .inspector-description {
+  margin-bottom: 10px;
+}
+.inspector-example {
+  color: #aaa;
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 0;
+}
+.inspector-example > span {
+  display: block;
+  color: #ddd;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
 .node-interface section {
   margin: 0 0 20px;
 }
@@ -3845,7 +3899,7 @@ kbd {
   height: 30px;
   flex-shrink: 0;
 }
-.library-compact .library-item small,
+.library-compact .provider-library-item small,
 .library-compact .library-plus,
 .library-compact .library-hint,
 .library-compact .template-heading,

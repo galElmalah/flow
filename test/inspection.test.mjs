@@ -67,6 +67,8 @@ test("every supported node describes each real input and output type", () => {
   for (const [type, expected] of Object.entries(inputTypes)) {
     const spec = nodeInterfaces[type];
     assert.ok(spec.description.length > 20);
+    assert.ok(spec.summary?.length > 20, `${type} needs a visible explanation`);
+    assert.ok(spec.example?.length > 20, `${type} needs a practical example`);
     assert.deepEqual(
       spec.inputs.map((p) => p.type),
       expected,

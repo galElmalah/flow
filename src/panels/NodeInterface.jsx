@@ -7,6 +7,20 @@ import {
   templateParameters,
 } from "../../shared/inspection.mjs";
 
+export function NodeExplanation({ type }) {
+  const definition = nodeInterfaces[type];
+  if (!definition) return null;
+  return (
+    <div className="node-explanation" aria-label="About this node">
+      <p className="inspector-description">{definition.description}</p>
+      <p className="inspector-example">
+        <span>Example</span>
+        {definition.example}
+      </p>
+    </div>
+  );
+}
+
 export function NodeInterface({ node, nodes, edges, onInspect }) {
   const definition = nodeInterfaces[node.type];
   if (!definition) return null;
@@ -68,7 +82,6 @@ export function NodeInterface({ node, nodes, edges, onInspect }) {
     });
   return (
     <div className="node-interface">
-      <p className="inspector-description">{definition.description}</p>
       {definition.inputs.length > 0 && (
         <section aria-label="Node inputs">
           <h3>Inputs</h3>

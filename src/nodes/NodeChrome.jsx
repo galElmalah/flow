@@ -3,7 +3,7 @@ import { Handle, Position } from "@xyflow/react";
 import { MoreHorizontal } from "lucide-react";
 import { StudioContext } from "../studio/context.jsx";
 import { cls } from "../studio/ui.mjs";
-import { icons, nodeNames } from "./catalog.mjs";
+import { icons, nodeNames, nodeDescriptions } from "./catalog.mjs";
 import { Tooltip } from "../components/Tooltip.jsx";
 export function Socket({ type, kind = "target", top, label }) {
   return (
@@ -24,9 +24,18 @@ export function Header({ id, type, label }) {
   const Icon = icons[type];
   return (
     <div className="node-head">
-      <span className="node-type-icon">
-        <Icon size={15} />
-      </span>
+      <Tooltip label={nodeDescriptions[type]}>
+        <button
+          className="node-type-icon node-type-help nodrag"
+          aria-label={`About ${nodeNames[type]}: ${label || nodeNames[type]}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            inspectNode(id);
+          }}
+        >
+          <Icon size={15} />
+        </button>
+      </Tooltip>
       <span className="node-title">{label || nodeNames[type]}</span>
       {ruleCounts?.get(id) > 0 && (
         <button

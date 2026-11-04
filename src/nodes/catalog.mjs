@@ -1,3 +1,4 @@
+import { nodeInterfaces } from "../../shared/inspection.mjs";
 import {
   Image as ImageIcon,
   Type,
@@ -54,18 +55,9 @@ export const nodeNames = {
   "video-output": "Video collection",
   output: "Output collection",
 };
-export const nodeDescriptions = {
-  image: "Reference images that guide generation",
-  prompt: "Shared text sent to connected nodes",
-  "prompt-generate": "Use an agent to write scene prompts",
-  variations: "Several versions of a prompt",
-  dataset: "Source records for individual outputs",
-  "prompt-set": "Named scenes with shared instructions and settings",
-  template: "Combine a reusable prompt with record fields",
-  filter: "Route records by field values",
-  section: "Group and focus part of a workflow",
-  generate: "Generate images from connected prompts and references",
-  output: "Collect generated images",
-  "video-generate": "Generate video from prompts or images",
-  "video-output": "Collect generated videos",
-};
+export const nodeDescriptions = Object.fromEntries(
+  Object.entries(nodeInterfaces).map(([type, definition]) => [
+    type,
+    definition.summary,
+  ]),
+);

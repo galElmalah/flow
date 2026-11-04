@@ -23,8 +23,11 @@ const image = (label, description) => ({ type: "image", label, description });
 const video = (label, description) => ({ type: "video", label, description });
 export const nodeInterfaces = {
   "prompt-set": {
+    summary: "Keep named scenes together and generate them as a batch.",
     description:
-      "Named scene prompts sharing one template and defaults. Each enabled scene becomes its own input, retaining its stable ID and overrides.",
+      "Add one row per scene and connect shared instructions and reference images once. Each enabled scene becomes a separate prompt, with optional copies, aspect ratio and seed overrides.",
+    example:
+      "Running, cycling and swimming become three scene prompts. One copy and one generation mode produce three images.",
     inputs: [
       text(
         "Shared instructions",
@@ -43,8 +46,11 @@ export const nodeInterfaces = {
     ],
   },
   image: {
+    summary: "Upload images to guide the look or starting scene.",
     description:
-      "Original images used as starting points or visual references.",
+      "Add one or more seed images or style references. Connected steps receive those images without changing the originals.",
+    example:
+      "Use a motion-blurred sports photo as the reference for a new cycling scene.",
     inputs: [],
     outputs: [
       image(
@@ -54,8 +60,11 @@ export const nodeInterfaces = {
     ],
   },
   dataset: {
+    summary: "Import rows so each record gets its own output.",
     description:
-      "A shared source of records. Every row keeps its identity throughout the workflow.",
+      "Import CSV or JSON records, such as quotes, products or article concepts. Each row carries its named fields and record ID into the following steps.",
+    example:
+      "A list of ten quotes gives a template ten separate records to illustrate.",
     inputs: [],
     outputs: [
       text(
@@ -65,7 +74,10 @@ export const nodeInterfaces = {
     ],
   },
   prompt: {
-    description: "Reusable instructions shared by connected branches.",
+    summary: "Write shared instructions for connected branches.",
+    description:
+      "Write the base art direction here. These instructions are added to incoming text and passed to connected steps; this node does not call an AI model.",
+    example: "“Black-and-white sports photography, motion blur, no text.”",
     inputs: [
       text(
         "Upstream text",
@@ -81,7 +93,10 @@ export const nodeInterfaces = {
     ],
   },
   template: {
-    description: "Fills the template separately for each incoming record.",
+    summary: "Fill a reusable prompt with each record’s fields.",
+    description:
+      "Write a reusable brief using {{field}} placeholders. Each record fills those placeholders with its own values. {{input}} inserts upstream text, including an AI-written brief. No AI call is needed to fill the template.",
+    example: "“A scene about {{meaning}}, set in {{scenery}}.”",
     inputs: [
       text(
         "Text & record fields",
@@ -100,8 +115,11 @@ export const nodeInterfaces = {
     ],
   },
   filter: {
+    summary: "Send only matching records into a branch.",
     description:
-      "Routes records by an exact field value; unmatched records do not enter this branch.",
+      "Choose a record field and the exact values to keep. Matching rows continue with their prompts, references and IDs; other rows skip this branch.",
+    example:
+      "Send role = quote to illustrations and role = category to cover artwork.",
     inputs: [
       text(
         "Source records",
@@ -116,8 +134,11 @@ export const nodeInterfaces = {
     ],
   },
   "prompt-generate": {
+    summary: "Ask a text model to write or expand a prompt.",
     description:
-      "Uses the selected text harness to write one scene or prompt per input record.",
+      "Send a brief or record to the selected text model. It writes one response per input, replacing the incoming text while keeping the record and references for later steps.",
+    example:
+      "Turn each quote into a visual scene, then send that brief to Image generation.",
     inputs: [
       text(
         "Brief & instructions",
@@ -136,8 +157,11 @@ export const nodeInterfaces = {
     ],
   },
   variations: {
+    summary: "Create a separate prompt direction from each line.",
     description:
-      "Adds each variation to the incoming prompt to create parallel directions.",
+      "Write one variation per line. Each non-empty line is added to the incoming prompt to create another direction. Connecting multiple variation nodes combines their possibilities.",
+    example:
+      "“Dawn”, “Midday” and “Dusk” create three directions from the same base prompt.",
     inputs: [
       text(
         "Base prompt",
@@ -152,8 +176,10 @@ export const nodeInterfaces = {
     ],
   },
   generate: {
+    summary: "Generate images from prompts and reference images.",
     description:
-      "Generates images with the selected image provider, using one prompt for each record and variation.",
+      "Run the selected image model on each incoming scene, record or variation. Copies create extra results per input; multiple generation modes compare providers or settings.",
+    example: "Four scenes × two copies × one mode produce eight images.",
     inputs: [
       text(
         "Image prompt",
@@ -172,8 +198,11 @@ export const nodeInterfaces = {
     ],
   },
   "video-generate": {
+    summary: "Generate clips from scene and motion instructions.",
     description:
-      "Generates a video through the selected API provider, retaining its prompt, records and durable remote interaction. Gemini Pro or Flow credits are not connected by signing into a coding harness.",
+      "Run the selected video model using the connected prompt and any supported image references. Set clip length, aspect ratio and other available controls on this node.",
+    example:
+      "Animate a cycling photo with a slow camera pan and natural forward motion.",
     inputs: [
       text(
         "Video prompt",
@@ -192,8 +221,10 @@ export const nodeInterfaces = {
     ],
   },
   "video-output": {
+    summary: "Collect clips for playback, download and inspection.",
     description:
-      "Collects video results without multiplying their records. Open a clip to play it, inspect its inputs or download it.",
+      "Bring generated videos from connected branches into one collection. Open a clip to play it, inspect its saved inputs or download it. Run this flow runs its upstream steps.",
+    example: "Review the clips from several video models together.",
     inputs: [
       video(
         "Flow videos",
@@ -203,8 +234,11 @@ export const nodeInterfaces = {
     outputs: [],
   },
   output: {
+    summary: "Collect images and inspect their inputs and lineage.",
     description:
-      "Collects image results from this flow. Open its gallery to inspect every result and its inputs.",
+      "Bring image results from one or more branches into a gallery. Open a result to see its prompt, references, settings and ancestry. Run this flow runs the connected upstream steps.",
+    example:
+      "Collect running and cycling images in one gallery, then open a result to inspect how it was made.",
     inputs: [
       image(
         "Flow results",
@@ -219,8 +253,11 @@ export const nodeInterfaces = {
     ],
   },
   section: {
+    summary: "Group and navigate a part of the canvas.",
     description:
-      "A visual frame for organizing a flow. It does not alter inputs or create jobs.",
+      "Use a frame to label and visually organize a workflow branch. It has no connections, changes no prompts and creates no generation jobs.",
+    example:
+      "Keep quote illustrations and journey covers in separately named frames.",
     inputs: [],
     outputs: [],
   },
