@@ -1,10 +1,8 @@
 # Flow
 
-Generate still images and animated GIFs in the same image node. Codex GIFs use generated sprite sheets with local assembly; explicit GPT Image 2.6 API connections also support native GIF, static SVG and complexity controls. See [image output formats](docs/image-outputs.md) for agent commands and provider requirements.
+A local canvas for image, GIF and video workflows. Connect reference images, shared prompts and scene collections, then run parallel batches through your own CLI harnesses, API providers or local models. Outputs keep their resolved prompts, settings, inputs and lineage.
 
-A local canvas for image and video generation. Connect seed images, shared prompts and scene collections, then run parallel batches across CLI harnesses, hosted APIs or local models. Every output keeps its resolved prompt, settings, source references and generation lineage.
-
-Flow is pre-release. See the [release checklist](docs/open-source-readiness.md) for verification, supported platforms and remaining publication gates.
+Flow runs on your computer. Each clone starts with its own local database and connects to its owner's providers. No hosted Flow account is required. macOS and Linux are verified in CI; Windows is not yet verified.
 
 ## Run locally
 
@@ -15,24 +13,27 @@ git clone https://github.com/galElmalah/flow.git
 cd flow
 npm ci
 npm run setup
-npm run serve
+npm run verify:setup
+npm run demo
 ```
 
-Setup builds the app and installs its agent skills for your user account. It does not sign in, download model weights or start inference. If you only want the UI, use `npm run build` instead of setup.
+`setup` builds Flow and installs its agent skills for your user account. It does not sign in to providers or download models. If you only want the UI, use `npm run build` instead of setup.
 
-Open **http://localhost:4310**. The server runs in the background and stores local state in `.flow/`. Stop it with `node cli/flow.mjs stop`. Use `npm run dev` to run the development server in the foreground.
+`verify:setup` starts a disposable workspace on a free port, processes four images, checks saved lineage, workflow files, installed skill launchers and real MCP discovery, then removes its temporary data. It inherits no provider credentials and blocks external fetches. It does not touch your current workspace or user skills. Success prints `"ok": true`.
 
-For an image-processing trial without cloud inference:
+`demo` starts or reuses your local server, creates a **Flow demo** project and a saved four-image workflow, then opens it in your browser. It uses Local color lab, a deterministic image processor requiring no account or model. Repeating the command reopens the same demo and run. For a terminal-only agent or headless machine:
 
 ```sh
-node cli/flow.mjs run \
-  --seed-image ./public/assets/paper-seed.png \
-  --prompt "Explore violet and warm peach" \
-  --provider local-color --model color-study \
-  --count 4 --concurrency 4 --wait
+node tools/demo.mjs --json
 ```
 
-Local color lab applies seeded color operations to the input. It is not a generative model. Semantic search is optional: a fresh workspace reports that its model needs setup and does not download it in the background. Choose **Download search model** in the gallery, or run `node cli/flow.mjs search-retry --json`, to fetch the pinned local embedding model. Cached search models work offline. For AI generation, configure a provider in **Settings → Providers**. Local models and SAM are optional downloads in Settings; a normal installation does not download weights.
+The JSON includes `projectId`, `workflowId`, `runId`, `url` and output asset IDs. If you edit the demo, rerunning this command preserves your changes and does not submit another batch.
+
+Open **http://localhost:4310** for the normal workspace. `npm run serve` starts the background server without a demo. Stop it with `node cli/flow.mjs stop`; use `npm run dev` for foreground development.
+
+For AI generation, open **Settings → Providers** and connect your own installed harness or API key. Local models and SAM are explicit optional downloads in Settings. Semantic search uses cached weights offline; **Download search model** in the gallery or `node cli/flow.mjs search-retry --json` fetches its pinned embedding model.
+
+If setup reports a modified existing skill, it leaves that skill intact. Use `npm run build` and `npm run demo` to continue with the app, then resolve the skill separately. If port 4310 belongs to another app, use `node tools/demo.mjs --url http://localhost:4311`; Flow never stops an unrelated process.
 
 ## Work on the canvas
 
@@ -57,7 +58,11 @@ The style catalog includes reusable style and scene prompts. Generated thumbnail
 
 ## Use Flow from an agent
 
-Read [AGENTS.md](AGENTS.md) first. The CLI, JavaScript client and MCP server use the same platform services as the UI. All commands below run from this checkout. From a consuming project, use the installed `flow-workflows` skill helper by its absolute path.
+Point your agent at this checkout and give it this instruction:
+
+> Read AGENTS.md. Install dependencies, run setup and verify:setup, then use the Flow CLI/client/MCP to create and plan a workflow for my project. Check provider readiness and planned counts before generating. Keep the returned run ID and report the viewer URL and output lineage.
+
+[AGENTS.md](AGENTS.md) is the machine-facing entry point. The CLI, JavaScript client and MCP server use the same platform services as the UI. All commands below run from this checkout. From a consuming project, use the installed `flow-workflows` skill helper by its absolute path.
 
 Register an existing local project once. This writes its local `flow.project.json` pointer without generating images:
 

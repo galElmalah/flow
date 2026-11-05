@@ -16,6 +16,8 @@
     "check:architecture": "node tools/check-architecture.mjs",
     "check": "npm run check:architecture && npm run build && npm test",
     "setup": "npm run build && node cli/flow.mjs skills install --json",
+    "demo": "node tools/demo.mjs",
+    "verify:setup": "node tools/verify-setup.mjs",
     "check:release": "node tools/check-release.mjs && node tools/check-doc-links.mjs",
     "check:licenses": "node tools/license-inventory.mjs"
   },

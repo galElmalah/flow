@@ -27,6 +27,7 @@ Before opening a pull request, run:
 ```sh
 npm run check
 npm run check:release
+npm run verify:setup
 ```
 
 For UI changes, also exercise the feature in the browser. Describe what changed, how you verified it, and any remaining limitation. Never include credentials, workspace databases, local run exports or images without redistribution rights.

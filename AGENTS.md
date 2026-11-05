@@ -2,6 +2,21 @@
 
 Flow is a local canvas and execution platform for image and video workflows. Read [README.md](README.md) for setup and the complete agent command sequence. Keep website work local; never deploy or publish to ChatGPT Sites.
 
+## First clone
+
+Use Node.js 22.13+ and npm on macOS/Linux. From the checkout:
+
+```sh
+npm ci
+npm run setup
+npm run verify:setup
+node tools/demo.mjs --json
+```
+
+Setup installs managed user skills; it never configures accounts or downloads weights. Verification is an isolated integration check: temporary database/port/skills, no inherited credentials, no external fetches, four local outputs, lineage and MCP. It cleans up afterward. The demo is persistent local-only processing and returns real `projectId`, `workflowId`, `runId`, `url` and output asset IDs. Reopening it does not duplicate jobs or overwrite edits. Use those IDs to inspect/fork a working example instead of guessing a graph schema or relying on the author's projects.
+
+A fresh clone contains no personal gallery, credentials, SAM weights or provider login. Missing AI providers are setup requirements, not a reason to invent outputs or fall back to another account. Configure the selected provider through the platform before requesting AI inference.
+
 ## Start a task
 
 Run commands from this checkout, or use the installed `flow-workflows` skill helper by absolute path from a consuming project. Do not assume a shell alias exists.
@@ -36,6 +51,7 @@ Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`
 
 | Change                               | Start here                                                                                                                    |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| First-run demo / clone verification | `cli/demo.mjs`, `tools/demo.mjs`, `tools/verify-setup.mjs` |
 | Agent API, CLI and MCP               | `client/index.mjs`, `cli/flow.mjs`, `mcp/server.mjs`, [agent guide](docs/agents.md), [MCP setup](docs/mcp.md)                 |
 | Project ownership and discovery      | `client/project-context.mjs`, `shared/projects.mjs`, `server/projects.mjs`, `src/projects/`                                   |
 | Graph schema, planning and queue     | `shared/graph.mjs`, `server/graph.mjs`, `server/queue.mjs`                                                                    |

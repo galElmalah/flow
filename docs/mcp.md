@@ -2,7 +2,7 @@
 
 Flow exposes a real stdio MCP server backed by the same supported `FlowClient`
 as the CLI. It does not start a second database or call harnesses directly.
-The CLI entrypoint starts or reuses the local platform before serving MCP:
+The CLI entrypoint starts or reuses the local platform before serving MCP. For a fresh clone, run `npm run setup`, `npm run verify:setup`, then `node tools/demo.mjs --json` first. The examples below use its registered `flow-demo` project; replace that ID with your own registered project when needed.
 
 `read_harness_usage` reads account quota windows and used percentages without inference.
 Missing reports are unavailable, and stale percentages are marked. These are global
@@ -10,7 +10,7 @@ account limits rather than project token counts. See [harness usage](harness-usa
 for the per-provider support and Claude status-line setup.
 
 ```sh
-node /absolute/path/to/flow/cli/flow.mjs mcp --project quoture
+node /absolute/path/to/flow/cli/flow.mjs mcp --project flow-demo
 ```
 
 Configure your agent host to launch this server. A project-bound configuration
@@ -28,11 +28,11 @@ all processes use the single local platform and shared scheduler.
         "/absolute/path/to/flow/cli/flow.mjs",
         "mcp",
         "--project",
-        "quoture"
+        "flow-demo"
       ],
       "env": {
         "FLOW_URL": "http://localhost:4310",
-        "FLOW_PROJECT": "quoture"
+        "FLOW_PROJECT": "flow-demo"
       }
     }
   }
@@ -44,11 +44,11 @@ For a host that uses TOML configuration:
 ```toml
 [mcp_servers.flow]
 command = "node"
-args = ["/absolute/path/to/flow/cli/flow.mjs", "mcp", "--project", "quoture"]
+args = ["/absolute/path/to/flow/cli/flow.mjs", "mcp", "--project", "flow-demo"]
 
 [mcp_servers.flow.env]
 FLOW_URL = "http://localhost:4310"
-FLOW_PROJECT = "quoture"
+FLOW_PROJECT = "flow-demo"
 ```
 
 Direct `mcp/server.mjs` reads the two environment variables above and requires
@@ -129,13 +129,13 @@ agreement and node existence in the run snapshot or saved graph. Hosts can show
 that link to the user. To launch the viewer explicitly through the OS:
 
 ```sh
-flow open --project quoture --workflow quoture-10-studies --node template --json
-flow open --project quoture --run RUN_ID --gallery --json
-flow open --project quoture --workflow quoture-10-studies --print-url --json
+flow open --project flow-demo --workflow flow-demo --node prompt --json
+flow open --project flow-demo --run RUN_ID --gallery --json
+flow open --project flow-demo --workflow flow-demo --print-url --json
 ```
 
-Choose a real node ID returned by `read_workflow`; the example `template` is
-illustrative. `--print-url` validates and prints the receipt without launching.
+Choose a real node ID returned by `read_workflow`; `prompt` is present in the
+local demo. `--print-url` validates and prints the receipt without launching.
 
 ## Verification
 
