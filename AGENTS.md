@@ -28,7 +28,7 @@ node cli/flow.mjs wait RUN_ID --project PROJECT_ID --timeout 600 --json
 node cli/flow.mjs open FORK_ID --project PROJECT_ID
 ```
 
-Creation and forks return `id`. Run submission returns `runId`. Keep that ID: a client timeout does not cancel server work. Inspect, resume or retry that run rather than resubmitting. `--count` means copies per record/scene and generation mode, not the total. Check planned job counts first.
+Creation and forks return `id`. CLI `run --json` without `--wait` returns `runId`; HTTP/client/MCP run submission and completed run documents use `id`. Keep that ID: a client timeout does not cancel server work. Inspect, resume or retry that run rather than resubmitting. `--count` means copies per record/scene and generation mode, not the total. Check planned job counts first.
 
 Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`. Canvas and CLI exports use the same schema. Legacy plain graph JSON remains readable. See [Flow files](docs/flow-files.md), `GET /api/schema/flow`, and the JavaScript client's `toFlowFile`/`fromFlowFile` helpers.
 

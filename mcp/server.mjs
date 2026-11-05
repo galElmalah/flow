@@ -965,7 +965,7 @@ export function createMcpServer({
   );
   tool(
     "run_workflow",
-    "Start a NEW workflow run, which can consume provider/subscription usage. Plan first. Preserve the returned ID; use inspect_run/wait_run to recover instead of resubmitting. Concurrency changes the shared queue limit.",
+    "Start a NEW workflow run, which can consume provider/subscription usage. Plan first. The returned run document uses id (not runId). Preserve it; use inspect_run/wait_run to recover instead of resubmitting. Concurrency changes the shared queue limit.",
     z
       .object({
         workflowId: id,

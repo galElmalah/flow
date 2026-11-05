@@ -198,7 +198,7 @@ The response contains `items`, `total`, and `index`. Each result preserves the g
 
 Embeddings run locally with a MiniLM model. The model files download on first use and remain cached in `.flow/models`. Derived vectors persist in `.flow/search.sqlite` and rebuild from the authoritative run history when needed. Search requires no provider API key and sends no prompts to a hosted embedding service. It searches image-associated text, rather than analyzing image pixels.
 
-The HTTP interface is `POST /api/gallery/search` with `{query, scope, workflowId?, runId?, providerId?, limit?}`. Inspect index readiness with `GET /api/search/status`; retry a failed index with `POST /api/search/retry`.
+The HTTP interface is `POST /api/gallery/search` with `{query, scope, workflowId?, runId?, providerId?, limit?}`. Inspect index readiness with `GET /api/search/status`; explicitly download/setup a missing search model or retry a failed setup with `POST /api/search/retry`. Normal startup uses the cache offline and never enables downloads implicitly.
 
 ## Quoture
 

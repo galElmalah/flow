@@ -82,7 +82,7 @@ node cli/flow.mjs wait RUN_ID --project my-app --timeout 600 --json
 node cli/flow.mjs open WORKFLOW_ID --project my-app
 ```
 
-Creation returns `id`: use it as `WORKFLOW_ID`. Planning returns `total`, `imageJobs`, `textJobs` and `videoJobs`; inspect those before running. Submission returns `runId`: use it as `RUN_ID`. Waiting returns the completed run and its jobs. `open` launches the viewer; add `--print-url` to return its URL without opening a browser.
+Creation returns `id`: use it as `WORKFLOW_ID`. Planning returns `total`, `imageJobs`, `textJobs` and `videoJobs`; inspect those before running. CLI submission without `--wait` returns `runId`: use it as `RUN_ID`. HTTP/client/MCP submissions and completed run documents use `id`. Waiting returns the completed run and its jobs. `open` launches the viewer; add `--print-url` to return its URL without opening a browser.
 
 Read or fork existing workflows before changing them. Save through the client/API with the current `revision`; a stale save returns HTTP 409. For results, use `inspect RUN_ID`, `gallery --project my-app`, and `asset lineage ASSET_ID`. Never place keys in graph nodes, prompts or project pointers.
 
