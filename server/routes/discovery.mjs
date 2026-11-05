@@ -162,6 +162,19 @@ export function registerDiscoveryRoutes(
         fal: "GET/PUT /api/providers/fal. Native fal-image/fal-video use private FAL_KEY credentials. Seedance 2.0/2.5 video, Seedream 5.0 Flash and FLUX.1 schnell images; same comparison modes, queue and lineage. CLI providers fal|configure-fal; MCP read_fal_connection/configure_fal.",
         grok: "GET/PUT /api/providers/grok. Native grok-image/grok-video use private xAI API credentials; consumer subscription does not prove API entitlement.",
       },
+      imageOutputs: {
+        guide: "/api/guide/image-outputs",
+        nodeTypes: ["generate", "output"],
+        settings:
+          "data.image:{outputFormat:png|jpeg|webp|gif|svg,frameCount?:2–16,frameDurationMs?:20–2000 (steps of 10),complexity?:low|medium|high,background?:auto|opaque|transparent,markup?:local-transparent-PNG-URL}",
+        discovery:
+          "GET /api/providers → modelDetails.outputFormats, animationMethod, complexityLevels, backgrounds. Availability depends on the selected provider and account.",
+        codex:
+          "providerId:codex, model:native. GIF uses a native-generated sprite sheet and local assembly, not a native GIF tool. Reference images supported. No API billing fallback; specific image-model and complexity controls are not exposed by Codex CLI.",
+        api: "gpt-image-2.6-sunburst or gpt-image-2.6-flare on an explicitly configured Image API connection. Native GIF and SVG require text-only generations, not image edits. API billing/access is separate from the Codex subscription.",
+        lineage:
+          "GIF remains kind:image. metadata captures outputFormat, frameCount, frameDurationsMs, durationMs, loop and animationMethod; originals are retained. Downloads and ZIPs keep the extension. SAM and downstream raster-reference use reject GIF/SVG instead of silently flattening them.",
+      },
       video: {
         guide: "/api/guide/video",
         nodeTypes: ["video-generate", "video-output"],
@@ -447,7 +460,9 @@ export function registerDiscoveryRoutes(
       ],
     }),
   );
-  app.get("/api/schema/flow", (_, res) => res.json(z.toJSONSchema(flowFileSchema)));
+  app.get("/api/schema/flow", (_, res) =>
+    res.json(z.toJSONSchema(flowFileSchema)),
+  );
   app.get("/api/schema/workflow", (_, res) =>
     res.json(z.toJSONSchema(workflowSchema)),
   );
@@ -483,6 +498,15 @@ export function registerDiscoveryRoutes(
       res
         .type("text/markdown")
         .send(await readFile(path.join(root, "docs/mcp.md"), "utf8"));
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.get("/api/guide/image-outputs", async (_, res, next) => {
+    try {
+      res
+        .type("text/markdown")
+        .send(await readFile(path.join(root, "docs/image-outputs.md"), "utf8"));
     } catch (error) {
       next(error);
     }

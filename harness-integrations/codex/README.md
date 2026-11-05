@@ -16,6 +16,14 @@ The native image provider exposes `native`. Numeric image seeds are variation la
 not deterministic model RNG seeds. Aspect ratio and quality are requests; inspect
 actual returned dimensions. Native image originals are preserved by the registry.
 
+`image.outputFormat:gif` requests one sprite sheet from the built-in image tool;
+Flow assembles the cells locally into an animated GIF. `frameCount` (2–16) and
+`frameDurationMs` control assembly. The original sheet and actual GIF metadata stay
+in lineage. This works with the existing sign-in and optional image references.
+The installed CLI does not expose native GIF/SVG, complexity or pinned image-model
+parameters. Those controls are available through an explicit GPT Image 2.6 API
+connection; see [image formats](../../docs/image-outputs.md). There is no API fallback.
+
 Settings → Providers → Codex selects the existing local harness, isolated ChatGPT
 OAuth, or API-key authentication. `connection.mjs` owns private credential homes and
 CLI sign-in lifecycle. The selected environment reaches text/image jobs, model-cache

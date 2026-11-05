@@ -174,6 +174,8 @@ export function GenerateNode({ id, data, selected }) {
           )}
         </span>
         <span className="preview-ratio">
+          {currentImage?.metadata?.outputFormat === "gif" &&
+            `GIF · ${currentImage.metadata.frameCount} frames · `}
           {currentImage?.metadata?.width
             ? `${currentImage.metadata.width}×${currentImage.metadata.height}`
             : data.ratio || "1:1"}

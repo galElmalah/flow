@@ -22,7 +22,7 @@ import {
 import { StudioContext } from "../studio/context.jsx";
 import { ImageLightbox } from "../media/ImageLightbox.jsx";
 import { MediaPreview } from "../media/MediaPreview.jsx";
-import { mediaKind } from "../../shared/media.mjs";
+import { mediaKind, editableImage } from "../../shared/media.mjs";
 import { rulesText } from "../../shared/rule-templates.mjs";
 import { useAssetLineage } from "../media/useAssetLineage.mjs";
 import { assetImage, assetLabel } from "../../shared/asset-inspection.mjs";
@@ -74,6 +74,9 @@ export function ImageTray({
     prompt: asset?.provenance?.prompt ?? image.prompt,
   };
   const video = mediaKind(image) === "video";
+  const raster = editableImage(image);
+  const extension =
+    image.output?.match(/\.([a-z]+)$/i)?.[1] || (video ? "mp4" : "png");
   const medium = video ? "Video" : "Image";
   const cache = useRef(new Map());
   const [snapshot, setSnapshot] = useState(null),
@@ -220,7 +223,7 @@ export function ImageTray({
             }}
           />
         )}
-        {!video && onEdit && (
+        {raster && onEdit && (
           <button className="tray-edit-regions" onClick={() => onEdit(image)}>
             <Scan size={16} /> Edit image regions
           </button>
@@ -577,12 +580,12 @@ export function ImageTray({
           <a
             className="primary-button"
             href={image.output}
-            download={`${recordIdentity(job) || `flow-${job.seed ?? "reference"}`}.${video ? "mp4" : "png"}`}
+            download={`${recordIdentity(job) || `flow-${job.seed ?? "reference"}`}.${extension}`}
           >
             <Download size={14} />
             Download {medium.toLowerCase()}
           </a>
-          {!video && (
+          {raster && (
             <button
               className="secondary-button"
               disabled={readOnly}

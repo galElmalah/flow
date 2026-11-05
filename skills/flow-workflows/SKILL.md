@@ -1,6 +1,6 @@
 ---
 name: flow-workflows
-description: Create, fork, plan and run image or video workflows through the local Flow platform. Use when a project needs seed-based generation, parallel batches, provider comparisons, or output lineage.
+description: Create, fork, plan and run image, GIF or video workflows through the local Flow platform. Use when a project needs seed-based generation, parallel batches, provider comparisons, or output lineage.
 ---
 
 # Flow workflows
@@ -23,6 +23,8 @@ Workflow exports are `*.flow.json`: `{format:"flow",version:1,workflow:{...}}`. 
 `workflow create --project ID --name NAME --prompt "Base direction" --seed-image /absolute/reference.png --provider PROVIDER --model MODEL --count 1 --json` saves a source → prompt → generator → collection flow without generating. Add `--records /absolute/records.json`, `--template /absolute/template.txt` and `--prompt-provider PROVIDER` for per-record scenery. Give records stable IDs and explicit scene/cast fields when variation matters.
 
 Use `providers --json` to check readiness, real models and auth requirements. Each node selects its own provider; a CLI subscription does not automatically authorize a provider's paid API.
+
+GIFs use `generate` → `output` image nodes: `data.image:{outputFormat:"gif",frameCount:9,frameDurationMs:200}`. CLI creation accepts `--output-format gif --frames 9 --frame-delay 200`. `--count` means complete animations per scene/mode. Codex/native generates a sprite sheet assembled locally using existing sign-in and optional references; it does not expose native GIF, pinned image-model or complexity controls. Explicit GPT Image 2.6 API connections (`gpt-image-2.6-sunburst`, `gpt-image-2.6-flare`) offer native GIF, SVG (both text-only) and `image.complexity:low|medium|high`. Inspect `modelDetails.outputFormats` and `animationMethod`; never switch billing paths. GIF/SVG cannot be SAM targets or raster references. Read `GET /api/guide/image-outputs`. Originals, frame timing and method remain in lineage. For GPT Image 2.6 API markup edits, upload a separate transparent PNG and set `image.markup` to its Flow URL; connect the original as the first image reference. Flow checks dimensions/transparency and captures the layer separately. Keep markup out of ordinary reference sockets and do not combine it with a region mask.
 
 For a collection of scenes sharing one template, use `workflow create --prompts /absolute/scenes.json` rather than duplicating record/template/generator branches. Each scene has stable `id`, `label`, `scene`, optional `concept`, `enabled`, `count`, `seed`, `ratio` and image references. Discover the current schema. `prompt-set preview WORKFLOW_ID --node SET_ID --items SCENE_ID --json` inspects planned prompts without inference. Plan/run with `--prompt-set SET_ID --items ID,ID` to scope a subset; omit `--items` for every enabled scene. Selection preserves other scenes' results and never mutates the saved graph. `docs/prompt-sets.md` explains defaults and recorded lineage.
 

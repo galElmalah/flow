@@ -3,7 +3,10 @@ import { fromFlowFile } from "../shared/flow-file.mjs";
 import { basename, resolve } from "node:path";
 import { parseRecords } from "../shared/records.mjs";
 import { createImageWorkflow, createVideoWorkflow } from "../client/index.mjs";
-import { generationModesSchema } from "../shared/generation-modes.mjs";
+import {
+  generationModesSchema,
+  imageSettingsSchema,
+} from "../shared/generation-modes.mjs";
 import { generationKind } from "../shared/media.mjs";
 import {
   promptItemsSchema,
@@ -56,6 +59,35 @@ export async function prepareWorkflow(
   if (values.media !== undefined && !["image", "video"].includes(values.media))
     throw new Error("Choose --media image or --media video.");
   const projectId = client.projectId;
+  const imageFlags = Object.fromEntries(
+    [
+      ["outputFormat", values["output-format"]],
+      [
+        "frameCount",
+        values.frames === undefined ? undefined : Number(values.frames),
+      ],
+      [
+        "frameDurationMs",
+        values["frame-delay"] === undefined
+          ? undefined
+          : Number(values["frame-delay"]),
+      ],
+      ["complexity", values.complexity],
+      ["background", values.background],
+    ].filter(([, value]) => value !== undefined),
+  );
+  if (values.media === "video" && Object.keys(imageFlags).length)
+    throw new Error(
+      "Image output controls belong to --media image; GIF is an image output format.",
+    );
+  const image =
+    values.media !== "video" &&
+    (Object.keys(imageFlags).length || values.resolution)
+      ? {
+          ...(values.resolution && { resolution: values.resolution }),
+          ...imageFlags,
+        }
+      : undefined;
   const modes = values.modes
     ? generationModesSchema.parse(
         JSON.parse(await readFile(resolve(values.modes), "utf8")),
@@ -116,12 +148,15 @@ export async function prepareWorkflow(
               ...(values["video-mode"] && { mode: values["video-mode"] }),
             },
           }
-        : values.resolution
-          ? { image: { resolution: values.resolution } }
+        : image
+          ? { image: imageSettingsSchema.parse(image) }
           : {}),
     });
   let workflow = values.from
-    ? owned(fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))), projectId)
+    ? owned(
+        fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))),
+        projectId,
+      )
     : await loadWorkflow(client, workflowId);
   if (modes) {
     const targets = workflow.nodes.filter(
@@ -237,8 +272,18 @@ export async function prepareWorkflow(
       if (values.ratio !== undefined) node.data.ratio = values.ratio;
       if (node.type === "generate" && values.quality !== undefined)
         node.data.quality = values.quality;
-      if (node.type === "generate" && values.resolution !== undefined)
-        node.data.image = { ...node.data.image, resolution: values.resolution };
+      if (node.type === "generate" && image) {
+        if (node.data.modes)
+          throw new Error(
+            "This node has generation modes. Edit image settings within each mode instead of image flags.",
+          );
+        const next = { ...node.data.image, ...image };
+        if (image.outputFormat && image.outputFormat !== "gif") {
+          delete next.frameCount;
+          delete next.frameDurationMs;
+        }
+        node.data.image = imageSettingsSchema.parse(next);
+      }
       if (
         node.type === "video-generate" &&
         [values.resolution, values.duration, values["video-mode"]].some(

@@ -387,6 +387,22 @@ export function AssetDetails({
             "Seed / variation label": provenance.requested?.seed,
             "Aspect ratio": provenance.requested?.ratio,
             Mode: provenance.mode?.label || job.mode?.label,
+            Format: asset.mimeType,
+            "Animation method":
+              asset.mimeType === "image/gif"
+                ? job.metadata?.animationMethod ||
+                  provenance.effective?.artifact?.animationMethod
+                : undefined,
+            Frames:
+              asset.mimeType === "image/gif"
+                ? job.metadata?.frameCount ||
+                  provenance.effective?.artifact?.frameCount
+                : undefined,
+            "Duration (ms)":
+              asset.mimeType === "image/gif"
+                ? job.metadata?.durationMs ||
+                  provenance.effective?.artifact?.durationMs
+                : undefined,
           }}
         />
       </section>

@@ -3,7 +3,7 @@ import { createReadStream } from "node:fs";
 import { stat, copyFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
-import { mediaArtifact, mediaKind } from "../shared/media.mjs";
+import { mediaArtifact, mediaKind, imageMimeType } from "../shared/media.mjs";
 import {
   assetIdSchema,
   assetAnnotationsSchema,
@@ -69,7 +69,7 @@ export class Assets {
   }
   file(url) {
     const match =
-      /^\/files\/runs\/([a-f0-9-]+)\/([a-f0-9-]+)\/(output\.(?:png|mp4|txt)|original-attempt-\d+\.(?:png|jpg|webp)|input-\d+\.(?:png|jpe?g|webp))$/.exec(
+      /^\/files\/runs\/([a-f0-9-]+)\/([a-f0-9-]+)\/(output\.(?:png|jpeg|webp|gif|svg|mp4|txt)|original-attempt-\d+\.(?:png|jpg|webp|gif|svg)|input-\d+\.(?:png|jpe?g|webp))$/.exec(
         url,
       );
     if (match) {
@@ -77,7 +77,7 @@ export class Assets {
       const job = run?.jobs.find((job) => job.id === match[2]);
       if (
         !job ||
-        (mediaArtifact(mediaKind(job)).basename !== match[3] &&
+        (mediaArtifact(job).basename !== match[3] &&
           job.metadata?.originalFile !== match[3] &&
           !job.lineage?.inputs.some((ref) => ref.snapshotFile === match[3]))
       )
@@ -141,11 +141,8 @@ export class Assets {
       ...(projectId && { projectId }),
       kind,
       mimeType:
-        kind === "image" && /\.jpe?g$/.test(url)
-          ? "image/jpeg"
-          : kind === "image" && /\.webp$/.test(url)
-            ? "image/webp"
-            : mediaArtifact(kind).mimeType,
+        (kind === "image" && imageMimeType(path.extname(url).slice(1))) ||
+        mediaArtifact(kind).mimeType,
       fingerprint: fp,
       origin,
       parents,
@@ -360,6 +357,24 @@ export class Assets {
       effective: {
         model: job.metadata?.actualModel ?? null,
         settings: job.metadata?.effectiveSettings ?? null,
+        ...(job.metadata?.outputFormat && {
+          artifact: Object.fromEntries(
+            [
+              "outputFormat",
+              "width",
+              "height",
+              "frameCount",
+              "frameDurationsMs",
+              "durationMs",
+              "loop",
+              "animationMethod",
+              "spriteGrid",
+              "spriteSheet",
+            ]
+              .filter((key) => job.metadata[key] !== undefined)
+              .map((key) => [key, structuredClone(job.metadata[key])]),
+          ),
+        }),
         seed:
           completeness === "captured"
             ? defaultSeed(job)
@@ -455,7 +470,11 @@ export class Assets {
         ref.jobId && run.jobs.find((parent) => parent.id === ref.jobId);
       const url = ref.asset || parent?.output;
       if (!url) throw fail("A generation image input is missing.");
-      await add(url, "reference", ordinal);
+      await add(
+        url,
+        ref.role === "markup" ? "annotation-map" : "reference",
+        ordinal,
+      );
     }
     for (const [ordinal, part] of (job.promptParts || []).entries())
       if (part.jobId) {
@@ -548,7 +567,7 @@ export class Assets {
   }
   async complete(run, job, directory) {
     const kind = mediaKind(job);
-    const url = `/files/runs/${run.id}/${job.id}/${mediaArtifact(kind).basename}`;
+    const url = `/files/runs/${run.id}/${job.id}/${mediaArtifact(job).basename}`;
     const parents = (job.lineage?.inputs || []).map(
       ({ assetId, snapshotAssetId, role, ordinal }) => ({
         assetId: snapshotAssetId || assetId,
@@ -559,11 +578,17 @@ export class Assets {
     const original = job.metadata?.originalFile;
     if (
       kind === "image" &&
-      /^original-attempt-\d+\.(png|jpg|webp)$/.test(original || "")
+      /^original-attempt-\d+\.(png|jpg|webp|gif|svg)$/.test(original || "")
     ) {
       const file = path.join(directory, original);
       if (await stat(file).catch(() => null)) {
         const rawUrl = `/files/runs/${run.id}/${job.id}/${original}`;
+        const originalProvenance = this.provenance(run, job);
+        if (job.metadata?.spriteSheet)
+          originalProvenance.effective.artifact = {
+            outputFormat: path.extname(original).slice(1),
+            ...job.metadata.spriteSheet,
+          };
         const raw = this.save({
           url: rawUrl,
           projectId: run.projectId,
@@ -576,7 +601,7 @@ export class Assets {
           },
           fingerprint: await fingerprint(file, "captured-at-generation"),
           parents: [...parents],
-          provenance: this.provenance(run, job),
+          provenance: originalProvenance,
         });
         parents.push({
           assetId: raw.id,
@@ -598,7 +623,7 @@ export class Assets {
         role: "final",
       },
       fingerprint: await fingerprint(
-        path.join(directory, mediaArtifact(kind).basename),
+        path.join(directory, mediaArtifact(job).basename),
         "captured-at-generation",
       ),
       parents,

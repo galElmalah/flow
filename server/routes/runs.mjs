@@ -49,6 +49,7 @@ export function registerRunRoutes(
             images: job.images,
             seed: job.seed,
             ratio: job.ratio,
+            image: job.image,
             count: 1,
             promptSet: job.promptSet,
           });
@@ -221,7 +222,7 @@ export function registerRunRoutes(
           "runs",
           run.id,
           job.id,
-          mediaArtifact(mediaKind(job)).basename,
+          mediaArtifact(job).basename,
         ),
         {
           name: `${String(i + 1).padStart(4, "0")}-${String(
@@ -231,7 +232,7 @@ export function registerRunRoutes(
             .slice(
               0,
               60,
-            )}-${(job.records?.[0]?.fields.readingID || job.records?.[0]?.fields.assetID || "seed-" + job.seed).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 160)}.${mediaArtifact(mediaKind(job)).extension}`,
+            )}-${(job.records?.[0]?.fields.readingID || job.records?.[0]?.fields.assetID || "seed-" + job.seed).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 160)}.${mediaArtifact(job).extension}`,
         },
       );
     archive.append(JSON.stringify(run, null, 2), { name: "manifest.json" });

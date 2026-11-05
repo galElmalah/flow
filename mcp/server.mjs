@@ -830,7 +830,7 @@ export function createMcpServer({
   );
   tool(
     "create_image_workflow",
-    "Create a standard source → base prompt / record template → optional AI prompt writer → images → gallery workflow. Does not run. Images must already be local Flow asset URLs; use upload_images for local file paths.",
+    "Create a source → prompt/template → optional AI prompt writer → image generation → collection workflow. Does not run. image:{outputFormat:png|jpeg|webp|gif|svg,frameCount?:2–16,frameDurationMs?:20–2000 in steps of 10,complexity?:low|medium|high,background?:auto|opaque|transparent,markup?:local-transparent-PNG-URL}. For API markup edits, connect the original first, keep markup separate from reference images/masks. GIF uses the same generate/output node types, not video. Codex/native GIF uses a generated sprite sheet assembled locally; GPT Image 2.6 API supports native GIF (text-only), SVG (text-only) and complexity. Inspect providers.modelDetails for supported outputFormats. PNG/JPEG/WebP image inputs must already be local Flow URLs; use upload_images for local files.",
     z
       .object({
         id: id.optional(),

@@ -6,6 +6,7 @@ import { StudioContext } from "../studio/context.jsx";
 import { modelsFor } from "../panels/ProviderPicker.jsx";
 import "./generation-modes.css";
 import { falDefaults, falModel } from "../../shared/fal.mjs";
+import { ImageOutputSettings } from "./ImageOutputSettings.jsx";
 
 const copies = (value) => Math.max(1, Math.min(500, Number(value) || 1));
 const choiceKey = (providerId, model) =>
@@ -243,6 +244,13 @@ export function GenerationModes({
               </label>
               {kind === "image" ? (
                 <>
+                  <ImageOutputSettings
+                    detail={detail}
+                    image={effective.image}
+                    index={index}
+                    readOnly={readOnly}
+                    onChange={(image) => set({ image })}
+                  />
                   <label>
                     Quality
                     <Autocomplete

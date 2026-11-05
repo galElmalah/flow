@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { verifyImage } from "../shared/image.mjs";
 
 async function boundedBody(response, max = 96 * 1024 * 1024) {
@@ -42,6 +43,51 @@ export async function runImageApi(
     quality: job.quality,
     n: 1,
   };
+  const settings = job.image || {};
+  const references = settings.markup ? imagePaths.slice(0, -1) : imagePaths;
+  const markup = settings.markup ? imagePaths.at(-1) : null;
+  if (markup) {
+    if ((await stat(markup)).size > 50 * 1024 * 1024)
+      throw new Error("The markup PNG exceeds the 50 MB API limit.");
+    if ((await verifyImage(markup)) !== "png")
+      throw new Error("The markup layer must be a transparent PNG.");
+    const [sourceMeta, layerMeta] = await Promise.all([
+      sharp(references[0], { limitInputPixels: 16_777_216 }).metadata(),
+      sharp(markup, { limitInputPixels: 16_777_216 }).metadata(),
+    ]);
+    const swapped = sourceMeta.orientation >= 5 && sourceMeta.orientation <= 8;
+    if (
+      layerMeta.width !== (swapped ? sourceMeta.height : sourceMeta.width) ||
+      layerMeta.height !== (swapped ? sourceMeta.width : sourceMeta.height) ||
+      !layerMeta.hasAlpha
+    )
+      throw new Error(
+        "Markup must be transparent and match the oriented source image dimensions.",
+      );
+    const stats = await sharp(markup).stats();
+    if (stats.channels.at(-1).min === 255)
+      throw new Error(
+        "The markup PNG must contain transparent pixels; do not flatten it onto the source.",
+      );
+  }
+  if (settings.outputFormat) fields.output_format = settings.outputFormat;
+  if (settings.complexity) fields.complexity = settings.complexity;
+  if (settings.background) fields.background = settings.background;
+  if (settings.outputFormat === "gif") {
+    fields.frame_count = settings.frameCount || 9;
+    fields.frame_duration_ms = settings.frameDurationMs || 200;
+    // Auto respects the animation's total pixel budget; still-image sizes can exceed it.
+    fields.size = "auto";
+  }
+  if (["gif", "svg"].includes(settings.outputFormat))
+    for (const key of [
+      "stream",
+      "partial_images",
+      "output_compression",
+      "prompt_rewriter",
+      "mask",
+    ])
+      delete fields[key];
   if (provider.seedParameter) fields[provider.seedParameter] = job.seed;
   const headers = { ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   let body;
@@ -52,7 +98,7 @@ export async function runImageApi(
         key,
         typeof value === "string" ? value : JSON.stringify(value),
       );
-    for (const [i, file] of imagePaths.entries()) {
+    for (const [i, file] of references.entries()) {
       const format = await verifyImage(file);
       body.append(
         "image[]",
@@ -62,6 +108,15 @@ export async function runImageApi(
           ],
         }),
         `reference-${i}${path.extname(file) || ".png"}`,
+      );
+    }
+    if (markup) {
+      body.delete("mask");
+      body.delete("prompt_rewriter");
+      body.append(
+        "markup",
+        new Blob([await readFile(markup)], { type: "image/png" }),
+        "markup.png",
       );
     }
   } else {
@@ -116,5 +171,27 @@ export async function runImageApi(
     throw new Error("The generated image exceeds 64 MB.");
   const output = path.join(directory, "output.png");
   await writeFile(output, bytes);
-  return output;
+  return {
+    path: output,
+    metadata: {
+      effectiveSettings: Object.fromEntries(
+        [
+          "model",
+          "size",
+          "quality",
+          "n",
+          "output_format",
+          "complexity",
+          "background",
+          "frame_count",
+          "frame_duration_ms",
+        ]
+          .filter((key) => fields[key] !== undefined)
+          .map((key) => [key, fields[key]]),
+      ),
+      ...(response.headers.get("x-request-id") && {
+        providerRequestId: response.headers.get("x-request-id"),
+      }),
+    },
+  };
 }

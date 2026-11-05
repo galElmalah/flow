@@ -1,0 +1,70 @@
+{
+  "format": "flow",
+  "version": 1,
+  "workflow": {
+    "revision": 0,
+    "id": "mascot-loop",
+    "name": "Mascot loop",
+    "nodes": [
+      {
+        "id": "prompt",
+        "type": "prompt",
+        "position": {
+          "x": 0,
+          "y": 320
+        },
+        "data": {
+          "label": "Scenery direction",
+          "text": "A tiny astronaut waves, then returns to its starting pose. Fixed camera, consistent character, seamless loop, no text."
+        }
+      },
+      {
+        "id": "generate",
+        "type": "generate",
+        "position": {
+          "x": 800,
+          "y": 0
+        },
+        "data": {
+          "label": "Image generation",
+          "count": 1,
+          "seed": 42,
+          "ratio": "1:1",
+          "quality": "high",
+          "image": {
+            "outputFormat": "gif",
+            "frameCount": 9,
+            "frameDurationMs": 200
+          },
+          "providerId": "codex",
+          "model": "native"
+        }
+      },
+      {
+        "id": "output",
+        "type": "output",
+        "position": {
+          "x": 1200,
+          "y": 0
+        },
+        "data": {
+          "label": "Output collection"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "prompt-generate",
+        "source": "prompt",
+        "target": "generate",
+        "targetHandle": "text"
+      },
+      {
+        "id": "generate-output",
+        "source": "generate",
+        "target": "output",
+        "targetHandle": "image"
+      }
+    ]
+  }
+}

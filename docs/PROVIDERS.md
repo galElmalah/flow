@@ -86,6 +86,11 @@ A wrapper can invoke another agent CLI, a local diffusion engine, or a service S
 
 ## Add an image API
 
+GPT Image 2.6 Sunburst/Flare connections expose GIF, SVG, complexity, transparency
+and native markup-layer controls on the existing image node. Codex uses sprite
+sheet generation and local assembly for GIFs. See [image formats](image-outputs.md)
+for agent examples, native/API differences and validation rules.
+
 The `image-api` adapter implements the [OpenAI-compatible Images API protocol](https://developers.openai.com/api/docs/guides/image-generation): JSON requests for text-to-image, multipart requests for reference-image edits, and base64 or image-URL responses.
 
 ```json

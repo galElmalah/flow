@@ -3,6 +3,7 @@ import { mkdir, open, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { codexBin } from "./status.mjs";
 import { verifyImage } from "../shared/image.mjs";
+import { spriteGrid } from "../shared/image-output.mjs";
 export async function runCodexImage({
   job,
   directory,
@@ -33,7 +34,13 @@ export async function runCodexImage({
   ];
   for (const image of imagePaths) args.push("--image", image);
   args.push("-");
-  const prompt = `Generate exactly ONE image with your built-in image generation tool. ${imagePaths.length ? "Edit/use the attached reference images; preserve the aspects the brief requests." : ""}\n\nCREATIVE BRIEF\n${job.prompt}\n\nOUTPUT\nRequested aspect ratio: ${job.ratio}.${job.ratio === "2:1" ? " Generate the ORIGINAL at exactly 2048 x 1024 pixels (2:1 landscape). Pass this native image size to the image tool if supported. Do not crop, pad, resize, or recolor the returned image." : ""} Quality: ${job.quality}. Variation label: ${job.seed}. Use this label to explore a distinct interpretation; it is not a deterministic model seed.\nSave the ORIGINAL raster image returned by the image tool to this exact path: ${output}\nIf the tool returns a generated image file path, copy it to that path. Do not replace the image with SVG, canvas, code, or a placeholder. Do not call another provider or invoke an image API directly. If image generation is unavailable, report failure and do not create a substitute. You may use shell commands only to copy the generated file and verify it. Do not change files outside this job directory. Return the saved path.\n`;
+  const animation = job.image?.outputFormat === "gif";
+  const count = job.image?.frameCount || 9;
+  const { columns, rows } = spriteGrid(count);
+  const brief = animation
+    ? `Create ONE animation sprite sheet for a seamless looping GIF. Exactly ${count} sequential frames arranged in a precise ${columns}-column by ${rows}-row grid, read left to right then top to bottom. Every cell must have identical dimensions, no borders, no gutters, no labels. ${columns * rows > count ? "Leave unused final cells blank." : ""} Keep camera, character identity, scale and composition fixed across frames; use clear incremental motion and a final frame that transitions to the first. Each frame has aspect ratio ${job.ratio}. Request a sheet size divisible by ${columns} horizontally and ${rows} vertically. Flow will extract and encode the frames locally at ${job.image?.frameDurationMs || 200} ms per frame; do not assemble the GIF yourself.\n\n${job.prompt}`
+    : job.prompt;
+  const prompt = `Generate exactly ONE image with your built-in image generation tool. ${imagePaths.length ? "Edit/use the attached reference images; preserve the aspects the brief requests." : ""}\n\nCREATIVE BRIEF\n${brief}\n\nOUTPUT\n${animation ? "Return the complete sprite sheet as a single PNG." : `Requested aspect ratio: ${job.ratio}.${job.ratio === "2:1" ? " Generate the ORIGINAL at exactly 2048 x 1024 pixels (2:1 landscape). Pass this native image size to the image tool if supported. Do not crop, pad, resize, or recolor the returned image." : ""}`} ${job.image?.background === "transparent" ? "Set transparent_background:true on the image generation tool." : job.image?.background === "opaque" ? "Use an opaque background." : ""} Quality: ${job.quality}. Variation label: ${job.seed}. Use this label to explore a distinct interpretation; it is not a deterministic model seed.\nSave the ORIGINAL raster image returned by the image tool to this exact path: ${output}\nIf the tool returns a generated image file path, copy it to that path. Do not replace the image with SVG, canvas, code, or a placeholder. Do not call another provider or invoke an image API directly. If image generation is unavailable, report failure and do not create a substitute. You may use shell commands only to copy the generated file and verify it. Do not change files outside this job directory. Return the saved path.\n`;
   const log = await open(path.join(directory, "events.jsonl"), "w");
   const errLog = await open(path.join(directory, "stderr.log"), "w");
   let child;

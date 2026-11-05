@@ -234,6 +234,8 @@ export class ImageEditors {
     return document;
   }
   async open(input) {
+    if (/\.(gif|svg)$/i.test(input.source))
+      throw new Error("SAM edits still raster images. Use a PNG, JPEG or WebP instead of an animation or vector.");
     const file = this.assetPath(input.source);
     const bytes = await readFile(file);
     const sourceHash = hash(bytes);

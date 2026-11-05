@@ -417,6 +417,13 @@ export function planWorkflow(input, options = {}) {
               status: "queued",
               attempts: 0,
             };
+            if (job.image?.markup) {
+              if (job.images.some((ref) => ref.asset === job.image.markup))
+                throw new Error(
+                  "Keep the transparent markup layer separate from the source/reference images.",
+                );
+              job.images.push({ asset: job.image.markup, role: "markup" });
+            }
             jobs.push(job);
             result.push(
               kind === "text"

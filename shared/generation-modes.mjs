@@ -22,8 +22,44 @@ export const qualitySchema = z.enum(["auto", "high", "medium", "low"]);
 export const imageSettingsSchema = z
   .object({
     resolution: z.enum(["1k", "1.5k", "2k"]).optional(),
+    outputFormat: z.enum(["png", "jpeg", "webp", "gif", "svg"]).optional(),
+    complexity: z.enum(["low", "medium", "high"]).optional(),
+    background: z.enum(["auto", "opaque", "transparent"]).optional(),
+    markup: z
+      .string()
+      .min(1)
+      .max(500)
+      .regex(/^\/(?:assets\/|files\/(?:uploads|runs|editors)\/)/)
+      .optional(),
+    frameCount: z.number().int().min(2).max(16).optional(),
+    frameDurationMs: z
+      .number()
+      .int()
+      .min(20)
+      .max(2000)
+      .multipleOf(10)
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((settings, ctx) => {
+    if (
+      settings.outputFormat !== "gif" &&
+      (settings.frameCount !== undefined ||
+        settings.frameDurationMs !== undefined)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Frame controls require image.outputFormat:gif.",
+      });
+    if (
+      settings.background === "transparent" &&
+      ![undefined, "png", "webp"].includes(settings.outputFormat)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Transparent backgrounds require PNG or WebP output.",
+      });
+  });
 export const videoSettingsSchema = z
   .object({
     resolution: z.enum(["360p", "480p", "720p", "1080p", "4k"]).default("720p"),

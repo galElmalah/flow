@@ -44,9 +44,14 @@ const dataRoot = path.resolve(
   process.env.FLOW_DATA_DIR || path.join(root, ".flow"),
 );
 const port = Number(process.env.PORT || 4310);
-if (!process.env.FLOW_DATA_DIR && !(await stat(dataRoot).catch(() => null)) &&
-    await stat(path.join(root, ".weft")).catch(() => null))
-  throw new Error("Legacy workspace found. Run node cli/flow.mjs migrate --json before starting Flow.");
+if (
+  !process.env.FLOW_DATA_DIR &&
+  !(await stat(dataRoot).catch(() => null)) &&
+  (await stat(path.join(root, ".weft")).catch(() => null))
+)
+  throw new Error(
+    "Legacy workspace found. Run node cli/flow.mjs migrate --json before starting Flow.",
+  );
 await initializeTracing({ dataRoot });
 const store = new Store(dataRoot);
 await store.init();
@@ -54,7 +59,7 @@ function assetPath(url) {
   const isAsset = url.startsWith("/assets/"),
     isUpload = url.startsWith("/files/uploads/");
   const generated =
-    /^\/files\/runs\/([a-f0-9-]+)\/([a-f0-9-]+)\/(output\.png|original-attempt-\d+\.(?:png|jpg|webp)|input-\d+\.(?:png|jpe?g|webp))$/.exec(
+    /^\/files\/runs\/([a-f0-9-]+)\/([a-f0-9-]+)\/(output\.(?:png|jpeg|webp|gif|svg)|original-attempt-\d+\.(?:png|jpg|webp|gif|svg)|input-\d+\.(?:png|jpe?g|webp))$/.exec(
       url,
     );
   let isOutput = false;
@@ -196,11 +201,11 @@ app.get("/files/runs/:run/:job/:output", (req, res) => {
     job.lineage?.inputs.some((ref) => ref.snapshotFile === req.params.output) &&
     /^input-\d+\.(png|jpe?g|webp)$/.test(req.params.output);
   if (job.status !== "completed" && !input) return res.sendStatus(404);
-  const artifact = mediaArtifact(mediaKind(job));
+  const artifact = mediaArtifact(job);
   const original =
     mediaKind(job) === "image" &&
     req.params.output === job.metadata?.originalFile &&
-    /^original-attempt-\d+\.(png|jpg|webp)$/.test(req.params.output);
+    /^original-attempt-\d+\.(png|jpg|webp|gif|svg)$/.test(req.params.output);
   const final =
     req.params.output === artifact.basename &&
     (job.output === `/files/runs/${run.id}/${job.id}/${artifact.basename}` ||
@@ -213,9 +218,16 @@ app.get("/files/runs/:run/:job/:output", (req, res) => {
           jpg: "image/jpeg",
           jpeg: "image/jpeg",
           webp: "image/webp",
+          gif: "image/gif",
+          svg: "image/svg+xml",
         }[path.extname(req.params.output).slice(1)]
       : artifact.mimeType;
   res.type(mime).set("X-Content-Type-Options", "nosniff");
+  if (mime === "image/svg+xml")
+    res.set(
+      "Content-Security-Policy",
+      "sandbox; default-src 'none'; style-src 'none'",
+    );
   res.sendFile(path.join(dataRoot, "runs", run.id, job.id, req.params.output), {
     dotfiles: "allow",
   });

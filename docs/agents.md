@@ -1,5 +1,7 @@
 # Agent workflows
 
+GIF animations use the existing image-generation and output nodes, not video. See [image formats](image-outputs.md) for Codex sprite-sheet GIFs, GPT Image 2.6 API formats/complexity, CLI flags, MCP settings and lineage. Inspect live `modelDetails.outputFormats` before choosing a provider.
+
 Run `npm run setup` from the Flow installation to install its bundled user-wide skills. See [agent skill setup](agent-skills.md) for discovery paths, maintenance commands and launchers that work from consuming repositories.
 
 Use the local Flow server for planning, prompt generation, image generation, run control and output provenance. Keep project source, review rules and selected artwork in the consuming repository. A workflow run never selects or installs artwork into that repository.

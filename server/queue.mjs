@@ -181,7 +181,7 @@ export class Queue extends EventEmitter {
               "runs",
               run.id,
               ref.jobId,
-              "output.png",
+              mediaArtifact(parent).basename,
             );
           }),
         ),
@@ -246,7 +246,7 @@ export class Queue extends EventEmitter {
           job.resultText = result.text;
           await writeFile(path.join(directory, "output.txt"), result.text);
         } else
-          job.output = `/files/runs/${run.id}/${job.id}/${mediaArtifact(mediaKind(job)).basename}`;
+          job.output = `/files/runs/${run.id}/${job.id}/${mediaArtifact(job).basename}`;
         await this.assets?.complete(run, job, directory);
         job.status = "completed";
         job.finishedAt = new Date().toISOString();

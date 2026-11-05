@@ -8,6 +8,12 @@ import { codexTextModels } from "./codex/models.mjs";
 import { claudeTextModels } from "./claude-code/models.mjs";
 import { runCodexImage } from "./codex/image.mjs";
 import { verifyImage } from "./shared/image.mjs";
+import { finalizeImage } from "./shared/image-output.mjs";
+import {
+  codexImageDetail,
+  imageModelDetails,
+  validateImageSettings,
+} from "../shared/image-generation.mjs";
 import { runCommand } from "./command/index.mjs";
 import { randomUUID } from "node:crypto";
 import { harnesses, runHarness, harnessStatus } from "./harnesses.mjs";
@@ -78,11 +84,18 @@ export const providerSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 const details = (p) =>
-  p.modelDetails ||
-  p.models.map((id) => ({
-    id,
-    capabilities: p.capabilities || [p.outputKind || "image"],
-    acceptsImages: p.acceptsImages !== false,
+  (
+    p.modelDetails ||
+    p.models.map((id) => ({
+      id,
+      capabilities: p.capabilities || [p.outputKind || "image"],
+      acceptsImages: p.acceptsImages !== false,
+    }))
+  ).map((model) => ({
+    ...(["image-api", "compatible"].includes(p.kind)
+      ? imageModelDetails(model.id)
+      : {}),
+    ...model,
   }));
 const modelFor = (p, job) =>
   details(p).find(
@@ -160,6 +173,7 @@ export class ProviderRegistry {
           description:
             "Native image generation through your signed-in Codex CLI.",
           models: ["native"],
+          modelDetails: [codexImageDetail],
           seeded: false,
         },
       ],
@@ -442,11 +456,25 @@ export class ProviderRegistry {
     }
     if (blockers.length) throw new ProviderRequirementsError(blockers);
     for (const job of jobs) {
+      if (
+        job.images.some(
+          (ref) =>
+            /\.(gif|svg)$/i.test(ref.asset || "") ||
+            ["gif", "svg"].includes(
+              jobs.find((parent) => parent.id === ref.jobId)?.image
+                ?.outputFormat,
+            ),
+        )
+      )
+        throw new Error(
+          "GIF and SVG outputs cannot be used as raster references or SAM edit targets. Use a still PNG, JPEG or WebP reference.",
+        );
       const p = this.get(job.providerId);
       job.kind ||= "image";
       job.model ||= details(p).find((m) =>
         m.capabilities.includes(job.kind),
       )?.id;
+      validateImageSettings({ ...p, modelDetails: details(p) }, job);
       const frozenComfy =
         p.kind === "comfyui" &&
         job.providerOperation?.providerId === p.id &&
@@ -669,14 +697,46 @@ export class ProviderRegistry {
             ? await this.grok.run(cleanContext)
             : p.kind === "comfyui"
               ? await this.comfy.run(cleanContext)
-              : null;
+              : ["image-api", "compatible"].includes(p.kind)
+                ? await runImageApi(p, cleanContext)
+                : null;
       const file = nativeResult
         ? nativeResult.path
         : p.kind === "codex"
           ? await runCodexImage(cleanContext)
-          : p.kind === "command"
-            ? await runCommand(p, cleanContext)
-            : await runImageApi(p, cleanContext);
+          : await runCommand(p, cleanContext);
+      if (!regionInputs) {
+        const result = await finalizeImage(
+          file,
+          context.directory,
+          context.job,
+          {
+            spriteSheet:
+              p.kind === "codex" && context.job.image?.outputFormat === "gif",
+          },
+        );
+        return {
+          kind: "image",
+          ...result,
+          metadata: {
+            ...(nativeResult?.metadata || {}),
+            ...result.metadata,
+            ...(cleanContext.codexExecution && {
+              authMode: cleanContext.codexExecution.mode,
+            }),
+            providerId: p.id,
+            providerName: p.name,
+            model: context.job.model,
+            seedMode:
+              nativeResult?.metadata?.seedMode ||
+              (["local-color", "local-recolor"].includes(p.id)
+                ? "deterministic"
+                : p.seeded || p.seedParameter
+                  ? "parameter"
+                  : "variation-label"),
+          },
+        };
+      }
       const originalFormat = await verifyImage(file);
       const originalFile = `original-attempt-${context.job.attempts || 1}.${originalFormat}`;
       await copyFile(file, path.join(context.directory, originalFile));

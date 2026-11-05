@@ -176,9 +176,9 @@ export const nodeInterfaces = {
     ],
   },
   generate: {
-    summary: "Generate images from prompts and reference images.",
+    summary: "Generate still images, GIF animations or SVGs with supported models.",
     description:
-      "Run the selected image model on each incoming scene, record or variation. Copies create extra results per input; multiple generation modes compare providers or settings.",
+      "Run the selected image model on each incoming scene, record or variation. Choose PNG, JPEG, WebP, animated GIF or SVG when supported. Codex GIFs use a generated sprite sheet assembled locally; GPT Image 2.6 API models also offer native GIF, SVG and complexity controls. Copies create extra results per input; modes compare providers or settings. GIFs stay in the image collection; use Video generation for movie clips.",
     example: "Four scenes × two copies × one mode produce eight images.",
     inputs: [
       text(

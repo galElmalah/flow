@@ -1,5 +1,7 @@
 # Flow
 
+Generate still images and animated GIFs in the same image node. Codex GIFs use generated sprite sheets with local assembly; explicit GPT Image 2.6 API connections also support native GIF, static SVG and complexity controls. See [image output formats](docs/image-outputs.md) for agent commands and provider requirements.
+
 A local canvas for image and video generation. Connect seed images, shared prompts and scene collections, then run parallel batches across CLI harnesses, hosted APIs or local models. Every output keeps its resolved prompt, settings, source references and generation lineage.
 
 Flow is pre-release. This repository remains private while it is prepared for an open source release. See the [release checklist](docs/open-source-readiness.md).
