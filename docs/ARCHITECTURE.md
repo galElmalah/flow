@@ -59,7 +59,7 @@ a provider. A project root is metadata; subprocess working directories remain is
 | `src/panels/`                    | Input inspection, provider setup and agent access                               |
 | `src/projects/`                  | Project-aware workflow navigation and assignment                                |
 | `src/components/`, `src/studio/` | Small UI primitives, context and browser helpers                                |
-| `examples/quoture/`              | Real project-specific records, templates, references and flow setup             |
+| `examples/quoture/`              | Reusable record-branch builder; synthetic examples live in test fixtures             |
 | `test/`                          | Observable planner, queue, storage, adapter and CLI/API behavior                |
 | `tools/check-architecture.mjs`   | Repeatable relative-import, cycle and dependency-boundary checks                |
 

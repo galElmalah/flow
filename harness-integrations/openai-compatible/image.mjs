@@ -169,6 +169,13 @@ export async function runImageApi(
   } else throw new Error(`${provider.name} returned no image data.`);
   if (bytes.length > 64 * 1024 * 1024)
     throw new Error("The generated image exceeds 64 MB.");
+  const requestId = response.headers.get("x-request-id");
+  const safeRequestId =
+    requestId &&
+    /^[a-zA-Z0-9_.:-]{1,200}$/.test(requestId) &&
+    !(token && requestId.includes(token))
+      ? requestId
+      : undefined;
   const output = path.join(directory, "output.png");
   await writeFile(output, bytes);
   return {
@@ -189,9 +196,7 @@ export async function runImageApi(
           .filter((key) => fields[key] !== undefined)
           .map((key) => [key, fields[key]]),
       ),
-      ...(response.headers.get("x-request-id") && {
-        providerRequestId: response.headers.get("x-request-id"),
-      }),
+      ...(safeRequestId && { providerRequestId: safeRequestId }),
     },
   };
 }

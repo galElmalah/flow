@@ -109,12 +109,9 @@ quotas: it is not a documented machine quota interface and may fall through to a
 request. The internal `retrieveUserQuota` API is not used as an undocumented auth bridge.
 [Official CLI commands](https://geminicli.com/docs/reference/commands/#stats).
 
-No `gemini`, `gemini-api` or Antigravity executable was found locally during the
-October 30 verification. On November 1, Google's official `gemini-api` v0.4.5 was
-installed privately at `.flow/tools/bin/gemini-api`. Its video dry run passed, but
-an actual request returned HTTP 403 because neither an API key nor an access token
-was configured. No video was generated or authenticated Pro entitlement tested.
-See [the live CLI validation](qa/gemini-video/README.md) for evidence and the next step.
+Validate your configured connection before relying on video access. A successful dry
+run does not establish authenticated generation or subscription entitlement.
+
 Flow now exposes native `video-generate` and `video-output` nodes through the same queue, gallery, CLI and MCP. The Gemini video connection uses public API-key or ADC OAuth credentials; it does not read coding CLI OAuth tokens. See [video workflows](video-workflows.md) for setup, durable operation receipts and playback. Local fixture verification proves the integration; authenticated Google generation remains unverified until credentials are configured.
 
 ## Code ownership

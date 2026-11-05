@@ -16,7 +16,8 @@
     "check:architecture": "node tools/check-architecture.mjs",
     "check": "npm run check:architecture && npm run build && npm test",
     "setup": "npm run build && node cli/flow.mjs skills install --json",
-    "check:release": "node tools/check-release.mjs"
+    "check:release": "node tools/check-release.mjs && node tools/check-doc-links.mjs",
+    "check:licenses": "node tools/license-inventory.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",

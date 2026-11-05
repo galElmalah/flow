@@ -4,7 +4,7 @@ Generate still images and animated GIFs in the same image node. Codex GIFs use g
 
 A local canvas for image and video generation. Connect seed images, shared prompts and scene collections, then run parallel batches across CLI harnesses, hosted APIs or local models. Every output keeps its resolved prompt, settings, source references and generation lineage.
 
-Flow is pre-release. This repository remains private while it is prepared for an open source release. See the [release checklist](docs/open-source-readiness.md).
+Flow is pre-release. See the [release checklist](docs/open-source-readiness.md) for verification, supported platforms and remaining publication gates.
 
 ## Run locally
 
@@ -32,7 +32,7 @@ node cli/flow.mjs run \
   --count 4 --concurrency 4 --wait
 ```
 
-Local color lab applies seeded color operations to the input. It is not a generative model. For AI generation, configure a provider in **Settings → Providers**. Local models and SAM are optional downloads in Settings; a normal installation does not download weights.
+Local color lab applies seeded color operations to the input. It is not a generative model. Semantic search is optional: a fresh workspace reports that its model needs setup and does not download it in the background. Choose **Download search model** in the gallery, or run `node cli/flow.mjs search-retry --json`, to fetch the pinned local embedding model. Cached search models work offline. For AI generation, configure a provider in **Settings → Providers**. Local models and SAM are optional downloads in Settings; a normal installation does not download weights.
 
 ## Work on the canvas
 
@@ -124,6 +124,7 @@ Set `FLOW_DATA_DIR` to move storage, `PORT` to change the server port, and `FLOW
 npm ci
 npm run check
 npm run check:release
+npm run check:licenses
 ```
 
 `check` validates architecture, builds browser assets, then runs behavior tests. CI also scans the complete Git history with a pinned, checksum-verified Gitleaks binary. Tests use local fixtures and fake provider transports; they do not prove live account access. See [CONTRIBUTING.md](CONTRIBUTING.md) and [the architecture map](docs/ARCHITECTURE.md).

@@ -270,7 +270,7 @@ test(
 
 test("runTextHarness exposes growing text before CLI process completion", async (t) => {
   const directory = await temporary(t);
-  const executable = path.join(directory, "fixture");
+  const executable = path.join(directory, "fixture.mjs");
   await writeFile(
     executable,
     `#!${process.execPath}

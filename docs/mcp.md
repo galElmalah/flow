@@ -143,21 +143,10 @@ illustrative. `--print-url` validates and prints the receipt without launching.
 stdio, lists tools, checks argument rejection and project boundaries, and calls
 the HTTP adapter against an isolated fixture service. It requires no inference.
 
-A separate agent exercised the same stdio interface against the real local
-platform on 2026-10-29. It forked Quoture into **Agent QA · MCP usability · local
-only**, saved an image-only `local-color`/`color-study` graph, planned exactly two
-images with zero text jobs, ran it, waited, inspected outputs, searched its
-images semantically and resolved a gallery URL. Both local processing jobs
-completed. This proves platform orchestration; it makes no claim about paid
-provider authentication. The existing source workflow and selected iOS artwork
-were untouched. [Receipt](qa/mcp-agent-receipt.json).
-
-The CLI entrypoint was also exercised over real stdio using
-`node cli/flow.mjs mcp --project quoture`: the agent listed all 16 tools, read
-`quoture-10-studies`, planned `collection` as 10 text jobs plus 10 images, and
-resolved the viewer directly to `shared-style`. No run was submitted. The SDK
-completed every call without stdout protocol pollution or stderr output.
-[CLI MCP receipt](qa/mcp-cli-receipt.json).
+For a local orchestration trial, register a disposable project, create a workflow with
+`local-color` and `color-study`, then plan, run, wait, and inspect it. This processes
+the bundled texture without cloud inference. Use the server's MCP `tools/list` response
+for the current tool catalog, and `discover` for live routes and schemas.
 
 This adapter uses pinned official MCP SDK server/client **2.4.0**. The server
 follows the official [stdio server pattern](https://ts.sdk.modelcontextprotocol.io/v2/get-started/first-server);
@@ -165,8 +154,8 @@ the test uses the official [stdio client pattern](https://ts.sdk.modelcontextpro
 
 ## Full UI operation coverage
 
-The current server advertises **49 tools**. In addition to the original flow and
-rule tools above:
+Use MCP `tools/list` to discover the current tools and their argument schemas.
+The server also supports these project and provider operations:
 
 | Tool                                   | UI action / behavior                                                                              |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -210,7 +199,7 @@ rejections before foreign exports/config updates. `test/agent-parity.test.mjs`
 launches the real CLI against isolated HTTP fixtures and checks graph save,
 reference uploads, gallery input access, project defaults, provider write-only
 key actions, index recovery, manifests, downloads and explicit error paths.
-The capability matrix is [docs/qa/agent-capability-matrix.md](qa/agent-capability-matrix.md).
+These fixture tests require no provider account and do not establish live inference access.
 
 To fork a recorded run rather than today's saved graph, call
 `fork_workflow {workflowId,runId,name?}`. The source workflow ID must match the

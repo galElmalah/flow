@@ -1,3 +1,5 @@
+import sharp from "sharp";
+import { verifyImage } from "../harness-integrations/shared/image.mjs";
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import path from "node:path";
@@ -187,6 +189,20 @@ export class Queue extends EventEmitter {
         ),
       ];
       await this.assets?.captureInputs(run, job);
+      for (const file of images) {
+        await verifyImage(file);
+        const metadata = await sharp(file, {
+          limitInputPixels: 64_000_000,
+        }).metadata();
+        if (
+          !["png", "jpeg", "webp"].includes(metadata.format) ||
+          !metadata.width ||
+          !metadata.height
+        )
+          throw new Error(
+            "Image inputs must be valid PNG, JPEG or WebP rasters.",
+          );
+      }
       if (this.assets && !(await this.update(run, job)))
         throw new Error("Could not save captured generation inputs.");
       const directory = path.join(this.store.root, "runs", run.id, job.id);

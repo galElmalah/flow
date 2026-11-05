@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import sharp from "sharp";
 import { Store } from "../server/store.mjs";
 import { Queue } from "../server/queue.mjs";
 import { starter } from "../server/defaults.mjs";
@@ -18,17 +19,28 @@ async function setup(t, adapter, concurrency = 4) {
   const root = await mkdtemp(path.join(tmpdir(), "flow-test-"));
   const store = new Store(root);
   await store.init();
+  const png = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: "#789" },
+  })
+    .png()
+    .toBuffer();
+  const reference = path.join(root, "uploads", "seed.png");
+  await writeFile(reference, png);
   const queue = new Queue(store, {
-    adapter,
+    adapter: async (context) => {
+      const result = await adapter(context);
+      await writeFile(path.join(context.directory, "output.png"), png);
+      return result;
+    },
     concurrency,
-    resolveAsset: (url) => url,
+    resolveAsset: () => reference,
   });
   t.after(async () => {
     await waitFor(() => queue.active.size === 0);
     await store.flush();
     await rm(root, { recursive: true, force: true });
   });
-  return { store, queue };
+  return { store, queue, reference, png };
 }
 test("100 jobs finish, never exceeding the parallel job limit, and restore from disk", async (t) => {
   let active = 0,
@@ -190,7 +202,7 @@ test("immediate retry after cancellation reruns aborted work instead of completi
 
 test("graceful shutdown preserves active and queued jobs as interrupted and resume completes them", async (t) => {
   let began = false;
-  const { store, queue } = await setup(
+  const { store, queue, reference, png } = await setup(
     t,
     async ({ signal }) => {
       began = true;
@@ -216,8 +228,10 @@ test("graceful shutdown preserves active and queued jobs as interrupted and resu
   const resumed = restored.runs.get(run.id);
   assert.equal(resumed.status, "interrupted");
   const restartedQueue = new Queue(restored, {
-    adapter: async () => {},
-    resolveAsset: (url) => url,
+    adapter: async ({ directory }) => {
+      await writeFile(path.join(directory, "output.png"), png);
+    },
+    resolveAsset: () => reference,
   });
   restartedQueue.action(run.id, "resume");
   await waitFor(() => resumed.status === "completed");

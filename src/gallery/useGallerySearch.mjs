@@ -33,12 +33,16 @@ export function useGallerySearch({
         const data = await response.json();
         if (!response.ok)
           throw new Error(data.error || "Local search could not complete.");
-        if (data.index.state === "error")
-          throw new Error(
-            data.index.error || "Local search needs setup. Retry local search.",
-          );
         if (controller.signal.aborted) return;
-        setSnapshot({ key, data });
+        setSnapshot({
+          key,
+          data,
+          ...(["error", "setup-required"].includes(data.index.state) && {
+            error:
+              data.index.error ||
+              "Local search needs setup. Download the search model to continue.",
+          }),
+        });
         if (["loading", "indexing"].includes(data.index.state))
           timer = setTimeout(search, 1000);
       } catch (error) {

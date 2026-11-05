@@ -1,6 +1,6 @@
 # Contribute to Flow
 
-Use Node.js 22.13 or newer. CI checks Node.js 22 and 24 on Linux.
+Use Node.js 22.13 or newer. CI checks the minimum 22.13.0 and current 24 on Linux, plus Node.js 24 on macOS.
 
 ```sh
 git clone https://github.com/galElmalah/flow.git

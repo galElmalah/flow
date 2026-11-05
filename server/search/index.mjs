@@ -42,7 +42,7 @@ export class GallerySearch {
       model: "Xenova/all-MiniLM-L6-v2",
     };
   }
-  async start() {
+  async start({ allowDownload = false } = {}) {
     const generation = this.generation;
     this.closing = false;
     await mkdir(path.join(this.dataRoot, "models"), { recursive: true });
@@ -52,6 +52,7 @@ export class GallerySearch {
       workerData: {
         filename: path.join(this.dataRoot, "search.sqlite"),
         cacheDir: path.join(this.dataRoot, "models"),
+        allowDownload,
       },
     });
     this.worker = worker;
@@ -96,7 +97,10 @@ export class GallerySearch {
       return Promise.reject(
         transient("Local search is restarting.", "SEARCH_CLOSED"),
       );
-    if (this.state.state === "error")
+    if (
+      ["error", "setup-required"].includes(this.state.state) &&
+      message.kind !== "catalog"
+    )
       return Promise.reject(new Error(this.state.error));
     if (this.pending.size >= 32)
       return Promise.reject(
@@ -192,6 +196,8 @@ export class GallerySearch {
     signal?.throwIfAborted();
     const snapshot = this.snapshot();
     await withSignal(this.catalog(snapshot), signal);
+    if (["setup-required", "loading"].includes(this.state.state))
+      return { items: [], total: 0, index: this.status() };
     const ranked = await this.rpc({ kind: "query", request }, { signal });
     const current = new Map(
       this.snapshot()
@@ -222,7 +228,7 @@ export class GallerySearch {
         total: 0,
         model: this.state.model,
       };
-      await this.start();
+      await this.start({ allowDownload: true });
       return this.status();
     })();
     this.retryTask = task;

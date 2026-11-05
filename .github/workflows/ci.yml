@@ -9,10 +9,16 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: [22, 24]
+        include:
+          - os: ubuntu-latest
+            node: 22.13.0
+          - os: ubuntu-latest
+            node: 24
+          - os: macos-latest
+            node: 24
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,4 +30,5 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run check:release
+      - run: npm run check:licenses
       - run: npm audit --omit=dev --audit-level=high

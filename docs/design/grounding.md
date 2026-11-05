@@ -1,4 +1,4 @@
-> Historical design record. For the current source layout and interfaces, use [ARCHITECTURE.md](../ARCHITECTURE.md) and [the agent guide](../agents.md).
+> Historical design record of the image-only prototype, before text jobs and provider setup forms. Links point to current source files for the same concerns; the descriptions below retain the original design context. For current interfaces, use [ARCHITECTURE.md](../ARCHITECTURE.md) and [the agent guide](../agents.md).
 
 ### Overview
 
@@ -8,10 +8,10 @@ Adding Pi, Codex, Gemini CLI, and Claude Code for prompt generation therefore ne
 
 ### Key concepts
 
-- **Workflow graph:** `workflowSchema`, `outputType`, `inputTypes`, and `validateGraph()` define node data, compatible sockets, unique IDs, and an acyclic execution order. Current types are `image`, `prompt`, `variations`, `generate`, and `output`. [shared/graph.mjs](/absolute/path/to/flow/shared/graph.mjs:19)
-- **Planning contexts:** `planWorkflow()` propagates `{ text, images }` values. Incoming branches form a Cartesian product; variations expand contexts; image generation creates a job per context/copy. [server/graph.mjs](/absolute/path/to/flow/server/graph.mjs:24)
-- **Job dependencies:** Currently derived exclusively from upstream image `{ jobId }` references. Prompts are completely assembled before execution. [server/graph.mjs](/absolute/path/to/flow/server/graph.mjs:91)
-- **Provider definition versus execution:** `ProviderRegistry` loads configuration, publishes a safe catalog, checks readiness/model compatibility, and dispatches adapters. Every result then undergoes image validation and PNG normalization. [server/providers.mjs](/absolute/path/to/flow/server/providers.mjs:57)
+- **Workflow graph:** `workflowSchema`, `outputType`, `inputTypes`, and `validateGraph()` define node data, compatible sockets, unique IDs, and an acyclic execution order. Current types are `image`, `prompt`, `variations`, `generate`, and `output`. [shared/graph.mjs](../../shared/graph.mjs)
+- **Planning contexts:** `planWorkflow()` propagates `{ text, images }` values. Incoming branches form a Cartesian product; variations expand contexts; image generation creates a job per context/copy. [server/graph.mjs](../../server/graph.mjs)
+- **Job dependencies:** Currently derived exclusively from upstream image `{ jobId }` references. Prompts are completely assembled before execution. [server/graph.mjs](../../server/graph.mjs)
+- **Provider definition versus execution:** `ProviderRegistry` loads configuration, publishes a safe catalog, checks readiness/model compatibility, and dispatches adapters. Every result then undergoes image validation and PNG normalization. [harness-integrations/registry.mjs](../../harness-integrations/registry.mjs)
 
 ### How it works
 
@@ -26,22 +26,22 @@ Run request → provider preflight → persisted run → Queue.next()
                        validate PNG → save result → SSE → UI
 ```
 
-`POST /api/plan` previews job counts without inference. `POST /api/runs` repeats planning, checks providers and assets, then submits the same plan to `Queue.create()`. [server/index.mjs](/absolute/path/to/flow/server/index.mjs:175)
+`POST /api/plan` previews job counts without inference. `POST /api/runs` repeats planning, checks providers and assets, then submits the same plan to `Queue.create()`. [server/index.mjs](../../server/index.mjs)
 
-`Queue.next()` releases jobs only after all dependencies complete and blocks jobs whose upstream work fails. `execute()` resolves asset/image references, invokes the registry, and currently assigns an image URL unconditionally. Pause prevents new scheduling; cancellation aborts active adapters; retry preserves successful jobs. [server/queue.mjs](/absolute/path/to/flow/server/queue.mjs:51)
+`Queue.next()` releases jobs only after all dependencies complete and blocks jobs whose upstream work fails. `execute()` resolves asset/image references, invokes the registry, and currently assigns an image URL unconditionally. Pause prevents new scheduling; cancellation aborts active adapters; retry preserves successful jobs. [server/queue.mjs](../../server/queue.mjs)
 
-`Store` saves complete run records through serialized atomic writes. Restart marks unfinished jobs as interrupted, requiring explicit resume. A generated text result must survive this same lifecycle. [server/store.mjs](/absolute/path/to/flow/server/store.mjs:11)
+`Store` saves complete run records through serialized atomic writes. Restart marks unfinished jobs as interrupted, requiring explicit resume. A generated text result must survive this same lifecycle. [server/store.mjs](../../server/store.mjs)
 
 ### Where things live
 
 | Concern | Current ownership and extension point |
 |---|---|
 | Text generation node | Add its schema/socket behavior in `shared/graph.mjs`; planning in `server/graph.mjs`; rendering/defaults/connection handling in `App.jsx`. |
-| CLI harnesses | `runCommand()` sends versioned JSON through stdin and `request.json`, substitutes paths, captures progress, and handles timeout/cancellation. It currently requests an image file. Text harness wrappers need explicit text output extraction; log/stdout progress is not a reliable final result. [command.mjs](/absolute/path/to/flow/server/providers/command.mjs:5) |
-| OpenAI-compatible APIs | `runImageApi()` already uses `baseUrl`, bearer credentials, configured models, and `/images/generations` or `/images/edits`. A text API adapter belongs beside it. [image-api.mjs](/absolute/path/to/flow/server/providers/image-api.mjs:18) |
-| Provider setup | `ProviderSettings` currently displays status and instructs manual editing of `.flow/providers.json`; it has reload/example actions, no create/update form. Backend currently offers catalog/reload endpoints, no configuration-writing endpoint. [ProviderPicker.jsx](/absolute/path/to/flow/src/ProviderPicker.jsx:86) |
-| Provider selection | Catalog arrives through bootstrap. Picker selection stores `providerId`, default model, and compatible ratio on each image node. It needs capability filtering for text versus images. [App.jsx](/absolute/path/to/flow/src/App.jsx:2650) |
-| Results | Gallery, output nodes, file serving and ZIP download all assume completed jobs contain images. Keep their image-only selection explicit when text jobs are introduced. [server/index.mjs](/absolute/path/to/flow/server/index.mjs:229) |
+| CLI harnesses | `runCommand()` sends versioned JSON through stdin and `request.json`, substitutes paths, captures progress, and handles timeout/cancellation. It currently requests an image file. Text harness wrappers need explicit text output extraction; log/stdout progress is not a reliable final result. [command adapter](../../harness-integrations/command/index.mjs) |
+| OpenAI-compatible APIs | `runImageApi()` already uses `baseUrl`, bearer credentials, configured models, and `/images/generations` or `/images/edits`. A text API adapter belongs beside it. [image API adapter](../../harness-integrations/openai-compatible/image.mjs) |
+| Provider setup | `ProviderSettings` currently displays status and instructs manual editing of `.flow/providers.json`; it has reload/example actions, no create/update form. Backend currently offers catalog/reload endpoints, no configuration-writing endpoint. [provider picker](../../src/panels/ProviderPicker.jsx) |
+| Provider selection | Catalog arrives through bootstrap. Picker selection stores `providerId`, default model, and compatible ratio on each image node. It needs capability filtering for text versus images. [App.jsx](../../src/App.jsx) |
+| Results | Gallery, output nodes, file serving and ZIP download all assume completed jobs contain images. Keep their image-only selection explicit when text jobs are introduced. [server/index.mjs](../../server/index.mjs) |
 
 ### Gotchas and required invariants
 
@@ -57,6 +57,6 @@ Run request → provider preflight → persisted run → Queue.next()
 
 6. **Keep credentials server-side.** Current configuration references environment variables, and `catalog()` excludes credentials. A URL/API-key setup form needs a backend save mechanism with safe credential storage and redacted responses; keys must stay out of graphs, run records, SSE, manifests, and browser persistence.
 
-7. **Update both connection validators.** `App.jsx:isValidConnection()` duplicates socket classification from shared validation. Both must accept the new node consistently. [App.jsx](/absolute/path/to/flow/src/App.jsx:1100)
+7. **Update both connection validators.** `App.jsx:isValidConnection()` duplicates socket classification from shared validation. Both must accept the new node consistently. [App.jsx](../../src/App.jsx)
 
 8. **“Ready” currently means basic availability.** Commands check executable presence; API providers check configured credentials, without verifying authentication or endpoint behavior. A setup test should report its stronger verification separately.

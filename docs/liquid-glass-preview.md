@@ -1,7 +1,9 @@
 # Canvas glass preview
 
 Open `/demos/liquid-glass/` on the local Flow server. This is an isolated material
-prototype using existing Quoture artwork. It never writes workflows or starts inference.
+prototype using the bundled `public/assets/paper-seed.png` texture. Four sample views
+use browser color filters and illustrative scene descriptions. The preview has no
+project IDs, private uploads, or recorded runs. It never writes workflows or starts inference.
 The main app does not import its stylesheet or script.
 
 Compare **Current**, **Frosted**, and **Liquid**. Drag the canvas or use **Slide artwork
@@ -51,11 +53,14 @@ solely because `CSS.supports()` accepts the syntax; that does not prove correct 
 
 ## Verification
 
-Browser checks covered all three materials, library search, collection selection,
-sidebar close/open, canvas shifting, and the opaque fallback. Computed styles confirmed
-no filter in Current, 30px blur in Frosted, and no filter with Reduce transparency.
-The console was clear. Desktop and narrow layouts were inspected without horizontal
-document overflow, then the temporary viewport override was reset.
+Open the preview in a fresh local workspace. Check all three materials, library
+search, each sample view, sidebar close and reopen, canvas movement, and the opaque
+fallback. Confirm that every image loads without workspace uploads or saved runs.
+Inspect desktop and narrow layouts for horizontal document overflow.
+
+The expected backdrop filter is `none` in Current, `blur(30px)` in Frosted, and
+`none` with Reduce transparency. Sample color filters are separate from the glass
+backdrop filter. Run `node tools/check-doc-links.mjs` to check local Markdown links.
 
 Sources: `public/demos/liquid-glass/index.html`, `preview.css`, and `preview.js`.
 The production build copies these files unchanged to `dist/demos/liquid-glass/`.

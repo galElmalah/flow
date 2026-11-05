@@ -50,7 +50,8 @@ This command uses real Codex text inference for short read-only questions. It ne
 applies proposals or starts image jobs. It opens a fresh scoped conversation for each
 sample, verifies a valid reply with no edits, counts failures and writes timing/span
 records without response content. Use an isolated QA project, then archive it through
-the normal platform API. The initial findings are in `docs/qa/streaming-latency/`.
+the normal platform API. Keep timing receipts local and compare the saved phases
+across repeated runs.
 
 Server milestones use one monotonic clock from acceptance. Browser timing uses
 `performance.now()` from the submit action, with two animation frames after the reply
@@ -76,7 +77,8 @@ Codex chat now defaults to medium reasoning, independently of the global Codex c
 Use the chat's thinking setting to choose Fast, Balanced, Thorough, Extra thorough, or
 Harness default. API/MCP asks accept `reasoningEffort`; CLI accepts `--reasoning`.
 The effective model and effort remain visible in Timing. Other providers are unchanged.
-The alternating comparison and its limits are in `docs/qa/smooth-chat/`.
+To compare reasoning settings, alternate them across the same questions and report
+failed samples alongside timing results. Provider conditions can vary between runs.
 
 Chat uses the same `/api/events` connection as workflow events, scoped with `sessionId`
 and optional `projectId`. `type:agent` carries a compact durable session snapshot with

@@ -119,6 +119,7 @@ test("semantic search keeps project ownership while narrowing filters and propag
     index: { state: "ready", indexed: 1, total: 1, model: "local" },
   };
   const client = new FlowClient({
+    url: "http://localhost:4310",
     projectId: "quoture",
     fetch: async (url, options) => {
       requests.push({ url, options });
@@ -169,6 +170,7 @@ test("semantic search keeps project ownership while narrowing filters and propag
 test("unbound search accepts explicit scopes and exposes index recovery without masking errors", async () => {
   const requests = [];
   const client = new FlowClient({
+    url: "http://localhost:4310",
     fetch: async (url, options = {}) => {
       requests.push({ url, options });
       if (url.endsWith("/api/gallery/search")) {

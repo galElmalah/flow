@@ -9,6 +9,7 @@ import { isMediaJob, mediaKind, mediaArtifact } from "../shared/media.mjs";
 import { Store } from "./store.mjs";
 import { Queue } from "./queue.mjs";
 import { Assets } from "./assets.mjs";
+import { createAssetPath } from "./asset-path.mjs";
 import { registerAssetRoutes } from "./routes/assets.mjs";
 import { verifyImage } from "../harness-integrations/shared/image.mjs";
 import { ProviderRegistry } from "../harness-integrations/registry.mjs";
@@ -55,46 +56,7 @@ if (
 await initializeTracing({ dataRoot });
 const store = new Store(dataRoot);
 await store.init();
-function assetPath(url) {
-  const isAsset = url.startsWith("/assets/"),
-    isUpload = url.startsWith("/files/uploads/");
-  const generated =
-    /^\/files\/runs\/([a-f0-9-]+)\/([a-f0-9-]+)\/(output\.(?:png|jpeg|webp|gif|svg)|original-attempt-\d+\.(?:png|jpg|webp|gif|svg)|input-\d+\.(?:png|jpe?g|webp))$/.exec(
-      url,
-    );
-  let isOutput = false;
-  if (generated) {
-    const run = store.runs.get(generated[1]),
-      job = run?.jobs.find((job) => job.id === generated[2]),
-      name = generated[3];
-    const final =
-      job?.status === "completed" &&
-      mediaKind(job) === "image" &&
-      job.output === url;
-    const original =
-      job?.status === "completed" &&
-      mediaKind(job) === "image" &&
-      job.metadata?.originalFile === name;
-    const input = job?.lineage?.inputs.find(
-      (ref) => ref.snapshotFile === name && ref.snapshotAssetId,
-    );
-    const captured = input && store.assetRecord(input.snapshotAssetId);
-    isOutput = Boolean(
-      final || original || (captured?.kind === "image" && captured.url === url),
-    );
-  }
-  const isEditor = /^\/files\/editors\/[a-f0-9]{32}\/[a-zA-Z0-9-]+\.png$/.test(
-    url,
-  );
-  if (!isAsset && !isUpload && !isOutput && !isEditor)
-    throw new Error("Images must be uploaded to this local workspace.");
-  const base = isAsset ? path.join(root, "public") : dataRoot;
-  const relative = isAsset ? url.slice(1) : url.slice("/files/".length);
-  const target = path.resolve(base, relative);
-  if (!target.startsWith(base + path.sep))
-    throw new Error("Invalid image path.");
-  return target;
-}
+const assetPath = createAssetPath({ root, dataRoot, store });
 const providers = new ProviderRegistry({ root, dataRoot });
 await providers.reload();
 const assets = new Assets({ store, resolveAsset: assetPath });

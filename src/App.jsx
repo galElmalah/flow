@@ -3211,7 +3211,9 @@ export default function App() {
                           }
                         }}
                       >
-                        Retry local search
+                        {semanticSearch.index?.state === "setup-required"
+                          ? "Download search model"
+                          : "Retry model download"}
                       </button>
                     </>
                   ) : (
@@ -3332,7 +3334,7 @@ export default function App() {
                     {semanticSearch.loading
                       ? "Matching scenes, quotes and prompts with local embeddings."
                       : semanticSearch.error
-                        ? "Your saved outputs are available when you clear the search. Retry setup to restore semantic search."
+                        ? "Download the local search model to search by meaning. Your saved outputs are available when you clear the search."
                         : semanticSearch.index &&
                             semanticSearch.index.state !== "ready"
                           ? "You can keep browsing while new outputs are indexed."

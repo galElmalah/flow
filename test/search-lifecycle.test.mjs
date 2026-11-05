@@ -87,6 +87,7 @@ test("canceling query RPCs frees capacity, removes listeners and tells the worke
 
 test("one search can abort a shared catalog wait without canceling another search", async () => {
   const search = new GallerySearch({ store: emptyStore, dataRoot: "/unused" });
+  search.state = { ...search.state, state: "ready" };
   const catalog = deferred();
   const messages = [];
   search.rpc = async (message) => {

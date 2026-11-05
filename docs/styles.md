@@ -150,8 +150,8 @@ To populate the built-in references through the native Codex harness, run
 the batch in the **Flow · style library** project, and reuses that same run when
 invoked again. It never silently submits a second batch. After completion,
 `node tools/style-references.mjs --verify` decodes every image, checks distinct
-content and style/job provenance, imports durable bindings, and saves a receipt in
-`docs/qa/style-library/references.json`. Retry failed jobs through normal run controls.
+content and style/job provenance, imports durable bindings, and prints a JSON receipt.
+Keep the receipt local. Retry failed jobs through normal run controls.
 
 To extend the library without repeating existing references, choose a new stable
 batch ID: `node tools/style-references.mjs --workflow my-new-style-batch --missing --execute`.

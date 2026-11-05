@@ -80,7 +80,7 @@ test("viewer links encode targets, use current project defaults, and validate ru
     /localhost/,
   );
   assert.equal(
-    (await new FlowClient().viewer()).url,
+    (await new FlowClient({ url: "http://localhost:4310" }).viewer()).url,
     "http://localhost:4310/projects",
   );
 });

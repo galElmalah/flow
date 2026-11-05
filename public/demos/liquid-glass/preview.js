@@ -81,29 +81,25 @@ document.getElementById("search").addEventListener("input", (event) => {
     item.hidden = !item.textContent.toLocaleLowerCase().includes(query);
 });
 const images = {
-  garden: {
-    title: "A little cultivation",
-    job: "b5f1a160-97db-4efb-bb2c-29bcf9ce351a",
+  full: {
+    title: "Full texture",
     prompt:
-      "Two anonymous figures quietly tend a small garden on a marble ledge. A watering can, young plants and a shared task. Warm ivory engraving on generous cobalt blue.",
+      "Compare blue, violet, and peach across the full paper texture. This is illustrative preview copy, with no saved generation or run.",
   },
-  bird: {
-    title: "Hope, with feathers",
-    job: "789da514-d1dd-4772-a5e0-1b18cd770707",
+  cool: {
+    title: "Cool color study",
     prompt:
-      "A small engraved songbird perches on a narrow branch. An ivory ribbon catches a quiet breeze above a marble ledge. Fine charcoal cross-hatching and a spacious cobalt field.",
+      "Shift the paper colors toward blue and violet. This sample uses a browser color filter on the bundled texture.",
   },
-  mirror: {
-    title: "The thinking figure",
-    job: "7ea9f3be-7017-47cf-8f61-dff372c42806",
+  warm: {
+    title: "Warm color study",
     prompt:
-      "An anonymous thinking figure holds a small pocket mirror, one hand resting at the chest. A quiet marble ledge and one column edge. Warm ivory and charcoal against cobalt blue.",
+      "Shift the paper colors toward peach and rose. This sample uses a browser color filter on the bundled texture.",
   },
-  travellers: {
-    title: "Quiet courage",
-    job: "63482783-37c7-4dff-bd90-765184652e85",
+  soft: {
+    title: "Soft color study",
     prompt:
-      "Two anonymous robed travellers quietly help each other across a shallow break in a marble walkway. One classical column edge, spacious cobalt blue and fine engraved ivory robes.",
+      "Lower the color intensity to compare glass over a quieter background. This sample uses a browser color filter on the bundled texture.",
   },
 };
 function inspect(name) {
@@ -111,7 +107,9 @@ function inspect(name) {
   document.getElementById("image-title").textContent = image.title;
   document.getElementById("scene-copy").textContent = image.prompt;
   const preview = document.getElementById("inspector-image");
-  preview.src = `/files/runs/14563c65-065a-4d12-a4cf-fd010126abed/${image.job}/output.png`;
+  preview.src = "/assets/paper-seed.png";
+  preview.dataset.tone = name;
+  document.getElementById("sample-view").textContent = image.title;
   preview.alt = image.title;
   setPanel(inspector, true);
 }
@@ -129,13 +127,13 @@ document.querySelectorAll("#library-items button").forEach((button) =>
     const kind = button.dataset.kind;
     status.textContent = `${button.querySelector("strong").textContent} · preview selected`;
     if (kind === "image" || kind === "collection" || kind === "generate")
-      inspect("garden");
+      inspect("full");
     else {
       setPanel(inspector, true);
       document.getElementById("image-title").textContent =
-        kind === "set" ? "Prompt Set · 10 scenes" : "Shared art direction";
+        kind === "set" ? "Prompt Set · 4 sample views" : "Shared art direction";
       document.getElementById("scene-copy").textContent =
-        "Calm antique copperplate engraving, ivory subjects and fine charcoal cross-hatching. Clear silhouettes and spare classical cues on generous cobalt blue. Shared direction is written once and combined with each scene.";
+        "Explore the bundled paper texture through four sample views. Compare warm and cool colors behind the same glass controls. This preview does not save a workflow or start inference.";
     }
   }),
 );

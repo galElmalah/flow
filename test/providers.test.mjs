@@ -305,3 +305,54 @@ test("seeded local processing reproduces its PNG and duotone preserves a colored
   );
   assert.notDeepEqual(await readFile(first.path), await readFile(next.path));
 });
+
+test("compatible image request IDs are bounded and cannot publish the selected private key", async (t) => {
+  const png = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: "red" },
+  })
+    .png()
+    .toBuffer();
+  const secret = "synthetic-private-request-header-key";
+  let requestId, authorization;
+  const server = http.createServer(async (req, res) => {
+    for await (const chunk of req) {
+    }
+    authorization = req.headers.authorization;
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "x-request-id": requestId,
+    });
+    res.end(JSON.stringify({ data: [{ b64_json: png.toString("base64") }] }));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const { registry, dataRoot } = await setup(t);
+  await registry.saveConnection(null, {
+    name: "Synthetic compatible endpoint",
+    baseUrl: `http://127.0.0.1:${server.address().port}/v1`,
+    models: [{ id: "fixture-image", capabilities: ["image"] }],
+    apiKey: { action: "replace", value: secret },
+  });
+  const providerId = registry.managed[0].id;
+  for (const [index, value] of [
+    "request_123:abc-def",
+    secret,
+    `request-${secret}`,
+    "r".repeat(201),
+    "invalid request id",
+  ].entries()) {
+    requestId = value;
+    const result = await registry.run({
+      job: imageJob({ providerId, model: "fixture-image", images: [] }),
+      directory: path.join(dataRoot, `request-id-${index}`),
+      imagePaths: [],
+      signal: new AbortController().signal,
+    });
+    assert.equal(authorization, `Bearer ${secret}`);
+    assert.equal(
+      result.metadata.providerRequestId,
+      index === 0 ? value : undefined,
+    );
+    assert.equal(JSON.stringify(result).includes(secret), false);
+  }
+});

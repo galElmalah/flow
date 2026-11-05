@@ -1,28 +1,30 @@
 # Prepare a public release
 
-The GitHub repository remains private. This checklist does not authorize changing its visibility or publishing packages.
+The repository remains private. Review [the November 5 multi-agent audit](public-release-review.md) before publishing. This checklist does not change visibility, post to X or publish packages.
 
-Completed preparation:
+## Verified preparation
 
-- Full Git history scanned with checksum-verified Gitleaks; no credentials found. CI scans future pushes and pull requests.
-- Canonical Flow names: `flow.project.json`, `*.flow.json`, `.flow/flow.sqlite`, `FLOW_*` and `FlowClient`. A tested upgrade preserves legacy workspace data and registered project pointers.
-- Separate source repository with ignored workspace data, credentials, model weights and private development evidence.
-- MIT source license, contributor instructions, security guidance and third-party notices.
-- CI for behavior tests, architecture checks, production build and release-file checks.
-- Synthetic graph fixtures instead of tests reading private project exports.
-- Lockfile-backed installation and pinned direct dependency versions.
-- Fresh source checkout verified on macOS: dependency installation, all 362 tests, production build, release checks, empty-workspace startup, project registration, Flow-file export/import, viewer URLs and four local-processing jobs. Managed skills were installed twice in an isolated user directory. No development data or provider account was required for the trial.
+- MIT source license, security policy, contributor/agent guides and third-party notices.
+- Full-history Gitleaks has no findings; private data, keys, model weights and screenshots remain excluded.
+- Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration.
+- Fixed private-file reference traversal and credential-bearing request metadata, with synthetic regressions.
+- Explicit search-model download; cached weights work offline. Local-processing demo makes no implicit model download.
+- Source-only clean-HOME install/build/serve, CLI/MCP, four local-processing outputs and idempotent/preserved user skills.
+- All 375 tests pass on macOS Node 24.22.1 and minimum Node 22.13.0; architecture/build/source/link checks pass.
+- CI configured for Linux Node 22.13.0/24 and macOS Node 24; check final Actions results.
+- Zero npm audit vulnerabilities; dependency and optional-model inventory in [licenses](licenses.md).
+- Portable shipped demo with synthetic metadata; current Pi marks use verified MIT-licensed source.
 
-Before making the repository public:
+## Before visibility changes
 
-- Confirm the MIT license choice and copyright ownership for contributed code.
-- Review every bundled asset's origin and redistribution terms, including the Pi mark and generated paper reference. Include only approved screenshots in public documentation.
-- Review dependency licenses and optional model licenses. A clean vulnerability audit does not establish license compatibility.
-- Test setup on a clean macOS and Linux machine, including optional SAM cold start and cancellation. Windows support is not yet established.
-- Verify each provider on a supported account and document limitations. Unit tests do not prove live inference access.
-- Review the local server's threat model and credential handling before broader distribution.
-- Replace private development evidence links with portable examples where needed.
-- Enable private vulnerability reporting and configure branch protection on GitHub.
-- Review the complete Git history for secrets before changing visibility. The local release check is a safeguard, not a full secret scanner.
+- [ ] Owner clears paper fixture origin/reference rights, or approves replacement and an appropriate source/history publication plan. See [asset provenance](asset-provenance.md).
+- [ ] Owner confirms code/license ownership and clears the exact X screenshots/video. Local galleries and account/path data are not public-source assets.
+- [ ] Verify final release commit CI and secret scan.
+- [ ] Verify private vulnerability reporting and enable main protection after public visibility or when the plan permits it. Private-repo checks currently return 404 and 403 respectively.
+- [ ] Make the explicit source-repository visibility change. Keep npm private; no prebuilt binary/bundle or model distribution is included.
 
-Do not ship `.flow/`, provider credentials, consuming-project manifests, generated runs or downloaded model weights. Keep the npm package private until a package release is explicitly planned.
+## Documented limitations
+
+Inference depends on provider/account access; fake transports do not prove entitlement. SAM cold setup and broader model/hardware installs need separate trials. Windows support is not established. Flow binds to loopback for a trusted local OS account and has no multi-user authentication; do not expose it publicly.
+
+Do not ship .flow data, credentials, consuming-project pointers, generated runs or downloaded weights. Preserve dependency/model terms in any later binary or weight distribution.

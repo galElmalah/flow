@@ -31,8 +31,9 @@ aside as `.invalid` so retry can download fresh weights.
 
 The page polls SAM status while mounted and preserves the selected submenu on refresh and browser history navigation. All existing editor, CLI, and MCP setup/status operations continue to use the same local model service.
 
-See [clean-install verification](qa/sam-clean-install/README.md) for the real empty-directory
-setup, automatic detection, mask validation, and restart evidence.
+For a fresh-install check, explicitly set up SAM, open a disposable image, and inspect
+the detected masks. Restart Flow and confirm that the completed installation remains
+ready. This check downloads weights and runs local segmentation.
 
 ## Codex connection
 
