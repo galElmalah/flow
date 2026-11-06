@@ -5,7 +5,7 @@ The repository remains private. Review [the November 5 multi-agent audit](public
 ## Verified preparation
 
 - MIT source license, security policy, contributor/agent guides and third-party notices.
-- Full-history Gitleaks has no findings; private data, keys, model weights and screenshots remain excluded.
+- Full-history Gitleaks has no findings; private data, keys, model weights and development screenshots remain excluded. Four selected README captures are included in `docs/images/`; see [asset provenance](asset-provenance.md).
 - Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration.
 - Fixed private-file reference traversal and credential-bearing request metadata, with synthetic regressions.
 - Explicit search-model download; cached weights work offline. Local-processing demo makes no implicit model download.

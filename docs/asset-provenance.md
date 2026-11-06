@@ -1,6 +1,6 @@
 # Bundled asset review
 
-Reviewed November 5, 2026. Only files in the source repository are covered. Local uploads, runs, style reference libraries and screenshots are not licensed by the source MIT license and remain excluded from Git.
+Reviewed November 6, 2026. Only files in the source repository are covered. Local uploads, runs, style reference libraries and unselected screenshots remain excluded from Git. The README includes the four selected product captures listed below; the source MIT license does not grant rights to third-party marks or depicted content.
 
 | Asset | Source and terms | Status |
 | --- | --- | --- |
@@ -8,9 +8,10 @@ Reviewed November 5, 2026. Only files in the source repository are covered. Loca
 | Provider SVG marks, including Pi | `@lobehub/icons-static-svg@1.101.0`, MIT; included LobeHub notice and modifications in [mark provenance](../public/harnesses/README.md) | Current Pi files use the verified package path; vendor names/trademarks remain theirs |
 | Flow favicon | Project source SVG under the root MIT license | Part of source; owner confirms overall code/brand ownership at release |
 | `public/assets/paper-seed.png` | Original source describes generated demo art; no generation/reference receipt was present in the audited Git source | **Owner clearance required for public release** |
+| `docs/images/helmet-campaign.jpg`, `helmet-seed-workflow.jpg`, `region-comment.jpg`, `pink-jersey-result.jpg` | Existing native Flow captures from November 3, 2026. The owner requested these helmet campaign and sports editing captures for the README. Campaign artwork was generated through Flow's Codex adapter; the pink result uses local recoloring. | Visually reviewed for credentials, account quotas and machine-specific paths. Original JPEG bytes retained; no local project data, prompts beyond the visible campaign brief, or model weights bundled. |
 
 Paper fixture: PNG, 1254 × 1254, SHA-256 `aac707eab11bd5d9748251372dbff8b201549edddfdbe88bfce33e4836f52551`. It is present in the first source commit. Removing it from the current tree alone does not remove it from public Git history. Existing local assets and historical run references were left intact during this review.
 
 The glass preview now uses the bundled fixture and synthetic metadata; no private artwork URLs or provider statuses remain. That makes it reproducible, but does not resolve the fixture's pending clearance.
 
-Before publishing, the owner should confirm the paper fixture's generation/reference rights, or approve replacement and an appropriate source/history publication plan. Apply the same review to the exact screenshots/video chosen for X. Do not copy entire local galleries, private prompts, file paths or account quotas into a launch screenshot. The repository currently ships no screenshot media.
+Before publishing, the owner should confirm the paper fixture's generation/reference rights, or approve replacement and an appropriate source/history publication plan. Apply the same review to any additional screenshots/video chosen for X. Do not copy entire local galleries, private prompts, file paths or account quotas into a launch screenshot. Only the four selected README captures ship in `docs/images/`; development screenshot directories remain ignored.

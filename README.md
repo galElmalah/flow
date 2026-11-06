@@ -2,6 +2,16 @@
 
 A local canvas for image, GIF and video workflows. Connect reference images, shared prompts and scene collections, then run parallel batches through your own CLI harnesses, API providers or local models. Outputs keep their resolved prompts, settings, inputs and lineage.
 
+![Flow canvas showing the SALT / SPEED helmet campaign, shared art direction, four scenes and generated images](docs/images/helmet-campaign.jpg)
+
+One shared direction, four scenes, one campaign. [See the workflow with its original helmet seed.](docs/images/helmet-seed-workflow.jpg)
+
+| Comment on a selected region | Keep editing the result |
+| --- | --- |
+| ![Selected cycling jersey with the inline comment Make it pink and named image layers](docs/images/region-comment.jpg) | ![Pink cycling jersey recolor with preserved image regions and version history](docs/images/pink-jersey-result.jpg) |
+
+Select a region, leave an inline comment, and choose an edit. This example uses local recoloring to keep the scene intact and carry regions into the new version. AI edits can regenerate the whole image.
+
 Flow runs on your computer. Each clone starts with its own local database and connects to its owner's providers. No hosted Flow account is required. macOS and Linux are verified in CI; Windows is not yet verified.
 
 ## Run locally
