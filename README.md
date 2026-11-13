@@ -27,7 +27,9 @@ npm run verify:setup
 npm run demo
 ```
 
-`setup` builds Flow and installs its agent skills for your user account. It does not sign in to providers or download models. If you only want the UI, use `npm run build` instead of setup.
+`setup` builds Flow, installs the `flow` executable in `~/.local/bin`, and installs its agent skills for your user account. It does not sign in to providers or download models. If you only want the UI, use `npm run build` instead of setup.
+
+If that directory is not on your PATH, setup prints the executable's absolute path. Add it for your shell session with `export PATH="$HOME/.local/bin:$PATH"`; add the same line to your shell configuration to keep it. No shell configuration is edited automatically. Then use `flow --version`, `flow serve`, and `flow open --projects` from any directory. The launcher uses this checkout, so keep it in place. See [CLI and SDK installation](docs/installation.md) for custom locations, upgrades and removal.
 
 `verify:setup` starts a disposable workspace on a free port, processes four images, checks saved lineage, workflow files, installed skill launchers and real MCP discovery, then removes its temporary data. It inherits no provider credentials and blocks external fetches. It does not touch your current workspace or user skills. Success prints `"ok": true`.
 
@@ -112,7 +114,26 @@ node cli/flow.mjs skills status --json
 
 Setup builds the app and installs managed skills into `~/.agents/skills` and `~/.claude/skills`. It preserves unrelated or locally modified skills. Plain `npm ci` does not install global skills or sign into providers.
 
-Use [AGENTS.md](AGENTS.md) for source navigation, [the agent guide](docs/agents.md) for project registration and batches, and [MCP setup](docs/mcp.md) for agent-host configuration. The canonical command is `flow`, installed with optional `npm link`, or `node cli/flow.mjs`. Configuration uses `FLOW_*` variables.
+Use [AGENTS.md](AGENTS.md) for source navigation, [the agent guide](docs/agents.md) for project registration and batches, and [MCP setup](docs/mcp.md) for agent-host configuration. The canonical command is `flow`, installed by setup or optional `npm link`, or `node cli/flow.mjs`. Configuration uses `FLOW_*` variables.
+
+## JavaScript SDK
+
+From a consuming Node.js project, install your local checkout:
+
+```sh
+npm install --save /absolute/path/to/flow
+```
+
+```js
+import { FlowClient } from "flow";
+import { builtInStyles } from "flow/styles";
+
+const flow = new FlowClient({ url: "http://localhost:4310" });
+const projects = await flow.projects();
+console.log(projects, builtInStyles.length);
+```
+
+Start the local server with `flow serve` first. The SDK includes graph builders, Flow file import/export, planning, run controls, uploads and lineage. It calls the same local services as the CLI and UI; importing it never starts inference. No npm registry publication is required. See [installation](docs/installation.md) and [agent examples](docs/agents.md).
 
 ## Save and exchange workflows
 
@@ -146,4 +167,4 @@ npm run check:licenses
 
 ## License
 
-Flow source is MIT licensed. Fonts, provider marks, dependencies and downloaded models retain their own terms. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). The npm package remains private.
+Flow source and style briefs are MIT licensed: use, modify, redistribute, sublicense or sell them, including commercially, while retaining the license and copyright notice. There is no Flow license fee. Fonts, provider marks, dependencies and downloaded models retain their own terms; paid provider usage is separate. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). The npm package remains private. [The release explainer](docs/launch/index.html) includes product captures, the complete style catalog and the remaining asset/history release gates.

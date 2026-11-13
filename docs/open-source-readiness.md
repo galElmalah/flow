@@ -1,12 +1,12 @@
 # Prepare a public release
 
-The repository remains private. Review [the November 5 multi-agent audit](public-release-review.md) before publishing. This checklist does not change visibility, post to X or publish packages.
+The repository remains private. Review [the November 5 multi-agent audit](public-release-review.md) and [the November 13 review](release-review-2026-11-13.md) before publishing. This checklist does not change visibility, post to X or publish packages.
 
 ## Verified preparation
 
 - MIT source license, security policy, contributor/agent guides and third-party notices.
 - Full-history Gitleaks has no findings; private data, keys, model weights and development screenshots remain excluded. Four selected README captures are included in `docs/images/`; see [asset provenance](asset-provenance.md).
-- Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration.
+- Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration. Setup installs a safe user CLI launcher; local package exports expose the JavaScript SDK and 257-style catalog. See [installation](installation.md).
 - Fixed private-file reference traversal and credential-bearing request metadata, with synthetic regressions.
 - Explicit search-model download; cached weights work offline. Local-processing demo makes no implicit model download.
 - Source-only clean-HOME install/build/serve, CLI/MCP, four local-processing outputs and idempotent/preserved user skills.
@@ -17,7 +17,7 @@ The repository remains private. Review [the November 5 multi-agent audit](public
 
 ## Before visibility changes
 
-- [ ] Owner clears paper fixture origin/reference rights, or approves replacement and an appropriate source/history publication plan. See [asset provenance](asset-provenance.md).
+- [ ] Owner clears paper fixture and historical Pi mark rights, and reviews historical demo workspace metadata, or chooses a reviewed source-snapshot/history publication plan. See [asset provenance](asset-provenance.md).
 - [ ] Owner confirms code/license ownership and clears the exact X screenshots/video. Local galleries and account/path data are not public-source assets.
 - [ ] Verify final release commit CI and secret scan.
 - [ ] Verify private vulnerability reporting and enable main protection after public visibility or when the plan permits it. Private-repo checks currently return 404 and 403 respectively.

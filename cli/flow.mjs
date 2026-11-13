@@ -77,6 +77,7 @@ const { values, positionals: args } = parseArgs({
     wait: { type: "boolean" },
     json: { type: "boolean" },
     help: { type: "boolean" },
+    version: { type: "boolean", short: "v" },
     url: { type: "string" },
     output: { type: "string" },
     port: { type: "string" },
@@ -191,6 +192,11 @@ async function registerProject({
   return { project, manifestPath, manifest };
 }
 try {
+  if (values.version) {
+    const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    print(values.json ? { name: "flow", version } : version);
+    process.exit(0);
+  }
   const [command, id] = args;
   if (command === "migrate") {
     const { migrateInstallation } = await import("./migration.mjs");
@@ -210,7 +216,7 @@ try {
     print(result);
     process.exit(0);
   }
-  const context = ["serve", "stop", "restart"].includes(command)
+  const context = values.help || !command || command === "help" || ["serve", "stop", "restart"].includes(command)
     ? null
     : await findProjectContext(values.root || process.cwd());
   base =

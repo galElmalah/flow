@@ -6,6 +6,12 @@
   "bin": {
     "flow": "./cli/flow.mjs"
   },
+  "exports": {
+    ".": "./client/index.mjs",
+    "./client": "./client/index.mjs",
+    "./styles": "./shared/styles/catalog.mjs",
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "dev": "node server/index.mjs",
     "start": "node server/index.mjs --production",
@@ -15,7 +21,9 @@
     "cli": "node cli/flow.mjs",
     "check:architecture": "node tools/check-architecture.mjs",
     "check": "npm run check:architecture && npm run build && npm test",
-    "setup": "npm run build && node cli/flow.mjs skills install --json",
+    "setup": "npm run build && node tools/setup.mjs",
+    "cli:install": "node tools/install-cli.mjs",
+    "cli:uninstall": "node tools/install-cli.mjs --uninstall",
     "demo": "node tools/demo.mjs",
     "verify:setup": "node tools/verify-setup.mjs",
     "check:release": "node tools/check-release.mjs && node tools/check-doc-links.mjs",

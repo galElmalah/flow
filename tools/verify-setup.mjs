@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import http from "node:http";
@@ -10,13 +10,13 @@ import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { FlowClient } from "../client/index.mjs";
 import { toFlowFile, fromFlowFile } from "../shared/flow-file.mjs";
-import { manageSkills } from "../cli/skills.mjs";
 import { createLocalDemo } from "../cli/demo.mjs";
 
+const execute = promisify(execFile);
 const root = path.resolve(import.meta.dirname, "..");
 const temporary = await mkdtemp(path.join(tmpdir(), "flow-clone-check-"));
 const dataRoot = path.join(temporary, "data"),
-  skillHome = path.join(temporary, "skills-home");
+  verificationHome = path.join(temporary, "home");
 const blocked = path.join(temporary, "network-attempts.log");
 let server, exited, mcp;
 const checks = [];
@@ -27,9 +27,14 @@ try {
     );
   });
   const guard = path.join(temporary, "local-only.mjs");
+  await mkdir(verificationHome, { mode: 0o700 });
   await writeFile(
     guard,
     `import {appendFileSync} from 'node:fs';
+import {homedir} from 'node:os';
+const expectedHome = ${JSON.stringify(verificationHome)};
+if ([process.env.HOME, process.env.USERPROFILE, homedir()].some(value => value !== expectedHome))
+  throw new Error('Clone verification requires its temporary home.');
 const originalFetch=globalThis.fetch;
 globalThis.fetch=(input,options)=>{
   const url=new URL(typeof input==='string'||input instanceof URL?input:input.url);
@@ -52,6 +57,8 @@ globalThis.fetch=(input,options)=>{
       .map((key) => [key, process.env[key]]),
   );
   Object.assign(env, {
+    HOME: verificationHome,
+    USERPROFILE: verificationHome,
     PORT: String(port),
     FLOW_URL: url,
     FLOW_DATA_DIR: dataRoot,
@@ -130,19 +137,35 @@ globalThis.fetch=(input,options)=>{
   assert.equal(page.status, 200);
   assert.match(await page.text(), /<div id="root">/);
   checks.push("Flow file round trip and viewer deep link");
-  for (let i = 0; i < 2; i++)
-    assert.equal(
-      (await manageSkills({ action: "install", home: skillHome, root })).ready,
-      true,
+  const binDir = path.join(verificationHome, ".local", "bin");
+  const commandOptions = {
+    cwd: path.join(dataRoot, "demo-project"),
+    env: { ...env, PATH: [binDir, env.PATH].join(path.delimiter) },
+    timeout: 15000,
+  };
+  for (let i = 0; i < 2; i++) {
+    const setup = await execute(
+      process.execPath, [path.join(root, "tools/setup.mjs")], commandOptions,
     );
+    const { cli, skills } = JSON.parse(setup.stdout);
+    assert.equal(cli.command, path.join(binDir, "flow"));
+    assert.equal(cli.alreadyInstalled, i > 0);
+    assert.equal(skills.ready, true);
+  }
+  const version = await execute("flow", ["--version", "--json"], commandOptions);
+  const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+  assert.deepEqual(JSON.parse(version.stdout), { name: pkg.name, version: pkg.version });
+  const help = await execute("flow", ["--help"], commandOptions);
+  assert.match(help.stdout, /flow plan/);
+  checks.push("installed flow on PATH from a consuming project");
   const launcher = path.join(
-    skillHome,
+    verificationHome,
     ".agents/skills/flow-workflows/scripts/flow.mjs",
   );
-  const listing = await promisify(execFile)(
+  const listing = await execute(
     process.execPath,
     [launcher, "projects", "--json"],
-    { cwd: path.join(dataRoot, "demo-project"), env, timeout: 15000 },
+    commandOptions,
   );
   assert.ok(
     JSON.parse(listing.stdout).some((project) => project.id === "flow-demo"),
@@ -164,7 +187,10 @@ globalThis.fetch=(input,options)=>{
   const discovered = await mcp.callTool({ name: "discover", arguments: {} });
   assert.notEqual(discovered.isError, true);
   assert.equal(discovered.structuredContent.data.projectId, "flow-demo");
-  checks.push("real stdio MCP discovery");
+  checks.push(
+    "real stdio MCP discovery",
+    "temporary home for server, launchers and MCP",
+  );
   const search = await client.request("/api/search/status");
   assert.equal(search.state, "setup-required");
   const attempts = await readFile(blocked, "utf8").catch((error) => {

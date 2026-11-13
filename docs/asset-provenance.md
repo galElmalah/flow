@@ -1,6 +1,6 @@
 # Bundled asset review
 
-Reviewed November 6, 2026. Only files in the source repository are covered. Local uploads, runs, style reference libraries and unselected screenshots remain excluded from Git. The README includes the four selected product captures listed below; the source MIT license does not grant rights to third-party marks or depicted content.
+Reviewed November 13, 2026. Only files in the source repository are covered. Local uploads, runs, style reference libraries and unselected screenshots remain excluded from Git. The README and private release explainer include the four selected product captures listed below; the source MIT license does not grant rights to third-party marks or depicted content.
 
 | Asset | Source and terms | Status |
 | --- | --- | --- |
@@ -15,3 +15,23 @@ Paper fixture: PNG, 1254 × 1254, SHA-256 `aac707eab11bd5d9748251372dbff8b201549
 The glass preview now uses the bundled fixture and synthetic metadata; no private artwork URLs or provider statuses remain. That makes it reproducible, but does not resolve the fixture's pending clearance.
 
 Before publishing, the owner should confirm the paper fixture's generation/reference rights, or approve replacement and an appropriate source/history publication plan. Apply the same review to any additional screenshots/video chosen for X. Do not copy entire local galleries, private prompts, file paths or account quotas into a launch screenshot. Only the four selected README captures ship in `docs/images/`; development screenshot directories remain ignored.
+
+## Historical files and the release explainer
+
+The original `ae96ccb` revision also contains a Pi mark attributed to `pi.dev`
+without established redistribution terms, plus local `/files/` URLs and workflow
+IDs in the old glass demo. The current mark has been replaced by the verified
+Lobe Icons source and the demo metadata was removed. Those earlier bytes remain
+in Git history. A current-tree check does not clear them for public history.
+
+The four current JPEGs contain no detected EXIF, IPTC, XMP or comment metadata.
+That is a privacy check, not an image-rights determination. The owner requested
+their inclusion in the private report; public redistribution of depicted artwork
+and its seed/reference materials remains a separate release decision.
+
+The [release explainer](launch/index.html) includes the four captures, the complete
+MIT style-brief catalog and a tracked-asset inventory with byte sizes, SHA-256
+hashes and terms. Rebuild with `node tools/build-explainer.mjs`. It reads only
+tracked visual files and source style definitions. It never reads `.flow/`, user
+uploads or run history. The 41 added styles have prompts and scenes; no new preview
+images have been generated or represented as completed outputs.

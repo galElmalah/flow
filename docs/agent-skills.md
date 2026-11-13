@@ -1,6 +1,6 @@
 # Agent skill setup
 
-`npm run setup` builds Flow and installs three bundled, user-wide skills:
+`npm run setup` builds Flow, installs the user CLI in `~/.local/bin`, and installs three bundled, user-wide skills:
 
 | Skill | Purpose |
 | --- | --- |
@@ -9,6 +9,8 @@
 | `flow-style-library` | Find styles, start workflows from references and maintain custom style/scene prompts and reference provenance. |
 
 Installation is local to the current OS user. Codex, Gemini CLI and Pi discover the copies in `~/.agents/skills/`. Claude Code uses separate copies in `~/.claude/skills/`. No provider configuration, shell startup files or agent security settings are changed. Installed skills guide authorized platform work; installation does not start inference or grant model/tool permissions.
+
+For skills alone, run `node cli/flow.mjs skills install --json`. For the launcher alone, use `npm run cli:install`. Read [CLI/SDK installation](installation.md) for PATH, removal and version selection.
 
 ```sh
 npm install
