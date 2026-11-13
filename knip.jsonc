@@ -25,6 +25,8 @@
     "website/landing/site/shared/site.js",
     "website/landing/site/shared/liquid-worker.js",
     "website/landing/site/examples/build.mjs",
+    // Public docs: browser script copied into the static bundle by tools/build-docs.mjs.
+    "website/docs/assets/docs.js",
     "test/*.test.mjs"
   ],
   "project": ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"]

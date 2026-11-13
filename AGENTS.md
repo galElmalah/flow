@@ -83,7 +83,7 @@ Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`
 | Styles and reusable rules             | `shared/styles/`, `server/styles.mjs`, `src/styles/`, `shared/rule-templates.mjs`                                             |
 | Skills installed for agents           | `skills/`, `cli/skills.mjs`, [skill setup](docs/agent-skills.md)                                                              |
 | Tracing and latency                   | `observability/`, `src/agent/AgentTiming.jsx`, [OpenTelemetry](docs/observability.md)                                         |
-| Public landing page and docs site     | `website/landing/`, `tools/build-docs.mjs`, `tools/lib/public-docs.mjs`, [website guide](website/README.md)                   |
+| Public landing page and docs site     | `website/landing/`, `website/docs/`, `tools/build-docs.mjs`, [website guide](website/README.md)                                |
 
 Use [the architecture map](docs/ARCHITECTURE.md) for subsystem boundaries. UI choices use `src/components/Autocomplete.jsx`. Background tabs release SSE streams and refresh durable state when visible again; see `src/studio/workspace-events.mjs`.
 
@@ -119,7 +119,7 @@ npm run landing:examples # only after changing the landing example code
 npm run landing:verify   # landing examples against this checkout; no inference
 ```
 
-Edit Markdown, not generated HTML. Public docs pages are declared in `tools/lib/public-docs.mjs`; only non-ignored repository files can be added. Links between bundled pages stay in the same frame; every other destination, including GitHub and the other Overto artifact, needs `target="_blank" rel="noopener"` because Overto shows sites in an iframe and GitHub refuses framing ([incident](docs/overto-navigation.md)).
+Edit Markdown, not generated HTML. Public docs pages are declared in `website/docs/inventory.mjs`; only non-ignored repository files can be added. The docs design (shell, CSS, browser script) lives in `website/docs/`. Links between bundled pages stay in the same frame; every other destination, including GitHub and the other Overto artifact, needs `target="_blank" rel="noopener"` because Overto shows sites in an iframe and GitHub refuses framing ([incident](docs/overto-navigation.md)).
 
 Redeploy only when the user asks, and only through the authorized Overto connection for workspace **Gal** (`https://gal.overto.work`):
 

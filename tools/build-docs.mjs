@@ -4,18 +4,15 @@
 // Reads no workspace database, credentials, models or private reports.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  buildDocumentation,
-  documentationImages,
-  validateDocumentationBundle,
-} from "./lib/docs-site.mjs";
+import { validateDocumentationBundle } from "./lib/docs-site.mjs";
 import {
   docsUrl,
+  pagePath,
   publicDocumentSources,
-  publicLayout,
-} from "./lib/public-docs.mjs";
+} from "../website/docs/inventory.mjs";
+import { renderSite, staticFiles } from "../website/docs/site.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const build = path.join(root, "website", "build");
@@ -33,28 +30,34 @@ const repositoryFiles = new Set(
     .split("\0")
     .filter(Boolean),
 );
-const images = documentationImages.map((name) => `docs/images/${name}`);
-for (const source of [...publicDocumentSources, ...images])
+for (const source of [
+  ...publicDocumentSources,
+  ...staticFiles.map(([, source]) => source),
+])
   if (!repositoryFiles.has(source))
     throw new Error(`${source}: not a public repository file`);
-const pages = publicDocumentSources.map(publicLayout.page);
+const pages = publicDocumentSources.map(pagePath);
 if (new Set(pages.map((page) => page.toLowerCase())).size !== pages.length)
   throw new Error("Two documents map to the same page path");
 
 await rm(output, { recursive: true, force: true });
-const files = await buildDocumentation(
-  root,
-  output,
-  publicDocumentSources,
-  publicLayout,
-);
-await mkdir(path.join(output, "images"), { recursive: true });
-for (const image of images) {
-  const target = `images/${path.posix.basename(image)}`;
-  await copyFile(path.join(root, image), path.join(output, target));
+const files = [];
+const emit = async (target, contents) => {
+  const file = path.join(output, target);
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, contents);
   files.push(target);
-}
-await validateDocumentationBundle(output, files);
+};
+for (const [target, contents] of await renderSite(root))
+  await emit(target, contents);
+for (const [target, source] of staticFiles)
+  await emit(target, await readFile(path.join(root, source)));
+
+await validateDocumentationBundle(output, files, { fragments: true });
+const css = await readFile(path.join(output, "assets/docs.css"), "utf8");
+for (const [, url] of css.matchAll(/url\(([^)#]+)\)/g))
+  if (!files.includes(path.posix.join("assets", url)))
+    throw new Error(`docs.css: undeclared asset ${url}`);
 
 const written = [];
 const walk = async (directory) => {
@@ -73,7 +76,11 @@ if (extra.length) throw new Error(`Undeclared output: ${extra.join(", ")}`);
 const mediaTypes = {
   ".html": "text/html",
   ".css": "text/css",
+  ".js": "text/javascript",
   ".jpg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".woff2": "font/woff2",
+  ".txt": "text/plain",
 };
 const manifest = {
   schemaVersion: 1,
@@ -86,7 +93,7 @@ const manifest = {
 };
 for (const file of [...files].sort()) {
   const bytes = await readFile(path.join(output, file));
-  if (/\.html$/.test(file) && /\/(?:Users|home)\/[^/\s]+\//.test(bytes))
+  if (/\.(?:html|js)$/.test(file) && /\/(?:Users|home)\/[^/\s]+\//.test(bytes))
     throw new Error(`${file}: contains a machine-specific path`);
   const mediaType = mediaTypes[path.posix.extname(file).toLowerCase()];
   if (!mediaType) throw new Error(`${file}: no declared media type`);

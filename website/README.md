@@ -21,15 +21,33 @@ npm run docs:build
 
 The command deletes and rebuilds the ignored `website/build/docs/`, then writes
 `website/build/docs.manifest.json`: an inventory whose `files` entries are
-`{path, mediaType, size, sha256}`. Upload exactly those files. The build fails if a declared page is missing or
-Git-ignored, a local link or image is not in the bundle, an external link lacks a
-separate-tab target, or an undeclared file appears.
+`{path, mediaType, size, sha256}` (HTML, CSS, JavaScript, JPEG, SVG, WOFF2 and
+text). Upload exactly those files. The build fails if a declared page is missing or
+Git-ignored, a local link, image or `#section` target does not exist, an external
+link lacks a separate-tab target, a stylesheet asset is undeclared, or an
+undeclared file appears.
 
-Pages are listed in [`tools/lib/public-docs.mjs`](../tools/lib/public-docs.mjs):
-`SETUP.md` → `SETUP.html`, `docs/mcp.md` → `guide/mcp.html`, nested READMEs keep
-their folders. Inline images come from `docs/images/`. Links to other repository
-files open GitHub in a new tab. The private release explainer
-(`node tools/build-explainer.mjs`) is a separate bundle; never publish it here.
+| Path                                   | Owns                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `website/docs/inventory.mjs`           | Published pages, navigation groups, reading order and page paths     |
+| `website/docs/shell.mjs`               | Page shell, sidebar, contents, pager, home page, code accents, search records |
+| `website/docs/site.mjs`                | Renders the whole bundle in memory (used by the build and tests)     |
+| `website/docs/assets/`                 | `docs.css`, `docs.js` (search, drawer, contents, copy), favicon, grain |
+| `tools/lib/docs-site.mjs`              | Shared Markdown sanitizer, link resolver and bundle validator        |
+
+Page paths are stable: `SETUP.md` → `SETUP.html`, `docs/mcp.md` →
+`guide/mcp.html`, nested READMEs keep their folders. Assets go under `assets/`
+(Figtree comes from `public/fonts/figtree/`), images under `images/`, and the
+search index is `assets/search-index.js`, loaded on first search. Every page works
+without JavaScript. Links to other repository files open GitHub in a new tab. The
+private release explainer (`node tools/build-explainer.mjs`) keeps its own plain
+layout and is a separate bundle; never publish it here.
+
+Preview locally:
+
+```sh
+python3 -m http.server 8799 --bind 127.0.0.1 --directory website/build/docs
+```
 
 ## Publishing request
 
