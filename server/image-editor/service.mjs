@@ -5,7 +5,6 @@ import {
   mkdir,
   readFile,
   access,
-  writeFile,
   copyFile,
   rename,
 } from "node:fs/promises";

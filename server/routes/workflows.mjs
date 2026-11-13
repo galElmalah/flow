@@ -90,7 +90,9 @@ export function registerWorkflowRoutes(
   });
   app.post("/api/workflows", async (req, res, next) => {
     try {
-      const body = Object.hasOwn(req.body, "format") ? fromFlowFile(req.body) : req.body;
+      const body = Object.hasOwn(req.body, "format")
+        ? fromFlowFile(req.body)
+        : req.body;
       const graph = prepare({ ...body, id: body.id ?? randomUUID() });
       if (store.workflows.has(graph.id))
         throw Object.assign(
@@ -109,7 +111,9 @@ export function registerWorkflowRoutes(
   });
   app.put("/api/workflows/:id", async (req, res, next) => {
     try {
-      const body = Object.hasOwn(req.body, "format") ? fromFlowFile(req.body) : req.body;
+      const body = Object.hasOwn(req.body, "format")
+        ? fromFlowFile(req.body)
+        : req.body;
       if (body.id !== req.params.id)
         throw new Error("Workflow ID does not match.");
       const graph = prepare(body);
@@ -164,10 +168,37 @@ export function registerWorkflowRoutes(
   });
   app.post("/api/workflows/:id/fork", async (req, res, next) => {
     try {
-      const source = store.workflows.get(req.params.id);
+      const recorded = req.body.runId !== undefined;
+      if (
+        recorded &&
+        (typeof req.body.runId !== "string" ||
+          !/^[a-zA-Z0-9_-]{1,100}$/.test(req.body.runId))
+      )
+        throw new Error("Provide a valid source runId.");
+      if (recorded && req.body.workflow !== undefined)
+        throw new Error(
+          "Choose a recorded runId or a workflow snapshot, not both.",
+        );
+      const run = recorded ? store.runs.get(req.body.runId) : null;
+      if (recorded && !run)
+        return res.status(404).json({ error: "Source run not found." });
+      if (run) {
+        projects.assertWorkflow(run, req.query.projectId);
+        if (run.workflowId !== req.params.id)
+          throw Object.assign(
+            new Error("Source run belongs to another workflow."),
+            { status: 409 },
+          );
+        if (!run.graph)
+          throw Object.assign(
+            new Error("This run has no recorded workflow snapshot to fork."),
+            { status: 409 },
+          );
+      }
+      const source = run?.graph || store.workflows.get(req.params.id);
       if (!source)
         return res.status(404).json({ error: "Workflow not found." });
-      const snapshot = req.body.workflow || source;
+      const snapshot = run?.graph || req.body.workflow || source;
       if (snapshot.id !== source.id)
         throw new Error("Fork source ID does not match.");
       const graph = prepare({
@@ -180,6 +211,7 @@ export function registerWorkflowRoutes(
           : source.projectId,
         forkedFrom: {
           workflowId: source.id,
+          ...(run && { runId: run.id }),
           name: source.name,
           createdAt: new Date().toISOString(),
         },

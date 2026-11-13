@@ -276,17 +276,6 @@
   margin-bottom: 10px;
   padding: 5px;
 }
-.editor-edit-result {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.editor-edit-result img {
-  width: 44px;
-  height: 44px;
-  object-fit: cover;
-  border-radius: 4px;
-}
 @keyframes editor-comment-in {
   from {
     opacity: 0;
@@ -528,8 +517,7 @@
   line-height: 1.7;
   font-size: 12px;
 }
-.editor-model-message button,
-.editor-prepared button {
+.editor-model-message button {
   border: 1px solid #555;
   border-radius: 6px;
   padding: 9px 12px;
@@ -550,33 +538,6 @@
 .editor-error button {
   margin-left: 15px;
   text-decoration: underline;
-}
-.editor-prepared {
-  padding: 16px 22px;
-  border-top: 1px solid #444;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 11px;
-}
-.editor-prepared > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.editor-prepared small {
-  color: #888;
-}
-.editor-prepared a {
-  color: #ddd;
-  text-decoration: underline;
-}
-.editor-prepared button {
-  display: flex;
-  gap: 6px;
-  align-items: center;
 }
 .tray-edit-regions {
   display: flex;

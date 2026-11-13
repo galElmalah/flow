@@ -14,7 +14,7 @@ import http from "node:http";
 import sharp from "sharp";
 import { ProviderRegistry } from "../harness-integrations/registry.mjs";
 import { planWorkflow } from "../server/graph.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 import { Queue } from "../server/queue.mjs";
 import { Store } from "../server/store.mjs";
 

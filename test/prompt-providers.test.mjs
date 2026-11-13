@@ -9,11 +9,10 @@ import { Store } from "../server/store.mjs";
 import { Queue } from "../server/queue.mjs";
 import { planWorkflow } from "../server/graph.mjs";
 import { capture } from "../harness-integrations/shared/process.mjs";
-import {
-  harnesses,
-  harnessInvocation,
-  parseHarnessText,
-} from "../harness-integrations/harnesses.mjs";
+import { invocation as codexInvocation } from "../harness-integrations/codex/text-stream.mjs";
+import * as claude from "../harness-integrations/claude-code/index.mjs";
+import * as gemini from "../harness-integrations/gemini/index.mjs";
+import * as pi from "../harness-integrations/pi/index.mjs";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function wait(fn) {
   const end = Date.now() + 5000;
@@ -238,23 +237,23 @@ test("four harness presets use fixed argv and parse only final responses; subpro
       directory: dir,
       imagePaths: [],
     };
-  for (const p of harnesses) {
-    const invocation = harnessInvocation(p, context);
+  for (const build of [
+    codexInvocation,
+    claude.invocation,
+    gemini.invocation,
+    pi.invocation,
+  ]) {
+    const invocation = build(context);
     assert.ok(invocation.input.includes("$(echo BAD)"));
     assert.ok(!invocation.args.some((a) => a.includes("$(echo BAD)")));
   }
-  assert.equal(
-    parseHarnessText("claude-code", '{"result":"CLAUDE"}'),
-    "CLAUDE",
-  );
-  assert.equal(
-    parseHarnessText("gemini-cli", '{"response":"GEMINI"}'),
-    "GEMINI",
-  );
-  assert.equal(parseHarnessText("pi", "PI"), "PI");
+  assert.equal(claude.parse('{"result":"CLAUDE"}'), "CLAUDE");
+  assert.equal(gemini.parse('{"response":"GEMINI"}'), "GEMINI");
+  assert.equal(pi.parse("PI"), "PI");
+  assert.throws(() => gemini.parse("null"), /invalid final-answer JSON/);
   assert.throws(
     () =>
-      parseHarnessText("claude-code", '{"is_error":true,"result":"failed"}'),
+      claude.parse('{"is_error":true,"result":"failed"}'),
     /failed/,
   );
   const file = path.join(dir, "fixture.mjs");
@@ -305,7 +304,7 @@ test("resuming a mixed run after restart reuses the completed prompt instead of 
   let queue;
   queue = new Queue(store, {
     resolveAsset: (x) => x,
-    adapter: async ({ job }) => {
+    adapter: async () => {
       queue.action([...store.runs.keys()][0], "pause");
       return { kind: "text", text: "SAVED BEFORE RESTART" };
     },

@@ -558,9 +558,6 @@ export function ImageEditor({
                 disabled={!editor?.regions.length || busy}
                 onClick={() => {
                   if (selected.length) {
-                    const region = editor.regions.find((r) =>
-                      selected.includes(r.id),
-                    );
                     setAnnotation({
                       regionIds: selected,
                       anchor: commentAnchor(editor, { regionIds: selected }),

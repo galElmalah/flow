@@ -410,7 +410,7 @@ export function registerDiscoveryRoutes(
         [
           "POST",
           "/api/workflows/:id/fork",
-          "Independent fork; optional {name,workflow,projectId}. Inherits project unless explicitly changed or cleared with null",
+          "Independent fork; optional {name,workflow,runId,projectId}. runId uses the authoritative recorded snapshot even without a saved workflow; do not combine with workflow. Inherits project unless explicitly changed or cleared with null. Records workflow and run ancestry.",
         ],
         [
           "POST",

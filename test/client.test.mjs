@@ -4,6 +4,8 @@ import {
   FlowClient,
   FlowError,
   createImageWorkflow,
+  createVideoWorkflow,
+  toFlowFile,
 } from "../client/index.mjs";
 import { prepareWorkflow } from "../cli/workflow-input.mjs";
 import { planWorkflow } from "../server/graph.mjs";
@@ -421,4 +423,218 @@ test("a wait deadline aborts a real pending HTTP body and preserves the run ID",
     client.wait("queued-run", { signal: AbortSignal.abort(reason) }),
     (error) => error === reason,
   );
+});
+
+test("bound clients can upload, import, save and plan a detached graph in their project", async () => {
+  const graph = createImageWorkflow({ id: "detached", prompt: "A pear" });
+  const { client, writes } = fixture({ ...graph, projectId: "one" }, "one");
+  const file = toFlowFile(graph);
+  for (const input of [graph, file]) {
+    assert.equal((await client.createWorkflow(input)).projectId, "one");
+    assert.equal((await client.saveWorkflow(input)).id, graph.id);
+    assert.equal((await client.plan(input)).workflow.projectId, "one");
+    assert.equal((await client.run(input)).workflow.projectId, "one");
+    assert.equal(
+      (await client.previewPromptItem(input, "prompts", "item")).workflow
+        .projectId,
+      "one",
+    );
+  }
+  assert.equal(Object.hasOwn(graph, "projectId"), false);
+  assert.equal(Object.hasOwn(file.workflow, "projectId"), false);
+  for (const projectId of [null, "other"]) {
+    const foreign = toFlowFile({ ...graph, projectId });
+    const before = writes.length;
+    assert.throws(() => client.createWorkflow(foreign), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+    assert.throws(() => client.run(foreign), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+    await assert.rejects(client.saveWorkflow(foreign), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+    assert.equal(writes.length, before);
+  }
+  const upload = new FlowClient({
+    projectId: "one",
+    fetch: async (_url, { body, headers }) => {
+      assert.equal(body.get("projectId"), "one");
+      assert.equal(body.get("images").name, "seed.png");
+      assert.equal(new Headers(headers).has("Content-Type"), false);
+      return Response.json([]);
+    },
+  });
+  await upload.upload([{ name: "seed.png", data: new Uint8Array([1]) }]);
+});
+
+test("recorded runs without a saved workflow open snapshot nodes and fork by run ID", async () => {
+  const urls = [];
+  const run = {
+    id: "run",
+    workflowId: "inline",
+    projectId: "one",
+    graph: createImageWorkflow({ id: "inline", projectId: "one" }),
+  };
+  const client = new FlowClient({
+    url: "http://127.0.0.1:4310",
+    fetch: async (url, options) => {
+      urls.push(url);
+      const path = new URL(url).pathname;
+      if (path === "/api/runs/run") return Response.json(run);
+      if (path === "/api/workflows/inline")
+        return Response.json({}, { status: 404 });
+      if (path === "/api/workflows/inline/fork")
+        return Response.json(JSON.parse(options.body));
+      throw new Error("Unexpected " + path);
+    },
+  });
+  assert.equal(
+    (await client.viewer({ runId: run.id, nodeId: "prompt" })).url,
+    "http://127.0.0.1:4310/project/one/workflow/inline/run/run/node/prompt",
+  );
+  await assert.rejects(
+    client.viewer({ runId: run.id, nodeId: "missing" }),
+    /does not exist/,
+  );
+  await assert.rejects(client.viewer({ workflowId: "inline" }), {
+    status: 404,
+  });
+  const bound = new FlowClient({
+    url: client.url,
+    fetch: client.fetch,
+    projectId: "one",
+  });
+  assert.deepEqual(await bound.fork("inline", { runId: "run" }), {
+    runId: "run",
+    projectId: "one",
+  });
+  assert.equal(new URL(urls.at(-1)).searchParams.get("projectId"), "one");
+  assert.throws(
+    () => bound.fork("inline", { runId: "run", workflow: run.graph }),
+    { code: "INVALID_ARGUMENT" },
+  );
+});
+
+test("HTTP errors retain status, request headers and caller cancellation", async (t) => {
+  const { createServer } = await import("node:http");
+  const { once } = await import("node:events");
+  const { promise: started, resolve: markStarted } = Promise.withResolvers();
+  const api = createServer((request, response) => {
+    if (request.url === "/headers")
+      return response.end(JSON.stringify(request.headers["x-sdk-header"]));
+    response.writeHead(503, { "Content-Type": "application/json" });
+    if (request.url === "/null") return response.end("null");
+    response.write("{");
+    markStarted();
+  }).listen(0, "127.0.0.1");
+  await once(api, "listening");
+  t.after(() => {
+    api.closeAllConnections();
+    return new Promise((resolve) => api.close(resolve));
+  });
+  const client = new FlowClient({
+    url: `http://127.0.0.1:${api.address().port}`,
+  });
+  for (const headers of [
+    new Headers({ "x-sdk-header": "value" }),
+    [["x-sdk-header", "value"]],
+  ])
+    assert.equal(await client.request("/headers", { headers }), "value");
+  await assert.rejects(client.request("/null"), {
+    name: "FlowError",
+    status: 503,
+  });
+  const controller = new AbortController(),
+    reason = new Error("Stop waiting for search");
+  const pending = client.searchImages(
+    { query: "apple" },
+    { signal: controller.signal },
+  );
+  await started;
+  controller.abort(reason);
+  await assert.rejects(pending, (error) => error === reason);
+});
+
+test("recipe templates substitute shared direction and an empty dataset never generates a fallback job", () => {
+  const record = { id: "s", fields: { scene: "a pear" } };
+  const prompt = { id: "s", label: "Study", scene: "a pear" };
+  for (const inputs of [{ prompts: [prompt] }, { records: [record] }]) {
+    const graph = createImageWorkflow({
+      prompt: "warm light",
+      template: "Paint {{scene}} in {{input}}.",
+      ...inputs,
+    });
+    assert.equal(
+      planWorkflow(graph).jobs[0].prompt,
+      "Paint a pear in warm light.",
+    );
+  }
+  assert.throws(
+    () => createImageWorkflow({ prompt: "a pear", records: [] }),
+    /at least one record/,
+  );
+});
+
+test("media recipes choose fal endpoints using per-scene references and retain explicit comparison settings", async () => {
+  const { FalMedia } = await import("../harness-integrations/fal/index.mjs");
+  const fal = new FalMedia({ dataRoot: import.meta.dirname, env: {} });
+  const image = "/assets/seed.png";
+  const prompts = [
+    { id: "pear", label: "Pear", scene: "A pear", images: [image] },
+    { id: "disabled", label: "Disabled", scene: "", enabled: false },
+  ];
+  const records = [{ id: "pear", fields: { fruit: "pear" }, images: [image] }];
+  for (const inputs of [{ prompts }, { records }]) {
+    const imageJob = planWorkflow(
+      createImageWorkflow({ providerId: "fal-image", ...inputs }),
+    ).jobs[0];
+    assert.match(imageJob.model, /\/edit$/);
+    fal.preflight(imageJob);
+    const videoJob = planWorkflow(
+      createVideoWorkflow({ providerId: "fal-video", ...inputs }),
+    ).jobs[0];
+    assert.equal(fal.preflight(videoJob).settings.mode, "image");
+    assert.equal(videoJob.ratio, "auto");
+  }
+  assert.throws(
+    () =>
+      createImageWorkflow({
+        providerId: "fal-image",
+        prompts: [...prompts, { id: "plain", label: "Plain", scene: "A tree" }],
+      }),
+    /text-only scenes/,
+  );
+  const compared = planWorkflow(
+    createImageWorkflow({
+      prompt: "A pear",
+      image: { resolution: "2k" },
+      modes: [
+        { id: "fal", providerId: "fal-image" },
+        { id: "grok", providerId: "grok-image", quality: "low" },
+      ],
+    }),
+  ).jobs;
+  assert.ok(compared.every((job) => job.image.resolution === "2k"));
+  assert.equal(compared[1].quality, "low");
+  const comparedVideos = planWorkflow(
+    createVideoWorkflow({
+      prompt: "A pear",
+      providerId: "fal-video",
+      images: [image],
+      video: { resolution: "720p", durationSeconds: 12, mode: "reference" },
+      modes: [
+        { id: "shared", providerId: "fal-video" },
+        {
+          id: "first",
+          providerId: "fal-video",
+          video: { resolution: "1080p" },
+        },
+      ],
+    }),
+  ).jobs;
+  assert.equal(fal.preflight(comparedVideos[0]).settings.mode, "reference");
+  assert.equal(comparedVideos[0].video.durationSeconds, 12);
+  assert.equal(fal.preflight(comparedVideos[1]).settings.mode, "image");
+  assert.equal(comparedVideos[1].video.durationSeconds, 8);
 });

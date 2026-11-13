@@ -8,7 +8,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { startServer, stopServer } from "../cli/server.mjs";
 
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 
 async function seedFixture(url) {
   const response = await fetch(url + "/api/workflows", {

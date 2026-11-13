@@ -177,7 +177,7 @@ test("style discovery, favorites and starting a saved project workflow preserve 
 });
 
 test("reference jobs expose progress and idempotent bindings validate actual completed image lineage", async (t) => {
-  const { root, store, services, client } = await fixture(t);
+  const { store, services, client } = await fixture(t);
   const [style, other] = builtInStyles;
   const runId = "aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb";
   const jobId = "cccccccc-1111-2222-3333-dddddddddddd";

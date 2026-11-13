@@ -1,6 +1,5 @@
 import { readFile, rename, copyFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { z } from "zod";
 import { codexStatus } from "./codex/status.mjs";
 import { CodexConnection } from "./codex/connection.mjs";
@@ -56,7 +55,7 @@ const common = {
   models: z.array(z.string().min(1).max(120)).min(1).max(100),
   timeoutMs: z.number().int().min(100).max(3600000).default(1200000),
 };
-export const providerSchema = z.discriminatedUnion("kind", [
+const providerSchema = z.discriminatedUnion("kind", [
   z.object({
     ...common,
     kind: z.literal("command"),
@@ -740,18 +739,12 @@ export class ProviderRegistry {
       const originalFormat = await verifyImage(file);
       const originalFile = `original-attempt-${context.job.attempts || 1}.${originalFormat}`;
       await copyFile(file, path.join(context.directory, originalFile));
-      let metadata = await sharp(file, {
-        limitInputPixels: 64000000,
-      }).metadata();
       const output = path.join(context.directory, "output.png"),
         temp = path.join(context.directory, "normalized.png");
-      if (regionInputs) {
-        context.onProgress?.(
-          "Preserving original pixels outside the selected regions…",
-        );
-        metadata = await compositeRegionFile(regionInputs, file, temp);
-      } else
-        await sharp(file, { limitInputPixels: 64000000 }).png().toFile(temp);
+      context.onProgress?.(
+        "Preserving original pixels outside the selected regions…",
+      );
+      const metadata = await compositeRegionFile(regionInputs, file, temp);
       await rename(temp, output);
       return {
         kind: "image",
@@ -767,10 +760,8 @@ export class ProviderRegistry {
           providerId: p.id,
           providerName: p.name,
           model: context.job.model,
-          ...(regionInputs && {
-            regionComposite: true,
-            outsidePixelsPreserved: true,
-          }),
+          regionComposite: true,
+          outsidePixelsPreserved: true,
           seedMode:
             nativeResult?.metadata?.seedMode ||
             (["local-color", "local-recolor"].includes(p.id)

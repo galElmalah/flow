@@ -181,7 +181,7 @@ test("skills CLI runs offline independently of a consuming project manifest, and
         env: { ...process.env, HOME: options.home },
       },
     ),
-    /Skill target must be/,
+    /Invalid --target.*codex.*claude-code/,
   );
   await assert.rejects(stat(options.home), { code: "ENOENT" });
 });

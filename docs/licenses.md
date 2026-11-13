@@ -2,7 +2,7 @@
 
 Flow's own source uses [MIT](../LICENSE). This inventory records upstream declarations; it does not relicense dependencies or model weights. Scope for the first public release is source-only: no npm package, packaged desktop binary, model archive or prebuilt `dist/` bundle.
 
-Run `npm run check:licenses` after `npm ci`. For the complete machine-readable package/version/license inventory, use `node tools/license-inventory.mjs --json`. All 418 current lockfile package entries have declared metadata or reviewed license-file evidence. `busboy@1.6.0` and `streamsearch@1.1.0` omit license metadata in the lockfile; their installed `LICENSE` files contain Brian White's MIT terms. The tool checks those files instead of treating missing metadata as an unlicensed dependency.
+Run `npm run check:licenses` after `npm ci`. For the complete machine-readable package/version/license inventory, use `node tools/license-inventory.mjs --json`. `busboy@1.6.0` and `streamsearch@1.1.0` omit license metadata in the lockfile; their installed `LICENSE` files contain Brian White's MIT terms. The tool checks those files instead of treating missing metadata as an unlicensed dependency.
 
 ## Distribution-sensitive dependencies
 

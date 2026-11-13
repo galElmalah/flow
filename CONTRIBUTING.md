@@ -30,6 +30,8 @@ npm run check:release
 npm run verify:setup
 ```
 
+Run `npm run check:unused` to check JavaScript modules, internal exports and package dependencies. When adding an executable launched by file path, register it in `knip.jsonc` so the checker can follow its imports.
+
 For UI changes, also exercise the feature in the browser. Describe what changed, how you verified it, and any remaining limitation. Never include credentials, workspace databases, local run exports or images without redistribution rights.
 
 ## Report a problem

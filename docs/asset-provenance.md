@@ -5,7 +5,7 @@ Reviewed November 13, 2026. Only files in the source repository are covered. Loc
 | Asset | Source and terms | Status |
 | --- | --- | --- |
 | Figtree normal/italic WOFF2 | Pinned upstream commit, SIL OFL; hashes and license in [font provenance](../public/fonts/figtree/README.md) | Notice and hashes verified |
-| Provider SVG marks, including Pi | `@lobehub/icons-static-svg@1.101.0`, MIT; included LobeHub notice and modifications in [mark provenance](../public/harnesses/README.md) | Current Pi files use the verified package path; vendor names/trademarks remain theirs |
+| Provider SVG marks, including Pi | `@lobehub/icons-static-svg@1.101.0`, MIT; included LobeHub notice and modifications in [mark provenance](../public/harnesses/README.md) | The current Pi mark uses the verified package path; vendor names/trademarks remain theirs |
 | Flow favicon | Project source SVG under the root MIT license | Part of source; owner confirms overall code/brand ownership at release |
 | `public/assets/paper-seed.png` | Original source describes generated demo art; no generation/reference receipt was present in the audited Git source | **Owner clearance required for public release** |
 | `docs/images/helmet-campaign.jpg`, `helmet-seed-workflow.jpg`, `region-comment.jpg`, `pink-jersey-result.jpg` | Existing native Flow captures from November 3, 2026. The owner requested these helmet campaign and sports editing captures for the README. Campaign artwork was generated through Flow's Codex adapter; the pink result uses local recoloring. | Visually reviewed for credentials, account quotas and machine-specific paths. Original JPEG bytes retained; no local project data, prompts beyond the visible campaign brief, or model weights bundled. |

@@ -4,7 +4,7 @@ import {
   organizeGraph,
   organizeOptionsSchema,
 } from "../shared/graph-layout.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 import { planWorkflow } from "../server/graph.mjs";
 
 const node = (id, type = "prompt", data = {}) => ({

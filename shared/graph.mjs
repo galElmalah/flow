@@ -93,6 +93,10 @@ export const workflowSchema = z.object({
   forkedFrom: z
     .object({
       workflowId: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/),
+      runId: z
+        .string()
+        .regex(/^[a-zA-Z0-9_-]{1,100}$/)
+        .optional(),
       name: z.string().min(1).max(120),
       createdAt: z.iso.datetime(),
     })

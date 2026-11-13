@@ -158,8 +158,14 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
       req.url === "/api/providers/example"
     )
       return res.end(JSON.stringify([]));
-    if (req.url === "/api/workflows/fixture/fork")
-      return res.end(JSON.stringify({ id: "forked", ...body }));
+    if (req.url.split("?")[0] === "/api/workflows/fixture/fork")
+      return res.end(
+        JSON.stringify({
+          id: "forked",
+          ...body,
+          name: body.runId ? "Recorded fixture" : body.name,
+        }),
+      );
     if (req.url === "/api/workflows/fixture/organize?projectId=qa")
       return res.end(
         JSON.stringify({
@@ -662,11 +668,8 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
     runId: "qa-run",
     name: "Snapshot fork",
   });
-  assert.equal(
-    snapshotFork.structuredContent.data.workflow.name,
-    "Recorded fixture",
-  );
-  assert.equal(requests.at(-1).body.workflow.id, "fixture");
+  assert.equal(snapshotFork.structuredContent.data.name, "Recorded fixture");
+  assert.equal(requests.at(-1).body.runId, "qa-run");
   const beforeWrongFork = requests.length;
   assert.equal(
     (await call("fork_workflow", { workflowId: "foreign", runId: "qa-run" }))

@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  // Knip also reads package exports, CLI binaries, npm scripts and the Vite HTML entry.
+  "entry": [
+    // Public preview served alongside the Vite application.
+    "public/demos/liquid-glass/preview.js",
+    // Worker threads and commands executed by path.
+    "server/search/worker.mjs",
+    "harness-integrations/claude-code/usage-statusline.mjs",
+    "examples/harnesses/local-color.mjs",
+    "examples/harnesses/recolor.mjs",
+    "skills/*/scripts/flow.mjs",
+    // Standalone authoring, verification and reporting commands.
+    "tools/build-explainer.mjs",
+    "tools/sample-agent-latency.mjs",
+    "tools/style-contact-sheets.mjs",
+    "tools/style-references.mjs",
+    "tools/verify-fal-catalog.mjs",
+    // Documented example consumed by external projects.
+    "examples/quoture/shared-workflow.mjs",
+    "test/*.test.mjs"
+  ],
+  "project": ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"]
+}

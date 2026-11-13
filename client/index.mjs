@@ -1,4 +1,5 @@
 import { providerFailureFields } from "../shared/provider-errors.mjs";
+import { fromFlowFile } from "../shared/flow-file.mjs";
 import {
   runOptionsSchema,
   runSubmissionSchema,
@@ -37,6 +38,19 @@ function assertProjectScope(boundProject, target) {
     );
 }
 
+function graphInput(input) {
+  return input && Object.hasOwn(input, "format") ? fromFlowFile(input) : input;
+}
+
+function scopedGraph(input, projectId) {
+  const graph = graphInput(input);
+  if (graph?.projectId !== undefined)
+    assertProjectScope(projectId, graph.projectId);
+  return graph && graph.projectId === undefined && projectId !== undefined
+    ? { ...graph, projectId }
+    : graph;
+}
+
 /** A small local HTTP client. All durable writes go through the platform. */
 export class FlowClient {
   constructor({
@@ -49,25 +63,27 @@ export class FlowClient {
     this.fetch = transport.bind(globalThis);
   }
   async response(route, options = {}) {
+    const headers = new Headers(options.headers);
+    if (typeof options.body === "string" && !headers.has("Content-Type"))
+      headers.set("Content-Type", "application/json");
     const response = await this.fetch(this.url + route, {
       ...options,
-      headers: {
-        ...(options.body && !(options.body instanceof FormData)
-          ? { "Content-Type": "application/json" }
-          : {}),
-        ...options.headers,
-      },
+      headers,
     });
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => {
+        options.signal?.throwIfAborted();
+      });
       throw Object.assign(
         new FlowError(
-          data.error || response.statusText,
+          (typeof data?.error === "string" && data.error) ||
+            response.statusText ||
+            `HTTP ${response.status}`,
           response.status,
-          typeof data.code === "string" ? data.code : undefined,
+          typeof data?.code === "string" ? data.code : undefined,
         ),
-        typeof data.runId === "string" && { runId: data.runId },
-        Array.isArray(data.issues) && { issues: data.issues },
+        typeof data?.runId === "string" && { runId: data.runId },
+        Array.isArray(data?.issues) && { issues: data.issues },
         providerFailureFields(data),
       );
     }
@@ -343,15 +359,10 @@ export class FlowClient {
     );
   }
   createWorkflow(graph) {
-    if (graph.projectId !== undefined)
-      assertProjectScope(this.projectId, graph.projectId);
-    return this.post("/api/workflows", {
-      ...graph,
-      projectId:
-        graph.projectId === undefined ? this.projectId : graph.projectId,
-    });
+    return this.post("/api/workflows", scopedGraph(graph, this.projectId));
   }
-  async saveWorkflow(graph) {
+  async saveWorkflow(input) {
+    const graph = graphInput(input);
     const existing = await this.workflow(graph.id, { unscoped: true }).catch(
       (error) => {
         if (error.status !== 404) throw error;
@@ -387,11 +398,19 @@ export class FlowClient {
       projectId,
     });
   }
-  fork(id, { name, workflow, projectId = this.projectId } = {}) {
+  fork(id, { name, workflow, runId, projectId = this.projectId } = {}) {
     assertProjectScope(this.projectId, projectId);
-    return this.post(`/api/workflows/${encoded(id)}/fork`, {
+    if (runId !== undefined && workflow !== undefined)
+      throw new FlowError(
+        "Choose a run or a workflow snapshot to fork.",
+        400,
+        "INVALID_ARGUMENT",
+      );
+    const route = `/api/workflows/${encoded(id)}/fork`;
+    return this.post(runId === undefined ? route : this.scoped(route), {
       name,
-      workflow,
+      workflow: graphInput(workflow),
+      runId,
       projectId,
     });
   }
@@ -408,7 +427,7 @@ export class FlowClient {
     return {
       ...(typeof workflow === "string"
         ? { workflowId: workflow }
-        : { workflow }),
+        : { workflow: scopedGraph(workflow, this.projectId) }),
       projectId: this.projectId,
       options: parseRunInput(runOptionsSchema, options),
     };
@@ -617,6 +636,7 @@ export class FlowClient {
   }
   upload(files) {
     const form = new FormData();
+    if (this.projectId) form.append("projectId", this.projectId);
     for (const { name, data, type } of files)
       form.append(
         "images",

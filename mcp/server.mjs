@@ -912,7 +912,7 @@ export function createMcpServer({
   );
   tool(
     "fork_workflow",
-    "Copy a saved workflow into this connection's project with provenance and a new ID. Optional runId uses its recorded graph snapshot after validating source workflow agreement and run ownership. A saved source may belong to another project; the original is unchanged.",
+    "Copy a saved workflow or recorded inline run into this connection's project with provenance and a new ID. Optional runId uses the authoritative recorded graph even if no saved workflow exists; source workflow agreement and run ownership are validated. A saved source may belong to another project; the original is unchanged.",
     z
       .object({
         workflowId: id,
@@ -921,19 +921,7 @@ export function createMcpServer({
       })
       .strict(),
     false,
-    async ({ workflowId, name, runId }) => {
-      let workflow;
-      if (runId) {
-        const run = await flow.inspect(runId);
-        if (run.workflowId !== workflowId)
-          throw new FlowError(
-            `Run ${runId} belongs to workflow ${run.workflowId}, not ${workflowId}.`,
-            409,
-          );
-        workflow = { ...run.graph, id: run.workflowId };
-      }
-      return flow.fork(workflowId, { name, workflow });
-    },
+    ({ workflowId, name, runId }) => flow.fork(workflowId, { name, runId }),
   );
   tool(
     "plan_workflow",

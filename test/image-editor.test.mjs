@@ -45,7 +45,7 @@ test("SAM editor API preserves originals, scopes ownership, serializes segmentat
   const model = {
     variant: "sam2-fixture",
     status: async () => ({ ready: true, model: model.variant }),
-    async run({ directory, point, onProgress }) {
+    async run({ directory, onProgress }) {
       calls++;
       for (const event of [
         { stage: "encoding", message: "Encoding image" },

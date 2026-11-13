@@ -37,8 +37,8 @@ test("agent CLI covers durable UI actions through the supported API with scoped 
       if (request.method === "PUT") graph = body;
       return send(graph);
     }
-    if (request.url === "/api/workflows/fixture/fork")
-      return send({ ...body.workflow, id: "forked", name: body.name });
+    if (request.url === "/api/workflows/fixture/fork?projectId=qa")
+      return send({ ...graph, id: "forked", name: body.name });
     if (request.url === "/api/gallery?projectId=qa")
       return send([
         {
@@ -175,7 +175,11 @@ test("agent CLI covers durable UI actions through the supported API with scoped 
     "From recorded run",
   );
   assert.equal(snapshotFork.id, "forked");
-  assert.equal(requests.at(-1).body.workflow.name, "Recorded snapshot");
+  assert.deepEqual(requests.at(-1).body, {
+    projectId: "qa",
+    name: "From recorded run",
+    runId: "run",
+  });
   const client = new FlowClient({ url, projectId: "qa" });
   assert.equal(
     new TextDecoder().decode(await client.download("run")),

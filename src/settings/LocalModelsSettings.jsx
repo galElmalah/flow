@@ -63,7 +63,7 @@ async function request(path = "", method = "GET", body) {
   return value;
 }
 const activeTask = (runtime) => runtime?.task?.status === "running";
-export function TaskProgress({ task }) {
+function TaskProgress({ task }) {
   if (!task) return null;
   const progress = task.download;
   return (

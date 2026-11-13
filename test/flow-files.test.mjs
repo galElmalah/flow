@@ -11,7 +11,7 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 import { Store } from "../server/store.mjs";
 import {
   toFlowFile,

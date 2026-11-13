@@ -207,8 +207,10 @@ These fixture tests require no provider account and do not establish live infere
 To fork a recorded run rather than today's saved graph, call
 `fork_workflow {workflowId,runId,name?}`. The source workflow ID must match the
 run, and a project-bound connection may only inspect its own recorded run.
-The graph snapshot, including original prompts and rule text, is sent through
-the same provenance-preserving fork endpoint as the viewer's **Fork to edit**.
+The server reads the authoritative graph snapshot, including original prompts
+and rule text, through the same fork endpoint as the viewer's **Fork to edit**.
+It also works for an inline run whose workflow was never saved. The new graph
+records `forkedFrom.runId` alongside its original workflow ID.
 
 Projects: `list_projects {search?,archived?:"active"|"archived"|"all"}` searches names,
 local folders and workflow titles. `list_workflows {archived?}` uses the same states.

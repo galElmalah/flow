@@ -63,33 +63,15 @@
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
-      "path": "public/harnesses/claude.svg",
-      "bytes": 1701,
-      "sha256": "365a70a7eb3956d9b9a96086058ebe04e1dbd8e291a756ad964e8a283fbd6d38",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
       "path": "public/harnesses/claudecode-color.svg",
       "bytes": 424,
       "sha256": "670b3d8d749d0815ad8f7e62a59d51cb5e2053cb19403f3541a8aed7036a877f",
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
-      "path": "public/harnesses/claudecode.svg",
-      "bytes": 429,
-      "sha256": "d7eb2d876b49e51cc16291a42b681d7cf4906e60e0150776dbfb353ec4ca3746",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
       "path": "public/harnesses/codex-color.svg",
       "bytes": 1769,
       "sha256": "4a2f43ce46b5b6e3722c95088f88d26ef91e6a8c2e598e70642a1c54367386e4",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
-      "path": "public/harnesses/codex.svg",
-      "bytes": 1368,
-      "sha256": "d08b4e824cd6727e89617f59e4737273ff53e44c1da849d016dd64dfd08b33e1",
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
@@ -111,21 +93,9 @@
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
-      "path": "public/harnesses/gemini.svg",
-      "bytes": 651,
-      "sha256": "87d5b3c4be75a66f54c1936482a263df68185545b741129badd1b7c2449c18d3",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
       "path": "public/harnesses/geminicli-color.svg",
       "bytes": 921,
       "sha256": "c2f54ebaa4c3b9191c6a07f7b0c66bc78e4abe486003dc564469cf650672663e",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
-      "path": "public/harnesses/geminicli.svg",
-      "bytes": 605,
-      "sha256": "bc9b0199cb4c5deee25d6cf49d6e7d60a891171ccbc5520f657d3047b84e5d2e",
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
@@ -147,21 +117,9 @@
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     },
     {
-      "path": "public/harnesses/openai.svg",
-      "bytes": 1687,
-      "sha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
       "path": "public/harnesses/pi-color.svg",
       "bytes": 309,
       "sha256": "44ce40089c8117ad21cfdbeb7350ab72f5ad94455b8a9fb58f032d47f1f3b5d3",
-      "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
-    },
-    {
-      "path": "public/harnesses/pi.svg",
-      "bytes": 313,
-      "sha256": "d82978781b824273c55473822c1f243a6ed34fc6e8c2dbfe1a90dfc66ae43ee8",
       "terms": "Lobe Icons MIT; included notice; trademarks remain their owners'"
     }
   ]

@@ -20,14 +20,15 @@
     "test": "node --test test/*.test.mjs",
     "cli": "node cli/flow.mjs",
     "check:architecture": "node tools/check-architecture.mjs",
-    "check": "npm run check:architecture && npm run build && npm test",
+    "check": "npm run check:architecture && npm run check:unused && npm run build && npm test",
     "setup": "npm run build && node tools/setup.mjs",
     "cli:install": "node tools/install-cli.mjs",
     "cli:uninstall": "node tools/install-cli.mjs --uninstall",
     "demo": "node tools/demo.mjs",
     "verify:setup": "node tools/verify-setup.mjs",
     "check:release": "node tools/check-release.mjs && node tools/check-doc-links.mjs",
-    "check:licenses": "node tools/license-inventory.mjs"
+    "check:licenses": "node tools/license-inventory.mjs",
+    "check:unused": "knip"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",
@@ -54,7 +55,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",
-    "prettier": "3.9.10"
+    "knip": "6.42.0"
   },
   "engines": {
     "node": ">=22.13.0"

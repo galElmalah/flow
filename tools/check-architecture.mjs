@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -27,7 +29,28 @@ async function walk(directory) {
     else if (/\.(mjs|jsx)$/.test(entry.name)) files.push(file);
   }
 }
-await Promise.all(roots.map((dir) => walk(path.join(root, dir))));
+if (existsSync(path.join(root, ".git"))) {
+  const names = execFileSync(
+    "git",
+    [
+      "ls-files",
+      "--cached",
+      "--others",
+      "--exclude-standard",
+      "-z",
+      "--",
+      ...roots,
+    ],
+    { cwd: root, encoding: "utf8" },
+  );
+  for (const name of names.split("\0")) {
+    const file = path.join(root, name);
+    if (/\.(mjs|jsx)$/.test(name) && existsSync(file)) files.push(file);
+  }
+} else {
+  // Source archives have no index or ignored working files.
+  await Promise.all(roots.map((dir) => walk(path.join(root, dir))));
+}
 const errors = [],
   dependencies = new Map();
 const relative = (file) => path.relative(root, file);

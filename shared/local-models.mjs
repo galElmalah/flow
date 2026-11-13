@@ -30,7 +30,7 @@ const filename = z
     "Use a relative model filename without traversal.",
   );
 const jsonValue = z.json();
-export const comfyBindingSchema = z
+const comfyBindingSchema = z
   .object({
     nodeId,
     input: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),

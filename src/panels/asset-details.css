@@ -219,9 +219,6 @@ button.asset-parent-heading:hover {
   object-fit: contain;
   background: #1b1b1b;
 }
-.image-corner-label {
-  pointer-events: none;
-}
 .embedded-image-lineage {
   min-width: 0;
   padding: 0 4px 16px;

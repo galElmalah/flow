@@ -30,7 +30,14 @@ or run `node cli/flow.mjs` from this checkout. Help and version work offline:
 node cli/flow.mjs --version --json
 node cli/flow.mjs help run --json
 node cli/flow.mjs run --help --json
+node tools/setup.mjs --help --json
+node tools/install-cli.mjs --help --json
+node tools/demo.mjs --help --json
 ```
+
+After building, `node tools/setup.mjs --json` returns one JSON result on stdout.
+PATH instructions go to stderr. Help and invalid arguments never install tools,
+write skills, or start the demo.
 
 `npm run verify:setup` uses a temporary home, database, port, launcher, and skills.
 It blocks external fetches, creates four local images, checks lineage and MCP,
@@ -148,6 +155,11 @@ reporting success. `--print-url` validates the viewer target and returns its loc
 URL without opening a browser. Add `--wait` to `run` if you want submission and
 waiting in one command.
 
+If a JSON wait reaches a failed or cancelled run, it exits nonzero with a
+structured error on stderr. The error includes `runId` and the full recorded run
+at `error.run`, including jobs and failure messages. A monitoring failure after
+successful submission also preserves the accepted `runId`.
+
 A client timeout does not cancel server work. Keep the run ID and inspect or wait
 again. Use `resume RUN_ID` for a paused run or `retry RUN_ID` for failed jobs.
 These controls act on the recorded run. Do not submit a fresh batch to recover an
@@ -209,6 +221,13 @@ console.log(finished.status, finished.jobs);
 The SDK calls the running local server. Imports never start inference. The SDK
 returns run documents with `id` and accepts the optional request key in the third
 argument to `run`.
+
+Bound clients also assign uploads and inline graphs to their project. Graph
+methods accept either graph objects or versioned `.flow.json` documents. For an
+inline run, `client.viewer({runId})` opens its recorded snapshot and
+`client.fork(run.workflowId, {runId:run.id})` saves an independent workflow with
+the original workflow and run recorded in `forkedFrom`. These operations work
+even when the inline graph was never saved as a workflow.
 
 With `--json`, successful CLI results go to stdout. Failures exit nonzero and
 write `{error:{message,code,status?,runId?,blockers?}}` as JSON to stderr.

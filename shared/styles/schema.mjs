@@ -50,7 +50,7 @@ export const styleReferenceSchema = z
           "Uploaded references cannot claim generated run/job provenance.",
       });
   });
-export const styleDefinitionSchema = z
+const styleDefinitionSchema = z
   .object({
     name: z.string().trim().min(1).max(120),
     category: z.string().trim().min(1).max(120),

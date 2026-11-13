@@ -67,7 +67,7 @@ export const videoSettingsSchema = z
     mode: z.enum(["text", "image", "reference"]).optional(),
   })
   .strict();
-export const generationModeSchema = z
+const generationModeSchema = z
   .object({
     id: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/),
     label: z.string().min(1).max(120),

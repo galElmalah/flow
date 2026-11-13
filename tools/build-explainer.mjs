@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -17,7 +18,10 @@ const files = execFileSync("git", ["ls-files", "-z", "public", "docs/images"], {
 })
   .toString()
   .split("\0")
-  .filter((file) => /\.(png|jpg|svg|woff2)$/.test(file));
+  .filter(
+    (file) =>
+      /\.(png|jpg|svg|woff2)$/.test(file) && existsSync(path.join(root, file)),
+  );
 const assets = await Promise.all(
   files.map(async (file) => {
     const bytes = await readFile(path.join(root, file));

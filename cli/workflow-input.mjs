@@ -8,6 +8,7 @@ import {
   imageSettingsSchema,
 } from "../shared/generation-modes.mjs";
 import { runOptionsSchema } from "../shared/run-options.mjs";
+import { validateGraph } from "../shared/graph.mjs";
 import { generationKind } from "../shared/media.mjs";
 import {
   promptItemsSchema,
@@ -107,25 +108,50 @@ export async function prepareWorkflow(
   const templateText = values.template
     ? await readFile(resolve(values.template), "utf8")
     : undefined;
-  let assets;
-  if (values["seed-image"]?.length)
-    assets = await client.upload(
-      await Promise.all(
-        values["seed-image"].map(async (file) => ({
+  const seedFiles = values["seed-image"] || [];
+  // The recipe needs the reference count to choose the image/video model and wire its edges.
+  // Fill in the server URLs only after the complete graph passes local validation.
+  const imageSlots = seedFiles.map(
+    (_, index) => `/files/uploads/pending-reference-${index}.png`,
+  );
+  async function finish(workflow) {
+    validateGraph(workflow);
+    if (seedFiles.length) {
+      const files = await Promise.all(
+        seedFiles.map(async (file) => ({
           name: basename(file),
           data: await readFile(resolve(file)),
         })),
-      ),
-    );
-  if (!values.from && !workflowId)
-    return (
+      );
+      const assets = await client.upload(files);
+      workflow.nodes.find((node) => node.type === "image").data.images =
+        assets.map((asset) => asset.url);
+    }
+    return workflow;
+  }
+  if (!values.from && !workflowId) {
+    if (
+      values.media !== "video" &&
+      (values.duration !== undefined || values["video-mode"] !== undefined)
+    )
+      throw new Error("--duration and --video-mode require a video workflow.");
+    if (values.media === "video" && values.quality !== undefined)
+      throw new Error("--quality requires an image workflow.");
+    if (
+      !values["prompt-provider"] &&
+      (values["prompt-model"] || values["prompt-instructions"] !== undefined)
+    )
+      throw new Error(
+        "Choose --prompt-provider when configuring a prompt writer.",
+      );
+    const workflow = (
       values.media === "video" ? createVideoWorkflow : createImageWorkflow
     )({
       id: values.id || (create ? undefined : "cli-seed"),
       name: values.name || "CLI exploration",
       projectId: projectId,
       prompt: values.prompt,
-      images: assets?.map((a) => a.url),
+      images: imageSlots,
       records,
       prompts,
       template: templateText,
@@ -153,12 +179,40 @@ export async function prepareWorkflow(
           ? { image: imageSettingsSchema.parse(image) }
           : {}),
     });
-  let workflow = values.from
+    return finish(workflow);
+  }
+  const workflow = values.from
     ? owned(
         fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))),
         projectId,
       )
     : await loadWorkflow(client, workflowId);
+  const hasImage = workflow.nodes.some((node) => node.type === "generate");
+  const hasVideo = workflow.nodes.some(
+    (node) => node.type === "video-generate",
+  );
+  if (
+    (values.media === "video" && !hasVideo) ||
+    (values.media === "image" && !hasImage)
+  )
+    throw new Error(`This workflow has no ${values.media} generation node.`);
+  if (
+    !hasVideo &&
+    (values.duration !== undefined || values["video-mode"] !== undefined)
+  )
+    throw new Error("--duration and --video-mode require a video workflow.");
+  if (
+    !hasImage &&
+    (Object.keys(imageFlags).length || values.quality !== undefined)
+  )
+    throw new Error("Image output controls require an image generation node.");
+  if (
+    (values["prompt-instructions"] !== undefined ||
+      values["prompt-model"] ||
+      values["prompt-provider"]) &&
+    !workflow.nodes.some((node) => node.type === "prompt-generate")
+  )
+    throw new Error("This workflow has no prompt writer to configure.");
   if (modes) {
     const targets = workflow.nodes.filter(
       (node) =>
@@ -238,7 +292,7 @@ export async function prepareWorkflow(
     if (!node) throw new Error("This workflow has no prompt node to override.");
     node.data.text = values.prompt;
   }
-  if (assets) {
+  if (seedFiles.length) {
     let node = workflow.nodes.find((n) => n.type === "image");
     if (!node) {
       node = {
@@ -249,7 +303,7 @@ export async function prepareWorkflow(
       };
       workflow.nodes.push(node);
     }
-    node.data.images = assets.map((a) => a.url);
+    node.data.images = imageSlots;
     if (!workflow.edges.some((e) => e.source === node.id))
       for (const target of workflow.nodes.filter((n) =>
         workflow.nodes.some((writer) => writer.type === "prompt-generate")
@@ -328,5 +382,5 @@ export async function prepareWorkflow(
           ),
         );
     }
-  return workflow;
+  return finish(workflow);
 }

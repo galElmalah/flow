@@ -24,7 +24,6 @@ import {
 } from "@xyflow/react";
 import {
   Plus,
-  Image as ImageIcon,
   Type,
   Sparkles,
   Layers,
@@ -32,14 +31,12 @@ import {
   Settings2,
   ChevronDown,
   ChevronRight,
-  ArrowUpRight,
   ArrowRight,
   CheckCheck,
   Play,
   Pause,
   Square,
   Terminal,
-  Command,
   Search,
   X,
   Upload,
@@ -65,7 +62,6 @@ import {
   HelpCircle,
   Link2,
   RefreshCw,
-  Shuffle,
   FileJson,
   FileInput,
   Palette,
@@ -102,12 +98,7 @@ import {
   fromFlowFile,
   flowFileName,
 } from "../shared/flow-file.mjs";
-import {
-  accents,
-  icons,
-  nodeNames,
-  nodeDescriptions,
-} from "./nodes/catalog.mjs";
+import { icons, nodeNames, nodeDescriptions } from "./nodes/catalog.mjs";
 import { nodeTypes } from "./nodes/index.mjs";
 import { edgeTypes } from "./canvas/FlowEdge.jsx";
 import { graphForSave } from "./canvas/graph-state.mjs";
@@ -1453,11 +1444,20 @@ export default function App() {
   };
   const forkWorkflow = async () => {
     try {
-      const { workflow, nodes, edges } = state.current;
+      const { workflow, nodes, edges, viewingRun } = state.current;
       const g = await jsonRequest(`/api/workflows/${workflow.id}/fork`, {
         method: "POST",
         body: JSON.stringify({
-          workflow: graphForSave(workflow, nodes, edges, flow.getViewport()),
+          ...(viewingRun
+            ? { runId: viewingRun.id }
+            : {
+                workflow: graphForSave(
+                  workflow,
+                  nodes,
+                  edges,
+                  flow.getViewport(),
+                ),
+              }),
         }),
       });
       setWorkflows((gs) => [g, ...gs]);
@@ -1634,11 +1634,8 @@ export default function App() {
       window.removeEventListener("keyup", up);
     };
   }, [undo, redo, fit, runWorkflow, saveCurrentWorkflow]);
-  const selected = nodes.find((n) => n.id === selection),
-    activity = workflowActivity(runs, workflow?.id, viewingRun?.id),
-    busy = activity.counts.running > 0,
-    complete = jobs.filter((j) => j.status === "completed").length,
-    failed = jobs.filter((j) => j.status === "failed").length;
+  const selected = nodes.find((n) => n.id === selection);
+  const activity = workflowActivity(runs, workflow?.id, viewingRun?.id);
   const outputSources = {};
   for (const node of nodes.filter((n) =>
     ["output", "video-output"].includes(n.type),

@@ -9,7 +9,6 @@ import { runOptionsSchema } from "../../shared/run-options.mjs";
 import {
   generationKind,
   isMediaJob,
-  mediaKind,
   mediaArtifact,
 } from "../../shared/media.mjs";
 

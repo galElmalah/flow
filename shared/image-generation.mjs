@@ -1,8 +1,8 @@
-export const gptImage26Models = [
+const gptImage26Models = [
   "gpt-image-2.6-sunburst",
   "gpt-image-2.6-flare",
 ];
-export const isGptImage26 = (model) => gptImage26Models.includes(model);
+const isGptImage26 = (model) => gptImage26Models.includes(model);
 export const codexImageDetail = {
   id: "native",
   label: "Codex Images · current",

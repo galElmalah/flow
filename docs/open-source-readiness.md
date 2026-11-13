@@ -10,10 +10,10 @@ The repository remains private. Review [the November 5 multi-agent audit](public
 - Fixed private-file reference traversal and credential-bearing request metadata, with synthetic regressions.
 - Explicit search-model download; cached weights work offline. Local-processing demo makes no implicit model download.
 - Source-only clean-HOME install/build/serve, CLI/MCP, four local-processing outputs and idempotent/preserved user skills.
-- All 389 tests pass locally on macOS Node 24; architecture/build/source/link checks pass. Minimum Node 22.13.0 is included in final-commit CI.
+- All 399 tests pass locally on macOS Node 24; architecture/unused-code/build/source/link checks pass. Minimum Node 22.13.0 is included in final-commit CI. See [the second agent-interface review](agent-review-second-pass.md).
 - CI configured for Linux Node 22.13.0/24 and macOS Node 24; check final Actions results.
 - Zero npm audit vulnerabilities; dependency and optional-model inventory in [licenses](licenses.md).
-- Portable shipped demo with synthetic metadata; current Pi marks use verified MIT-licensed source.
+- Portable shipped demo with synthetic metadata; the current Pi mark uses verified MIT-licensed source.
 
 ## Before visibility changes
 

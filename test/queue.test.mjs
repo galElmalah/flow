@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import { Store } from "../server/store.mjs";
 import { Queue } from "../server/queue.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(fn) {
   const end = Date.now() + 5000;

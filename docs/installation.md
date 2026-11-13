@@ -34,6 +34,13 @@ The absolute command `~/.local/bin/flow` also works without a PATH change. Comma
 from other projects discover their `flow.project.json`. Help and version checks
 work offline, even if that project's manifest needs repair.
 
+The setup entrypoints also support offline `--help --json`. Help and invalid
+arguments never install files or start the demo. After building, use
+`node tools/setup.mjs --json` for one machine-readable setup result; PATH hints
+are written to stderr. `node tools/install-cli.mjs --json` installs only the
+launcher. Run `node tools/demo.mjs --json` to create or reopen the local demo
+without launching a browser.
+
 ## Choose an installation or remove the launcher
 
 ```sh

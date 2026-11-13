@@ -13,8 +13,6 @@ import path from "node:path";
 import { ProviderRegistry } from "../harness-integrations/registry.mjs";
 import {
   harnesses,
-  harnessInvocation,
-  parseHarnessText,
   runHarness,
   harnessStatus,
 } from "../harness-integrations/harnesses.mjs";
@@ -45,20 +43,8 @@ test("all built-in harness IDs are reserved and unknown adapters cannot fall thr
     await assert.rejects(() => registry.reload(), /reserved provider ID/);
   }
   assert.throws(
-    () => harnessInvocation({ id: "unknown" }, {}),
-    /Unknown text harness/,
-  );
-  assert.throws(
-    () => parseHarnessText("unknown", "text"),
-    /Unknown text harness/,
-  );
-  assert.throws(
     () => runHarness({ id: "unknown" }, {}),
     /Unknown text harness/,
-  );
-  assert.throws(
-    () => parseHarnessText("gemini-cli", "null"),
-    /invalid final-answer JSON/,
   );
 });
 

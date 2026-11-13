@@ -629,23 +629,6 @@
   gap: 7px;
   align-items: center;
 }
-.agent-stream-caret {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 3px;
-  background: #ddd;
-  vertical-align: -1px;
-  animation: agent-stream-blink 1s step-end infinite;
-}
-.agent-partial-message {
-  color: #aaa;
-}
-@keyframes agent-stream-blink {
-  50% {
-    opacity: 0;
-  }
-}
 .agent-dock-row {
   display: flex;
   align-items: center;
@@ -832,9 +815,6 @@
     transform: none;
   }
   .agent-toggle i {
-    animation: none;
-  }
-  .agent-stream-caret {
     animation: none;
   }
   .agent-live-progress i {

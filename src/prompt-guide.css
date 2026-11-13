@@ -7,10 +7,6 @@
   color: #aaa;
   overscroll-behavior: contain;
 }
-.prompt-guide-intro {
-  margin: 0 0 20px;
-  color: #ccc;
-}
 .prompt-guide section {
   margin: 0 0 24px;
 }
@@ -165,28 +161,6 @@
   color: #999;
   border-top: 1px solid #333;
   padding-top: 14px;
-}
-.prompt-guide-entry {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  background: #1b1b1b;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 10px;
-  color: #eee;
-  margin: 0 0 12px;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-.prompt-guide-entry small {
-  display: block;
-  font-size: 9px;
-  color: #999;
-  margin-top: 3px;
 }
 .prompt-map-back {
   display: flex;

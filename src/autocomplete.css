@@ -176,13 +176,6 @@
     padding: 3px;
   }
 }
-.generation-params .autocomplete {
-  width: 100%;
-}
-.generation-params .autocomplete > input[role="combobox"] {
-  height: 30px;
-  font-size: 10px;
-}
 .parallel-control .autocomplete {
   width: 135px;
 }

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { Store } from "../server/store.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 
 async function temporary(t) {
   const root = await mkdtemp(path.join(tmpdir(), "flow-db-"));

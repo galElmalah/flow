@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { projectIdSchema } from "../../shared/projects.mjs";
 
-export function publicAgentSession(session) {
+function publicAgentSession(session) {
   return {
     id: session.id,
     projectId: session.projectId,

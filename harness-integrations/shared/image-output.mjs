@@ -51,7 +51,7 @@ export function verifyStaticSvg(bytes) {
   if (!root) throw new Error("Expected an SVG document.");
 }
 
-export async function verifyGeneratedImage(file, requested) {
+async function verifyGeneratedImage(file, requested) {
   const bytes = await readFile(file);
   if (bytes.length < 64 || bytes.length > 64 * 1024 * 1024)
     throw new Error(
@@ -69,7 +69,7 @@ export const spriteGrid = (count) => {
   const columns = Math.ceil(Math.sqrt(count));
   return { columns, rows: Math.ceil(count / columns) };
 };
-export async function assembleSpriteGif(file, output, settings) {
+async function assembleSpriteGif(file, output, settings) {
   const frameCount = settings.frameCount || 9;
   const { columns, rows } = spriteGrid(frameCount);
   const metadata = await sharp(file, {

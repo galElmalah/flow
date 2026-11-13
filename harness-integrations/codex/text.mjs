@@ -9,7 +9,7 @@ export const provider = {
   description: "Write and refine prompts using your Codex sign-in.",
 };
 
-export { invocation, runCodexText as run } from "./text-stream.mjs";
+export { runCodexText as run } from "./text-stream.mjs";
 
 export async function status(_provider, { codexHealth = codexStatus } = {}) {
   const health = await codexHealth();

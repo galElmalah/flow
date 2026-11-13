@@ -116,11 +116,6 @@
   background: #eee;
   border-color: #eee;
 }
-.settings-content .settings-note {
-  margin: 18px 0 0;
-  font-size: 11px;
-  color: #777;
-}
 .settings-facts {
   margin: 20px 0;
   display: grid;
@@ -163,22 +158,6 @@
 .settings-project-location:last-child {
   border: 0;
 }
-.settings-content .provider-setting {
-  border-color: #333;
-}
-.settings-content .provider-setting > div:first-of-type {
-  flex: 1;
-}
-.settings-content .provider-setting small {
-  font-size: 10px;
-  overflow-wrap: anywhere;
-}
-.settings-content .provider-setting strong {
-  font-size: 12px;
-}
-.settings-content .provider-setting > div > span {
-  font-size: 11px;
-}
 .settings-content .connection-form {
   margin-top: 24px;
 }
@@ -213,9 +192,6 @@
   .settings-facts > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 7px;
-  }
-  .settings-content .provider-setting {
-    flex-wrap: wrap;
   }
 }
 @media (max-width: 600px) {

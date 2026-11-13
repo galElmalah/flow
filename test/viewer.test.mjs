@@ -13,7 +13,7 @@ import { resolveViewer } from "../client/viewer.mjs";
 import { openViewer, viewerOpener } from "../cli/viewer.mjs";
 import { stopServer } from "../cli/server.mjs";
 
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const exec = promisify(execFile);

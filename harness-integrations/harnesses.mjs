@@ -23,17 +23,6 @@ function adapterFor(id) {
   return adapter;
 }
 
-export function harnessInvocation(provider, context, imageBlocks) {
-  return adapterFor(provider.id).invocation(context, imageBlocks);
-}
-
-export function parseHarnessText(id, stdout) {
-  const adapter = adapterFor(id);
-  if (!adapter.parse)
-    throw new Error(`${adapter.provider.name} uses the app-server text protocol.`);
-  return adapter.parse(stdout);
-}
-
 export function runHarness(provider, context) {
   const adapter = adapterFor(provider.id);
   if (adapter.run) return adapter.run(provider, context);

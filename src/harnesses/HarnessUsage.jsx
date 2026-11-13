@@ -13,7 +13,7 @@ const time = (value) =>
     minute: "2-digit",
   });
 
-export function UsageAccounts({ usage }) {
+function UsageAccounts({ usage }) {
   const [copyStatus, setCopyStatus] = useState("");
   return (
     <>

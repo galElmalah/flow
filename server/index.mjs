@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyFile, unlink, writeFile, rename, stat } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { isMediaJob, mediaKind, mediaArtifact } from "../shared/media.mjs";
+import { mediaKind, mediaArtifact } from "../shared/media.mjs";
 import { Store } from "./store.mjs";
 import { Queue } from "./queue.mjs";
 import { Assets } from "./assets.mjs";

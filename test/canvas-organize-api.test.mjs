@@ -55,7 +55,7 @@ async function fixture(t) {
 }
 
 test("organize previews, saves one revision and protects concurrent edits/project scope", async (t) => {
-  const { client, store, url, graph } = await fixture(t);
+  const { client, url, graph } = await fixture(t);
   const geometry = Object.fromEntries(
     graph.nodes.map((n) => [n.id, { width: 340, height: 740 }]),
   );

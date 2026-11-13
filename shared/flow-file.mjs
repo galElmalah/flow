@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { workflowSchema } from "./graph.mjs";
 
-export const flowFileExtension = ".flow.json";
+const flowFileExtension = ".flow.json";
 export const flowFileSchema = z
   .object({
     format: z.literal("flow"),

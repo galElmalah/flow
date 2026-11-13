@@ -1,6 +1,6 @@
 Harness and model marks are vendored from @lobehub/icons-static-svg 1.101.0 (https://github.com/lobehub/lobe-icons), under the included MIT license. Color variants retain their upstream fills and gradients. openai-light.svg uses the upstream OpenAI path with a light fill for the dark interface.
 
-Both Pi files use `icons/pi.svg` from the same MIT-licensed `@lobehub/icons-static-svg@1.101.0` package. The color variant changes only `currentColor` to Flow's Pi accent `#F09082`. It no longer includes the separately downloaded website SVG whose redistribution provenance was unclear. The package archive was checked against npm's SHA-512 integrity value before extraction: `sha512-Ob6WJOjXauLP/A1qZ9OlPlrncPNbwsIGH+ToFdxWt3APtaaMKtbIBGqJ0/LY2eBeUwTQuG7GpUw9LwPiv7OTdg==`.
+The Pi mark uses `icons/pi.svg` from the same MIT-licensed `@lobehub/icons-static-svg@1.101.0` package. The local SVG changes only `currentColor` to Flow's Pi accent `#F09082`. It no longer includes the separately downloaded website SVG whose redistribution provenance was unclear. The package archive was checked against npm's SHA-512 integrity value before extraction: `sha512-Ob6WJOjXauLP/A1qZ9OlPlrncPNbwsIGH+ToFdxWt3APtaaMKtbIBGqJ0/LY2eBeUwTQuG7GpUw9LwPiv7OTdg==`.
 
 Gemini CLI uses its terminal mark; Gemini models use the Gemini sparkle. Claude Code uses its pixel mascot; Claude models use the Claude mark. Codex uses its color app mark; OpenAI models use the OpenAI mark. Unknown/custom endpoints retain a neutral globe rather than borrowing another vendor's identity.
 

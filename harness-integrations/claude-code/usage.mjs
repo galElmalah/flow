@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const source = "Claude Code status line";
-export const CLAUDE_USAGE_MAX_AGE_MS = 10 * 60 * 1000;
+const CLAUDE_USAGE_MAX_AGE_MS = 10 * 60 * 1000;
 
 export function claudeUsageFile() {
   return (

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { planWorkflow } from "../server/graph.mjs";
 import { validateGraph } from "../shared/graph.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 const graph = () => structuredClone(starter);
 test("four prompt variations and 25 copies produce 100 image jobs with the seed reference", () => {
   const p = planWorkflow(graph());

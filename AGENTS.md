@@ -95,4 +95,4 @@ npm run check
 npm run check:release
 ```
 
-`check` validates module boundaries, builds the UI and runs behavior tests. Verify changed UI behavior in the real browser. CI also scans full Git history for credentials. Follow [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). The repository remains private; public-release gaps are tracked in [the release checklist](docs/open-source-readiness.md).
+`check` validates module boundaries and unused code, builds the UI and runs behavior tests. `check:unused` follows package exports, scripts, browser entries, tests and the explicit dynamic entrypoints in `knip.jsonc`. Before deleting a reported item, check external SDK consumers, provider subprocesses, worker paths, installed skills and documented standalone tools. Add an exact dynamic entrypoint only when it has a real caller; avoid broad ignores. Verify changed UI behavior in the real browser. CI also scans full Git history for credentials. Follow [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). The repository remains private; public-release gaps are tracked in [the release checklist](docs/open-source-readiness.md).

@@ -51,7 +51,7 @@ export const agentContextSchema = z
       .optional(),
   })
   .strict();
-export const agentEditSchema = z.discriminatedUnion("op", [
+const agentEditSchema = z.discriminatedUnion("op", [
   z
     .object({ op: z.literal("update-node"), nodeId: id, data: partialNodeData })
     .strict(),

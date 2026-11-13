@@ -15,7 +15,7 @@ import express from "express";
 import { Store, summarize } from "../server/store.mjs";
 import { ProjectService } from "../server/projects.mjs";
 import { Queue } from "../server/queue.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 import { registerProjectRoutes } from "../server/routes/projects.mjs";
 import { registerWorkflowRoutes } from "../server/routes/workflows.mjs";
 import { registerRunRoutes } from "../server/routes/runs.mjs";

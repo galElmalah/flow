@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { runOptionsSchema, runSubmissionSchema } from "./run-options.mjs";
 import {
+  ratioSchema,
+  qualitySchema,
   imageSettingsSchema,
   videoSettingsSchema,
 } from "./generation-modes.mjs";
+import { reasoningEffortSchema } from "./reasoning.mjs";
 import { editRequestSchema } from "./image-editor.mjs";
 
 // Command definitions drive offline help and argument validation before any I/O.
@@ -15,7 +18,17 @@ const recipe =
 const commands = new Map();
 function add(names, flags = "", args = "", effect = "read", example) {
   for (const name of names.split("|"))
-    commands.set(name, { name, flags, args, effect, example });
+    commands.set(name, {
+      name,
+      flags: flags.replaceAll("!", ""),
+      required: flags
+        .split(" ")
+        .filter((flag) => flag.endsWith("!"))
+        .map((flag) => flag.slice(0, -1)),
+      args,
+      effect,
+      example,
+    });
 }
 add("serve", "", "", "start-server");
 add("stop", "force", "", "stop-server");
@@ -36,11 +49,11 @@ add(
 add("providers reload|search-retry", "", "", "refresh");
 add(
   "providers configure-codex|providers configure-fal|providers configure-grok|providers configure-video|providers create",
-  "from",
+  "from!",
   "",
   "configure",
 );
-add("providers save", "from", "ID", "configure");
+add("providers save", "from!", "ID", "configure");
 add("providers test|providers remove", "", "ID", "manage-connection");
 add(
   "providers login-codex|providers cancel-codex-login",
@@ -52,9 +65,9 @@ add("local");
 add("local status", "", "[RUNTIME]");
 add("local profiles");
 add("local profile validate", "", "ID", "validate-runtime");
-add("local profile save|local checkpoint", "from", "", "configure");
+add("local profile save|local checkpoint", "from!", "", "configure");
 add("local profile remove", "", "ID", "configure");
-add("local configure", "from", "RUNTIME", "configure");
+add("local configure", "from!", "RUNTIME", "configure");
 add(
   "local setup|local start|local stop|local cancel|local install",
   "wait timeout",
@@ -81,7 +94,7 @@ add(
 add("workflow organize", "geometry plan", "WORKFLOW_ID", "arrange-workflow");
 add("workflow archive|workflow restore", "", "WORKFLOW_ID", "write");
 add("fork", "name run", "WORKFLOW_ID", "create-workflow");
-add("import", "from", "", "save-workflow");
+add("import", "from!", "", "save-workflow");
 add("export|manifest", "output", "ID", "export");
 add(
   "plan",
@@ -102,10 +115,10 @@ add("inspect", "", "RUN_ID");
 add("pause|resume|retry|cancel", "", "RUN_ID", "control-run");
 add("download", "output", "RUN_ID", "write-file");
 add("results", "", "WORKFLOW_ID");
-add("prompt-set preview", "workflow node items", "[WORKFLOW_ID]");
+add("prompt-set preview", "workflow node! items!", "[WORKFLOW_ID]");
 add("styles", "search category favorites", "[STYLE_ID]");
-add("style create", "from seed-image", "", "write");
-add("style update", "from seed-image", "STYLE_ID", "write");
+add("style create", "from! seed-image", "", "write");
+add("style update", "from! seed-image", "STYLE_ID", "write");
 add(
   "style start",
   "name subject prompt provider model",
@@ -114,13 +127,13 @@ add(
   'flow style start STYLE_ID --subject "A mountain" --provider local-color --model color-study --json',
 );
 add("style favorite", "unfavorite", "STYLE_ID", "write");
-add("style references", "from", "STYLE_ID", "write");
+add("style references", "from!", "STYLE_ID", "write");
 add("style import-run", "", "RUN_ID", "write");
-add("rules save", "from", "", "write");
+add("rules save", "from!", "", "write");
 add("upload", "seed-image", "[FILES...]", "upload");
 add("assets", "run image workflow");
 add("asset|asset lineage", "", "ASSET_ID");
-add("asset annotate", "from", "ASSET_ID", "write");
+add("asset annotate", "from!", "ASSET_ID", "write");
 add("dataset|dataset export", "mode run workflow output", "", "export");
 add("search", "scope workflow run provider count", "TEXT...");
 add("agent|agent session", "from", "", "open-session");
@@ -151,7 +164,7 @@ add(
   "start-inference",
 );
 add("editor segment", "editor from", "[EDITOR_ID]", "segment");
-add("editor patch", "editor from", "[EDITOR_ID]", "write");
+add("editor patch", "editor from!", "[EDITOR_ID]", "write");
 add(
   "editor prepare",
   "editor from regions prompt provider model count mode color strength",
@@ -193,6 +206,25 @@ const numberTypes = {
   frames: imageFields.frameCount,
   "frame-delay": imageFields.frameDurationMs,
 };
+const constrainedStrings = {
+  media: { type: "string", enum: ["image", "video"] },
+  ratio: z.toJSONSchema(ratioSchema),
+  quality: z.toJSONSchema(qualitySchema),
+  "video-mode": videoFields.mode,
+  "output-format": imageFields.outputFormat,
+  complexity: imageFields.complexity,
+  background: imageFields.background,
+  resolution: {
+    type: "string",
+    enum: [...imageFields.resolution.enum, ...videoFields.resolution.enum],
+  },
+  reasoning: z.toJSONSchema(reasoningEffortSchema),
+  color: editFields.color,
+  target: {
+    type: "string",
+    enum: ["all", "codex", "claude-code", "gemini", "pi"],
+  },
+};
 const words = (value) => value.split(" ").filter(Boolean);
 export function hasRecipeFlags(values) {
   return words(recipe).some((flag) => values[flag] !== undefined);
@@ -216,6 +248,11 @@ parserOptions.version = { type: "boolean", short: "v" };
 
 function flagSchema(command, flag) {
   if (flag === "request-id") return submissionFields.requestId;
+  if (flag === "mode")
+    return command.name === "editor prepare"
+      ? editFields.mode
+      : { type: "string", enum: ["all", "training"] };
+  if (constrainedStrings[flag]) return constrainedStrings[flag];
   if (flag === "count" && command.name === "search")
     return {
       type: "integer",
@@ -226,7 +263,11 @@ function flagSchema(command, flag) {
   if (flag === "count" && command.name === "editor prepare")
     return { ...editFields.count, description: "Number of edit variations." };
   if (flag === "seed-image")
-    return { type: "array", items: { type: "string" } };
+    return {
+      type: "array",
+      items: { type: "string", minLength: 1 },
+      maxItems: command.name === "editor open" ? 1 : 16,
+    };
   return (
     numberTypes[flag] || { type: booleans.has(flag) ? "boolean" : "string" }
   );
@@ -240,7 +281,17 @@ function lookup(args) {
   throw new Error(`Unknown command: ${args.join(" ")}. Use flow help.`);
 }
 function describe(command) {
-  const usage = ["flow", command.name, command.args].filter(Boolean).join(" ");
+  const usage = [
+    "flow",
+    command.name,
+    command.args,
+    ...command.required.map(
+      (flag) =>
+        "--" + flag + " " + (flag === "from" ? "FILE" : flag.toUpperCase()),
+    ),
+  ]
+    .filter(Boolean)
+    .join(" ");
   return {
     command: command.name,
     usage,
@@ -248,6 +299,7 @@ function describe(command) {
     flags: {
       type: "object",
       additionalProperties: false,
+      ...(command.required.length && { required: command.required }),
       properties: Object.fromEntries(
         flags(command).map((flag) => [flag, flagSchema(command, flag)]),
       ),
@@ -293,7 +345,16 @@ export function renderHelp(help) {
     );
   return lines.join("\n");
 }
-export function validateInvocation(args, values) {
+export function validateInvocation(args, values, tokens) {
+  const seen = new Map();
+  for (const token of tokens) {
+    if (token.kind !== "option" || parserOptions[token.name].multiple) continue;
+    if (seen.has(token.name) && seen.get(token.name) !== token.value)
+      throw new Error(
+        `Conflicting values for --${token.name}. Provide it once.`,
+      );
+    seen.set(token.name, token.value);
+  }
   const { command, params } = lookup(args);
   const positionals = words(command.args);
   const min = positionals.filter((p) => !p.startsWith("[")).length;
@@ -304,6 +365,13 @@ export function validateInvocation(args, values) {
     throw new Error(
       `Expected: ${["flow", command.name, command.args].filter(Boolean).join(" ")}. Use flow help ${command.name} for options.`,
     );
+  if (params.some((value) => !value.trim()))
+    throw new Error("Provide a nonempty command argument.");
+  for (const key of command.required)
+    if (values[key] === undefined)
+      throw new Error(
+        `Provide --${key} for ${command.name}. See flow help ${command.name}.`,
+      );
   const preview =
     command.name === "plan" || (command.name === "run" && values.plan);
   const allowed = new Set(flags(preview ? commands.get("plan") : command));
@@ -320,9 +388,29 @@ export function validateInvocation(args, values) {
       throw new Error(
         "Invalid --request-id. Use 1–128 letters, numbers, dots, underscores, colons or hyphens, starting with a letter or number.",
       );
+    const schema = flagSchema(command, key);
+    if (
+      schema.type === "array" &&
+      (raw.length > schema.maxItems || raw.some((path) => !path.trim()))
+    )
+      throw new Error(
+        `Use --${key} with ${schema.maxItems === 1 ? "one file path" : `1–${schema.maxItems} file paths`} for ${command.name}.`,
+      );
+    if (
+      typeof raw === "string" &&
+      !raw.trim() &&
+      !["prompt", "subject", "prompt-instructions"].includes(key)
+    )
+      throw new Error(`Provide a nonempty value for --${key}.`);
+    if (
+      (schema.enum && !schema.enum.includes(raw)) ||
+      (schema.pattern && !new RegExp(schema.pattern).test(raw))
+    )
+      throw new Error(
+        `Invalid --${key}.${schema.enum ? " Choose " + schema.enum.join(", ") + "." : ""} See flow help ${command.name}.`,
+      );
     if (!numberTypes[key]) continue;
-    const value = Number(raw),
-      schema = flagSchema(command, key);
+    const value = Number(raw);
     if (
       !raw.trim() ||
       !Number.isFinite(value) ||
@@ -343,6 +431,48 @@ export function validateInvocation(args, values) {
     params[0] !== values.workflow
   )
     throw new Error("Workflow argument and --workflow must match.");
+  if (
+    values.port &&
+    values.url &&
+    Number(new URL(values.url).port || 80) !== Number(values.port)
+  )
+    throw new Error("--url and --port must select the same port.");
+  if (
+    command.name.startsWith("project") &&
+    params[0] &&
+    values.project &&
+    params[0] !== values.project
+  )
+    throw new Error("Project argument and --project must match.");
+  if (
+    command.name.startsWith("editor ") &&
+    params[0] &&
+    values.editor &&
+    params[0] !== values.editor
+  )
+    throw new Error("Editor argument and --editor must match.");
+  if (
+    command.name.startsWith("agent ") &&
+    params[1] &&
+    values.id &&
+    params[1] !== values.id
+  )
+    throw new Error("Turn argument and --id must match.");
+  if (command.name === "local pull" && values.from && values.model)
+    throw new Error("Choose --from or --model for the local pull request.");
+  if (command.name === "editor open" && values.image && values["seed-image"])
+    throw new Error("Choose --image or --seed-image for an editor.");
+  if (command.name === "open") {
+    const workflow = params[0] || values.workflow;
+    const otherCanvasTarget =
+      workflow || values.node || values.run || values.gallery || values.styles;
+    if (
+      (values.editor && (otherCanvasTarget || values.projects)) ||
+      (values.projects && otherCanvasTarget) ||
+      (values.gallery && values.styles)
+    )
+      throw new Error("Choose compatible viewer targets. Use flow help open.");
+  }
   if (command.name === "run" && values.from && (params[0] || values.workflow))
     throw new Error("Choose a saved workflow ID or --from.");
   if (command.name === "run" && values["request-id"] && hasRecipeFlags(values))
@@ -359,16 +489,31 @@ export function validateInvocation(args, values) {
   )
     throw new Error("Choose --subject or --prompt for the style scene.");
   if (command.name === "workflow create" || command.name === "run") {
-    if (
-      values.media !== undefined &&
-      !["image", "video"].includes(values.media)
-    )
-      throw new Error("Choose --media image or video.");
+    if (values.prompts && values.records)
+      throw new Error("Choose --prompts or --records.");
+    if (command.name === "workflow create") {
+      if (values.node && !(values.from && values.modes))
+        throw new Error(
+          "--node selects the generation node for --from with --modes.",
+        );
+      if (values["prompt-set"] && !(values.from && values.prompts))
+        throw new Error(
+          "--prompt-set selects the Prompt Set for --from with --prompts.",
+        );
+      if (
+        !values.from &&
+        !values["prompt-provider"] &&
+        (values["prompt-model"] || values["prompt-instructions"] !== undefined)
+      )
+        throw new Error(
+          "Choose --prompt-provider when configuring a prompt writer.",
+        );
+    }
     if (
       values.media === "video" &&
-      words("output-format frames frame-delay complexity background").some(
-        (flag) => values[flag] !== undefined,
-      )
+      words(
+        "quality output-format frames frame-delay complexity background",
+      ).some((flag) => values[flag] !== undefined)
     )
       throw new Error("Image output controls require --media image.");
     if (

@@ -1,6 +1,6 @@
 import { Autocomplete } from "../components/Autocomplete.jsx";
 import React from "react";
-export const projectScope = (projectId) =>
+const projectScope = (projectId) =>
   projectId ? `project:${projectId}` : "unassigned";
 export const matchesProject = (item, scope) =>
   scope === "all" ||

@@ -10,6 +10,11 @@ import {
 } from "../shared/agent.mjs";
 import { basename, resolve, join } from "node:path";
 import { realpath } from "node:fs/promises";
+import {
+  createStyleSchema,
+  updateStyleSchema,
+} from "../shared/styles/schema.mjs";
+import { openEditorSchema } from "../shared/image-editor.mjs";
 import { FlowClient } from "../client/index.mjs";
 import {
   loadWorkflow,
@@ -37,7 +42,6 @@ let values = {},
   args = [],
   base;
 let client;
-const request = (...args) => client.request(...args);
 const print = (x) =>
   console.log(
     values.json
@@ -47,15 +51,31 @@ const print = (x) =>
         : JSON.stringify(x, null, 2),
   );
 async function waitForRun(id) {
-  const run = await client.wait(id, {
-    timeout: Number(values.timeout ?? 3600),
-    onProgress: values.json
-      ? undefined
-      : (run) =>
-          process.stderr.write(
-            `\r${run.status} · ${run.jobs.filter((j) => j.status === "completed").length}/${run.jobs.length} completed   `,
-          ),
-  });
+  const run = await client
+    .wait(id, {
+      timeout: Number(values.timeout ?? 3600),
+      onProgress: values.json
+        ? undefined
+        : (run) =>
+            process.stderr.write(
+              `\r${run.status} · ${run.jobs.filter((j) => j.status === "completed").length}/${run.jobs.length} completed   `,
+            ),
+    })
+    .catch((error) => {
+      error.runId ??= id;
+      throw error;
+    });
+  if (run.status !== "completed" && values.json)
+    throw Object.assign(
+      new Error(
+        `Run ${id} ${run.status}. Inspect the recorded jobs with flow inspect ${id}.`,
+      ),
+      {
+        code: `RUN_${run.status.toUpperCase()}`,
+        runId: id,
+        run,
+      },
+    );
   if (!values.json) process.stderr.write("\n");
   print(run);
   if (run.status !== "completed") process.exitCode = 1;
@@ -84,26 +104,32 @@ async function registerProject({
       if (error.code !== "ENOENT") throw error;
     }
   }
+  async function readDefault(id) {
+    const graph = await client.workflow(id, { unscoped: true });
+    if (graph.projectId && graph.projectId !== projectId)
+      throw new Error(
+        `Workflow belongs to project ${graph.projectId}. Fork it explicitly first.`,
+      );
+    return graph;
+  }
+  const explicitDefault = workflowId
+    ? await readDefault(workflowId)
+    : undefined;
   let project = await client.createProject({
     id: projectId,
     name: name || basename(projectRoot),
     root: projectRoot,
   });
-  const selectedWorkflowId =
-    workflowId ||
-    (!project.defaultWorkflowId ? bootstrapWorkflowId : undefined);
-  if (selectedWorkflowId) {
-    const workflow = await client.workflow(selectedWorkflowId, {
-      unscoped: true,
-    });
-    if (workflow.projectId && workflow.projectId !== project.id)
-      throw new Error(
-        `Workflow belongs to project ${workflow.projectId}. Fork it explicitly first.`,
-      );
+  const workflow =
+    explicitDefault ||
+    (!project.defaultWorkflowId && bootstrapWorkflowId
+      ? await readDefault(bootstrapWorkflowId)
+      : undefined);
+  if (workflow) {
     if (!workflow.projectId)
       await client.saveWorkflow({ ...workflow, projectId: project.id });
     project = await client.updateProject(project.id, {
-      defaultWorkflowId: selectedWorkflowId,
+      defaultWorkflowId: workflow.id,
     });
   }
   const manifest = {
@@ -129,8 +155,14 @@ async function registerProject({
   }
   return { project, manifestPath, manifest };
 }
-try {
-  ({ values, positionals: args } = parseArgs({
+async function main() {
+  let tokens;
+  ({
+    values,
+    positionals: args,
+    tokens,
+  } = parseArgs({
+    tokens: true,
     allowPositionals: true,
     options: parserOptions,
   }));
@@ -143,7 +175,7 @@ try {
       throw new Error("Choose a command. Use flow help.");
     const help = commandHelp(args[0] === "help" ? args.slice(1) : args);
     print(values.json ? help : renderHelp(help));
-    process.exit(0);
+    return;
   }
   if (values.version) {
     if (
@@ -155,27 +187,32 @@ try {
       await readFile(new URL("../package.json", import.meta.url), "utf8"),
     );
     print(values.json ? { name: "flow", version } : version);
-    process.exit(0);
+    return;
   }
-  validateInvocation(args, values);
+  validateInvocation(args, values, tokens);
   const [command, id] = args;
   if (["run", "plan"].includes(command) && id) values.workflow = id;
   const options = ["run", "plan"].includes(command)
     ? runOptions(values)
     : undefined;
+  if (command === "agent" && id === "schema") {
+    print(z.toJSONSchema(agentContextSchema));
+    return;
+  }
+  const explicitUrl =
+    values.url ||
+    (values.port ? `http://localhost:${Number(values.port)}` : undefined) ||
+    process.env.FLOW_URL;
   if (command === "migrate") {
     const { migrateInstallation } = await import("./migration.mjs");
     print(
       await migrateInstallation({
         root: resolve(import.meta.dirname, ".."),
-        url:
-          values.url ||
-          process.env.FLOW_URL ||
-          `http://localhost:${values.port || process.env.PORT || 4310}`,
+        url: explicitUrl || `http://localhost:${process.env.PORT || 4310}`,
         plan: Boolean(values.plan),
       }),
     );
-    process.exit(0);
+    return;
   }
   if (command === "skills") {
     const { manageSkills } = await import("./skills.mjs");
@@ -184,17 +221,17 @@ try {
       target: values.target,
     });
     print(result);
-    process.exit(0);
+    return;
   }
-  const context = ["serve", "stop", "restart"].includes(command)
-    ? null
-    : await findProjectContext(values.root || process.cwd());
+  const context =
+    command === "project" && id === "register" && values.from
+      ? await readProjectManifest(values.from)
+      : ["serve", "stop", "restart"].includes(command)
+        ? null
+        : await findProjectContext(values.root || process.cwd());
   base =
-    values.url ||
-    process.env.FLOW_URL ||
-    (values.port
-      ? `http://localhost:${values.port}`
-      : context?.manifest.serverUrl) ||
+    explicitUrl ||
+    context?.manifest.serverUrl ||
     `http://localhost:${process.env.PORT || 4310}`;
   const projectId = values.project || context?.manifest.projectId;
   let defaultWorkflowId;
@@ -211,12 +248,14 @@ try {
   let registeredProject;
   if (
     projectId &&
-    !(command === "agent" && id === "schema") &&
+    !(
+      command === "project" &&
+      (["init", "register"].includes(id) || !context || values.project)
+    ) &&
     ![
       "serve",
       "stop",
       "restart",
-      "project",
       "projects",
       "guide",
       "schema",
@@ -237,7 +276,7 @@ try {
     !values.from
   ) {
     defaultWorkflowId = registeredProject.defaultWorkflowId;
-    if (!defaultWorkflowId && values.prompt === undefined && !values.records)
+    if (!defaultWorkflowId && !hasRecipeFlags(values))
       throw new Error(
         `Project ${projectId} has no default workflow. Pass --workflow ID or create a workflow explicitly.`,
       );
@@ -262,9 +301,17 @@ try {
     const input = values.from
       ? JSON.parse(await readFile(resolve(values.from), "utf8"))
       : {};
+    if (args[2] && input.sessionId && args[2] !== input.sessionId)
+      throw new Error("Session argument and sessionId in --from must match.");
     const sessionId = args[2] || input.sessionId;
-    if (id === "schema") print(z.toJSONSchema(agentContextSchema));
-    else if (!id || id === "session")
+    if (
+      ["trace", "apply", "cancel", "undo"].includes(id) &&
+      input.turnId &&
+      (args[3] || values.id) &&
+      input.turnId !== (args[3] || values.id)
+    )
+      throw new Error("Turn argument and turnId in --from must match.");
+    if (!id || id === "session")
       print(await client.agentSession(agentSessionSchema.parse(input)));
     else if (id === "ask") {
       const { sessionId: _session, turnId: _turn, ...payload } = input;
@@ -333,23 +380,36 @@ try {
     else if (id === "status") print(await client.editorStatus());
     else if (id === "setup") print(await client.setupEditorModel());
     else if (id === "open") {
-      let source = values.image || input.source;
-      if (values["seed-image"]?.length)
-        source = (
-          await client.upload(
-            await Promise.all(
-              values["seed-image"].map(async (file) => ({
-                name: basename(file),
-                data: await readFile(resolve(file)),
-              })),
-            ),
-          )
-        )[0].url;
-      if (!source)
+      const file = values["seed-image"]?.[0];
+      if (
+        input.source &&
+        (file || (values.image && input.source !== values.image))
+      )
+        throw new Error(
+          "Choose one editor source in --from, --image or --seed-image.",
+        );
+      const source = values.image || input.source;
+      if (!(file || source))
         throw new Error(
           "Provide --image LOCAL_URL, --seed-image PATH or --from input.json.",
         );
-      print(await client.openImageEditor({ ...input, source }));
+      const editor = openEditorSchema.parse({
+        ...input,
+        source: source || "/",
+      });
+      if (
+        client.projectId &&
+        editor.projectId &&
+        editor.projectId !== client.projectId
+      )
+        throw new Error("Editor project and selected project must match.");
+      if (file) {
+        const [asset] = await client.upload([
+          { name: basename(file), data: await readFile(resolve(file)) },
+        ]);
+        editor.source = asset.url;
+      }
+      print(await client.openImageEditor(editor));
     } else {
       if (!target) throw new Error("Provide an editor ID.");
       if (id === "inspect") print(await client.imageEditor(target));
@@ -401,8 +461,6 @@ try {
         );
     }
   } else if (command === "open") {
-    if (id && values.workflow && id !== values.workflow)
-      throw new Error("Workflow argument and --workflow must match.");
     const target = await client.viewer({
       workflowId: id || values.workflow,
       nodeId: values.node,
@@ -434,12 +492,12 @@ try {
     );
   } else if (command === "style") {
     if (id === "create" || id === "update") {
-      if (!values.from || (id === "update" && !args[2]))
-        throw new Error(
-          `Use style ${id}${id === "update" ? " ID" : ""} --from style.json [--seed-image ./reference.png].`,
-        );
       const input = JSON.parse(await readFile(resolve(values.from), "utf8"));
       if (values["seed-image"]?.length) {
+        (id === "create" ? createStyleSchema : updateStyleSchema).parse({
+          references: [],
+          ...input,
+        });
         if ((input.references?.length || 0) + values["seed-image"].length > 16)
           throw new Error("A style can have at most 16 references.");
         const assets = await client.upload(
@@ -465,10 +523,6 @@ try {
           : await client.updateStyle(args[2], input),
       );
     } else if (id === "start") {
-      if (!args[2])
-        throw new Error(
-          "Provide a style ID: flow style start ID --subject 'Your scene'.",
-        );
       print(
         await client.startStyle(args[2], {
           subject: values.subject || values.prompt,
@@ -478,16 +532,10 @@ try {
         }),
       );
     } else if (id === "favorite") {
-      if (!args[2]) throw new Error("Provide a style ID.");
       print(await client.favoriteStyle(args[2], !values.unfavorite));
     } else if (id === "import-run") {
-      if (!args[2]) throw new Error("Provide a reference run ID.");
       print(await client.importStyleRun(args[2]));
     } else if (id === "references") {
-      if (!args[2] || !values.from)
-        throw new Error(
-          "Use style references ID --from references.json containing a references array.",
-        );
       const input = JSON.parse(await readFile(resolve(values.from), "utf8"));
       print(await client.styleReferences(args[2], input.references || input));
     } else
@@ -518,16 +566,8 @@ try {
     );
   } else if (command === "asset") {
     const assetId = ["lineage", "annotate"].includes(id) ? args[2] : id;
-    if (!assetId)
-      throw new Error(
-        "Provide asset ID: asset ID | asset lineage ID | asset annotate ID --from annotations.json",
-      );
     if (id === "lineage") print(await client.assetLineage(assetId));
     else if (id === "annotate") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from annotations.json with the current annotation revision.",
-        );
       print(
         await client.annotateAsset(
           assetId,
@@ -536,10 +576,6 @@ try {
       );
     } else print(await client.asset(assetId));
   } else if (command === "dataset") {
-    if (id && id !== "export")
-      throw new Error(
-        "Use dataset export --project ID --mode all|training --output assets.jsonl",
-      );
     const data = await client.exportDataset({
       mode: values.mode || "all",
       runId: values.run,
@@ -547,8 +583,8 @@ try {
     });
     if (values.output) {
       await writeFile(resolve(values.output), data.jsonl);
-      const { jsonl, ...summary } = data;
-      print({ ...summary, output: resolve(values.output) });
+      const { total, skipped, skipReasons } = data;
+      print({ total, skipped, skipReasons, output: resolve(values.output) });
     } else if (values.json)
       print({
         ...data,
@@ -563,10 +599,8 @@ try {
     else process.stdout.write(data.jsonl);
   } else if (command === "gallery") print(await client.gallery());
   else if (command === "results") {
-    if (!id) throw new Error("Provide a workflow ID.");
     print(await client.workflowResults(id));
   } else if (command === "manifest") {
-    if (!id) throw new Error("Provide a run ID.");
     const manifest = await client.manifest(id);
     if (values.output) {
       await writeFile(
@@ -604,28 +638,18 @@ try {
         }),
       );
     } else if (id === "register") {
-      const selected = values.from
-        ? await readProjectManifest(values.from)
-        : context;
-      if (!selected)
+      if (!context)
         throw new Error(
           "Provide --from flow.project.json or run from a registered project directory.",
         );
-      if (values.project && values.project !== selected.manifest.projectId)
+      if (values.project && values.project !== context.manifest.projectId)
         throw new Error("Explicit project does not match the manifest.");
-      if (!values.url && !process.env.FLOW_URL && !values.port) {
-        base = selected.manifest.serverUrl;
-        client = new FlowClient({
-          url: base,
-          projectId: selected.manifest.projectId,
-        });
-      }
       print(
         await registerProject({
-          context: selected,
-          projectId: selected.manifest.projectId,
+          context,
+          projectId: context.manifest.projectId,
           name: values.name,
-          bootstrapWorkflowId: selected.manifest.defaultWorkflowId,
+          bootstrapWorkflowId: context.manifest.defaultWorkflowId,
           writeManifest: false,
         }),
       );
@@ -653,10 +677,6 @@ try {
   else if (command === "rules") {
     if (!id) print(await client.ruleTemplates());
     else if (id === "save") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from rule.json containing {id,title,group?,text}.",
-        );
       print(
         await client.saveRuleTemplate(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -666,7 +686,7 @@ try {
       throw new Error(
         "Use `flow rules` or `flow rules save --from rule.json`.",
       );
-  } else if (command === "schema") print(await request("/api/schema/workflow"));
+  } else if (command === "schema") print(await client.schema());
   else if (command === "workflow" && id === "create")
     print(
       await client.createWorkflow(
@@ -674,7 +694,6 @@ try {
       ),
     );
   else if (command === "workflow" && id === "organize") {
-    if (!args[2]) throw new Error("Provide a workflow ID.");
     const graph = await client.workflow(args[2]);
     print(
       await client.organizeWorkflow(graph.id, {
@@ -688,40 +707,23 @@ try {
       }),
     );
   } else if (command === "workflow" && ["archive", "restore"].includes(id)) {
-    if (!args[2]) throw new Error("Provide a workflow ID.");
     print(await client.archiveWorkflows([args[2]], id === "archive"));
   } else if (command === "workflow") {
-    if (!id) throw new Error("Provide a workflow ID.");
     print(await loadWorkflow(client, id));
   } else if (command === "fork") {
-    if (!id) throw new Error("Provide a source workflow ID.");
-    let snapshot;
-    if (values.run) {
-      const run = await client.inspect(values.run);
-      if (run.workflowId !== id)
-        throw new Error(
-          `Run ${values.run} belongs to workflow ${run.workflowId}, not ${id}.`,
-        );
-      snapshot = { ...run.graph, id: run.workflowId };
-    }
-    print(await client.fork(id, { name: values.name, workflow: snapshot }));
+    print(await client.fork(id, { name: values.name, runId: values.run }));
   } else if (command === "import") {
-    if (!values.from) throw new Error("Provide --from workflow.flow.json.");
     const graph = owned(
       fromFlowFile(JSON.parse(await readFile(resolve(values.from), "utf8"))),
       client.projectId,
     );
     print(await client.saveWorkflow(graph));
   } else if (command === "wait") await waitForRun(id);
-  else if (command === "status") print(await request("/api/health"));
+  else if (command === "status") print(await client.request("/api/health"));
   else if (command === "local") {
     const runtime = args[2];
     if (!id || id === "status") print(await client.localModels(runtime));
     else if (id === "configure") {
-      if (!runtime || !values.from)
-        throw new Error(
-          "Use local configure ollama|comfyui --from config.json containing {baseUrl}.",
-        );
       print(
         await client.configureLocalRuntime(
           runtime,
@@ -731,10 +733,6 @@ try {
     } else if (
       ["setup", "start", "stop", "pull", "cancel", "install"].includes(id)
     ) {
-      if (!runtime)
-        throw new Error(
-          "Choose ollama/comfyui, or a preset ID for local install.",
-        );
       const input = values.from
         ? JSON.parse(await readFile(resolve(values.from), "utf8"))
         : values.model
@@ -764,8 +762,6 @@ try {
     } else if (id === "profiles") print(await client.localProfiles());
     else if (id === "profile") {
       if (runtime === "save") {
-        if (!values.from)
-          throw new Error("Use local profile save --from profile.json.");
         print(
           await client.saveLocalProfile(
             JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -782,10 +778,6 @@ try {
           "Use local profile save --from profile.json or local profile validate|remove PROFILE_ID.",
         );
     } else if (id === "checkpoint") {
-      if (!values.from)
-        throw new Error(
-          "Use local checkpoint --from recipe.json with {id,name,checkpoint,imageToImage?}.",
-        );
       print(
         await client.createLocalCheckpointProfile(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -800,10 +792,6 @@ try {
     else if (id === "usage") print(await client.harnessUsage());
     else if (id === "codex") print(await client.codexConnection());
     else if (id === "configure-codex") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from private-codex-connection.json with {mode,apiKey?}. Never pass keys as command arguments.",
-        );
       print(
         await client.configureCodex(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -814,10 +802,6 @@ try {
       print(await client.cancelCodexLogin());
     else if (id === "fal") print(await client.falConnection());
     else if (id === "configure-fal") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from private-fal-connection.json. Never pass keys as command arguments.",
-        );
       print(
         await client.configureFal(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -825,10 +809,6 @@ try {
       );
     } else if (id === "grok") print(await client.grokConnection());
     else if (id === "configure-grok") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from private-grok-connection.json. Never put keys in workflow graphs or command arguments.",
-        );
       print(
         await client.configureGrok(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -837,10 +817,6 @@ try {
     } else if (id === "gemini-video")
       print(await client.geminiVideoConnection());
     else if (id === "configure-video") {
-      if (!values.from)
-        throw new Error(
-          "Provide --from private-video-connection.json. API keys belong in that private file, never in workflow graphs or command arguments.",
-        );
       print(
         await client.configureGeminiVideo(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -849,12 +825,6 @@ try {
     } else if (id === "reload") print(await client.reloadProviders());
     else if (id === "example") print(await client.providerExample());
     else if (["save", "create"].includes(id)) {
-      if (!values.from)
-        throw new Error(
-          "Provide --from connection.json. Keys belong in this private file, never in command arguments or workflows.",
-        );
-      if (id === "create" && args[2])
-        throw new Error("Use providers save ID to update a connection.");
       print(
         await client.saveProviderConnection(
           JSON.parse(await readFile(resolve(values.from), "utf8")),
@@ -862,7 +832,6 @@ try {
         ),
       );
     } else if (["test", "remove"].includes(id)) {
-      if (!args[2]) throw new Error("Provide a provider connection ID.");
       print(
         await (id === "test"
           ? client.testProviderConnection(args[2])
@@ -888,13 +857,7 @@ try {
     );
   else if (command === "search") {
     const query = args.slice(1).join(" ").trim();
-    if (!query) throw new Error('Provide search text: flow search "a scene".');
     const limit = values.count === undefined ? undefined : Number(values.count);
-    if (
-      limit !== undefined &&
-      (!Number.isInteger(limit) || limit < 1 || limit > 200)
-    )
-      throw new Error("Search result count must be 1–200.");
     print(
       await client.searchImages({
         query,
@@ -910,7 +873,6 @@ try {
   else if (["pause", "resume", "retry", "cancel"].includes(command))
     print(await client.control(id, command));
   else if (command === "download") {
-    if (!id) throw new Error("Provide a run ID.");
     const target = resolve(values.output || `flow-${id}.zip`);
     await writeFile(target, await client.download(id));
     print("Saved " + target);
@@ -967,10 +929,14 @@ try {
         );
     }
   } else throw new Error("Unknown command. Run flow --help.");
+}
+
+try {
+  await main();
 } catch (error) {
   const message =
     error.cause?.code === "ECONNREFUSED"
-      ? `Flow is not running at ${base}. Start it with npm run dev.`
+      ? `Flow is not running at ${base}. Start it with flow serve --url ${base}.`
       : error.message;
   const json = values.json || process.argv.slice(2).includes("--json");
   const code =
@@ -985,6 +951,7 @@ try {
             message,
             ...(error.status && { status: error.status }),
             ...(error.runId && { runId: error.runId }),
+            ...(error.run && { run: error.run }),
             ...(error.issues && { issues: error.issues }),
             ...(error.blockers && { blockers: error.blockers }),
           },

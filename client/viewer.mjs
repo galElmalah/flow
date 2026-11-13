@@ -4,7 +4,7 @@ export function localViewerUrl(address) {
   const url = new URL(address);
   if (
     url.protocol !== "http:" ||
-    !["localhost", "127.0.0.1"].includes(url.hostname) ||
+    !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
     url.username ||
     url.password ||
     url.pathname !== "/" ||
@@ -61,7 +61,15 @@ export async function resolveViewer(
       `Run ${runId} belongs to workflow ${run.workflowId}, not ${workflowId}.`,
     );
   workflowId = run?.workflowId || workflowId || project?.defaultWorkflowId;
-  const workflow = workflowId ? await client.workflow(workflowId) : null;
+  let workflow;
+  if (workflowId) {
+    try {
+      workflow = await client.workflow(workflowId);
+    } catch (error) {
+      // An inline run has a durable graph snapshot but no saved workflow.
+      if (!run?.graph || error.status !== 404) throw error;
+    }
+  }
   if (workflow && client.projectId && workflow.projectId !== client.projectId)
     throw new Error(
       `Workflow ${workflowId} belongs to ${workflow.projectId || "the unassigned workspace"}, not project ${client.projectId}.`,
@@ -83,7 +91,8 @@ export async function resolveViewer(
         ? `Node ${nodeId} does not exist in workflow ${workflowId}${run ? " for this run" : ""}.`
         : "Choose a workflow before opening a node.",
     );
-  const projectId = client.projectId || workflow?.projectId || undefined;
+  const projectId =
+    client.projectId || run?.projectId || workflow?.projectId || undefined;
   url.pathname = viewerPath({
     project: projectId,
     workflow: workflowId,

@@ -235,22 +235,6 @@
   color: #999;
   border-style: dashed;
 }
-.provider-setting > .harness-usage-badge {
-  margin-left: auto;
-}
-.provider-usage-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 16px 0;
-}
-.provider-usage-header button {
-  color: #ccc;
-  font-size: 11px;
-  border: 1px solid #444;
-  padding: 7px 10px;
-  border-radius: 6px;
-}
 @media (prefers-reduced-motion: reduce) {
   .harness-usage-popover {
     animation: none;

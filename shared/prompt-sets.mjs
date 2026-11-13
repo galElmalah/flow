@@ -8,7 +8,7 @@ export const promptSettingsSchema = z
     ratio: ratioSchema.optional(),
   })
   .strict();
-export const promptItemSchema = promptSettingsSchema
+const promptItemSchema = promptSettingsSchema
   .extend({
     id: z.string().min(1).max(160),
     label: z.string().min(1).max(120),

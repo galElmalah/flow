@@ -123,6 +123,9 @@ With `--json`, CLI failures exit nonzero and write a JSON `error` object to stde
 stdout is for successful results. Errors include `message`, `code`, and applicable
 `status`, `runId`, `issues` or provider `blockers`. Invalid flags, numbers and
 irrelevant options fail before project discovery, uploads or network calls.
+For a terminal unsuccessful JSON wait, stderr also retains the complete run at
+`error.run`; inspect its jobs before choosing retry or resume. Monitoring errors
+after an accepted `run --wait` retain its `runId`.
 
 For an inference-free orchestration check, use a seed-image workflow with `--provider local-color --model color-study`. This performs real local image processing. It does not replace upstream AI prompt nodes, so choose an image-only workflow for this check. Executable detection and protocol tests do not prove that a CLI harness is authenticated; inspect provider readiness and run the specifically intended harness when inference is required. Compatible API connections use their selected base URL/model and explicit key; there is no automatic switch from a signed-in harness to a paid API.
 
@@ -193,10 +196,22 @@ Run overrides and submission controls reject unknown fields, invalid numbers and
 unsupported shapes before a request is sent. A project-bound client cannot create,
 save or move workflows into another project or change another project's metadata.
 The SDK's `run(workflow, options, {concurrency,requestId})` returns a full run.
+Project-bound uploads inherit that project so their returned asset IDs remain
+readable by the same client. Inline graph inputs inherit the bound project when
+no owner is specified. Graph inputs can use plain graph objects or versioned
+Flow file envelopes.
 `wait` applies its deadline to network calls and polling. A deadline throws
 `FlowError` with `code: "RUN_WAIT_TIMEOUT"`, `status:408`, `runId`,
 `timeoutSeconds` and optional `lastRun`; server work continues. An explicit caller
 abort preserves its supplied reason.
+
+`viewer({runId})` resolves the frozen run graph even when no saved workflow exists.
+To retain an inline run as an editable workflow, call
+`fork(run.workflowId, {runId:run.id,name:"My saved study"})` or CLI
+`fork WORKFLOW_ID --run RUN_ID`. The server reads its authoritative snapshot and
+records both `forkedFrom.workflowId` and `forkedFrom.runId`. A different source
+workflow ID or project is rejected. A run ID and arbitrary workflow snapshot
+cannot be supplied together.
 
 Read `GET /api` or `flow guide --json` for route discovery and `flow schema --json` for the complete graph schema. All live state mutations use the API/CLI/client; never edit SQLite or JSON mirrors directly.
 

@@ -4,7 +4,7 @@ import {
   copySubgraph,
   cloneSubgraph,
 } from "../src/canvas/graph-operations.mjs";
-import { starter } from "../server/defaults.mjs";
+import { starter } from "./fixtures/paper-workflow.mjs";
 test("duplicating a connected selection keeps internal edges and gives every item a new identity", () => {
   const copied = copySubgraph(starter.nodes, starter.edges, [
     "prompt",

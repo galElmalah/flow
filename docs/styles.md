@@ -191,3 +191,5 @@ batch ID: `node tools/style-references.mjs --workflow my-new-style-batch --missi
 The saved batch freezes its selected styles and prompts. Reusing the command
 inspects that batch rather than submitting another. Verify it with
 `node tools/style-references.mjs --workflow my-new-style-batch --verify`.
+
+For a local visual review, `node tools/style-contact-sheets.mjs` groups available style references by category under `docs/qa/style-library/sheets/`.

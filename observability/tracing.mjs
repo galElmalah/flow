@@ -46,7 +46,7 @@ export const safeAttributes = (attributes = {}) =>
     ),
   );
 const milliseconds = ([s, ns]) => s * 1000 + ns / 1e6;
-export function spanRecord(span) {
+function spanRecord(span) {
   return {
     name: span.name,
     traceId: span.spanContext().traceId,
@@ -63,7 +63,7 @@ export function spanRecord(span) {
     })),
   };
 }
-export class LocalSpanExporter {
+class LocalSpanExporter {
   constructor(directory, { maxBytes = 10 * 1024 * 1024 } = {}) {
     this.directory = directory;
     this.maxBytes = maxBytes;
