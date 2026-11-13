@@ -1,6 +1,9 @@
 // Reference artworks are generated examples, not photographs or historical originals.
 import { movementFamily } from "./movements.mjs";
 import { advertisingFamily, advertisingReferenceEnding } from "./advertising.mjs";
+import { fineArtStyles } from "./fine-art-expansion.mjs";
+import { materialStyles } from "./material-expansion.mjs";
+import { mediaStyles } from "./media-expansion.mjs";
 const families = [
   ["Photography", [
     ["natural-light-realism", "Natural light realism", "Believable materials and unforced daylight.", "Use physically believable detail, soft window illumination, natural color, restrained sharpening and authentic surface imperfections.", "A handmade ceramic pitcher and sliced pears rest beside a rain-streaked kitchen window."],
@@ -210,7 +213,7 @@ const families = [
 
 const referenceEnding = "Make the medium unmistakable through its characteristic edges, surface and light. Compose one coherent finished artwork, with a clear focal point and enough surrounding space to read at thumbnail size. Show the full artwork without a frame, border, sample grid or interface. Do not add lettering, labels, numbers, signatures, watermarks or logos. If people appear, invent anonymous faces with distinct features; do not copy identifiable people. This is a newly generated style demonstration.";
 
-export const builtInStyles = [...families, movementFamily, advertisingFamily].flatMap(([category, rows]) => rows.map(([id, name, description, prompt, scene]) => ({
+export const builtInStyles = [...families, movementFamily, advertisingFamily, ...fineArtStyles, ...materialStyles, ...mediaStyles].flatMap(([category, rows]) => rows.map(([id, name, description, prompt, scene]) => ({
   id,
   name,
   category,

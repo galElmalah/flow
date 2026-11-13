@@ -18,10 +18,13 @@ snapshotted in `node.data.style`; later library changes never rewrite old workfl
 or recorded runs. A reference illustrates a visual language rather than promising
 that every model will reproduce it exactly.
 
-The local library has 216 built-in style briefs across 14 families. References are actual generated
-images with recorded run/job provenance. Missing or active references show their
-real generation state. Favorites and uploaded/generated reference bindings persist
-in the platform's SQLite metadata.
+The library has 257 built-in style briefs across 14 families. Each includes a
+reusable rendering instruction, a separate scene and a complete reference-generation
+brief. Preview images belong to the local installation; a fresh clone does not
+include pre-generated previews. Uploaded references retain their source notes;
+generated references retain recorded run/job provenance. Missing or active
+references show their real state. Favorites and reference bindings persist in the
+platform's SQLite metadata.
 
 The **Art & design movements** family includes realism, brutalism, neo-brutalism,
 analytic and synthetic cubism, Bauhaus, De Stijl, Memphis and other movements.
@@ -29,6 +32,36 @@ analytic and synthetic cubism, Bauhaus, De Stijl, Memphis and other movements.
 feature, creator-style, SaaS and product campaign directions. Ad references are
 original generated composition studies with fictional placeholder screens;
 use your own product assets and app screenshots for finished campaigns.
+
+The expanded coverage includes:
+
+| Area | Additional directions |
+| --- | --- |
+| Art movements and painting | Pointillism, Color Field, Action painting, Precisionism, Pre-Raphaelite, Rococo ornament, grisaille, reverse glass painting |
+| Decorative traditions | Kalighat, Korean chaekgeori, Yamato-e roofless interiors, Egyptian registers, Attic red-figure, sgraffito slipware, agateware, wood marquetry, pietre dure, porcelain lithophane |
+| Materials and textiles | Cameo glass, millefiori glass, repoussé metalwork, filament 3D printing, warp ikat, devoré velvet |
+| Printmaking | Gyotaku, pochoir |
+| Photography and drawing | Double exposure, fisheye, thermal imaging, photo-finish strips, darkfield microscopy, exploded assemblies |
+| Graphics and animation | Screentone manga, ligne claire, vector arcade, rubber hose, pinscreen, sand animation |
+| Experimental processes | Anthotype, schlieren flow, red-cyan stereo anaglyph |
+
+These directions describe techniques rather than imitate a named artist. They
+retain distinctions such as unmixed color dots versus monochrome stippling,
+carved glass layers versus glass cane slices, and resist-dyed yarn versus painted
+fabric. Technical imaging presets are creative simulations, not measurements or
+calibrated stereo pairs.
+
+Technique research includes the [Met's Yamato-e overview](https://www.metmuseum.org/essays/yamato-e-painting),
+[Cleveland's chaekgeori article](https://www.clevelandart.org/articles/chaekgeori),
+[V&A ceramics guide](https://www.vam.ac.uk/articles/a-z-of-ceramics),
+[Corning's cameo glass study](https://info.cmog.org/publication/cameo-glass-masterpieces-2000-years-glassmaking),
+[Australian Museum's ikat explanation](https://australian.museum/learn/cultures/international-collection/indonesia/ikat-design/),
+[NFB's pinscreen demonstration](https://www.nfb.ca/film/pinscreen/),
+[Nikon's darkfield guide](https://www.microscopyu.com/techniques/stereomicroscopy/darkfield-illumination)
+and [NASA's schlieren explanation](https://www.grc.nasa.gov/www/k-12/airplane/tunvschlrn.html).
+These are research links; their images are not bundled or represented as generated
+Flow outputs. Generating previews remains an explicit operation using the selected
+provider, as described below.
 
 **Explore web reference collections** opens 15 curated collections covering
 open-access art, materials, style guides and advertising archives. Entries include

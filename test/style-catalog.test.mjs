@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { builtInStyles } from "../shared/styles/catalog.mjs";
 
-test("built-in style library offers 216 distinct reusable styles with baseline scenes", () => {
-  assert.equal(builtInStyles.length, 216);
+test("built-in style library offers 257 distinct reusable styles with baseline scenes", () => {
+  assert.equal(builtInStyles.length, 257);
   assert.equal(
     new Set(builtInStyles.map(({ id }) => id)).size,
     builtInStyles.length,
@@ -45,7 +45,7 @@ test("built-in style library offers 216 distinct reusable styles with baseline s
   }
   assert.equal(categories.size, 14);
   assert.ok([...categories.values()].every((count) => count >= 15));
-  assert.equal(categories.get("Photography"), 15);
+  assert.equal(categories.get("Photography"), 20);
   for (const id of [
     "realist-painting",
     "brutalism",
@@ -55,6 +55,14 @@ test("built-in style library offers 216 distinct reusable styles with baseline s
     "sports-performance-ad",
     "app-device-hero-ad",
     "fitness-app-ad",
+    "pointillism",
+    "chaekgeori",
+    "cameo-glass",
+    "warp-ikat",
+    "pochoir",
+    "double-exposure",
+    "pinscreen-animation",
+    "schlieren-flow",
   ])
     assert.ok(
       builtInStyles.some((style) => style.id === id),
