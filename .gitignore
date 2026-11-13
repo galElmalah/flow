@@ -1,5 +1,6 @@
 node_modules/
 docs/launch/guide/
+/website/build/
 dist/
 .flow
 .env

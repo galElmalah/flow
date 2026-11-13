@@ -18,6 +18,13 @@
     "tools/verify-fal-catalog.mjs",
     // Documented example consumed by external projects.
     "examples/quoture/shared-workflow.mjs",
+    // Static landing page: scripts loaded by website/landing/site/index.html,
+    // the worker started by site.js and the downloadable SDK example.
+    "website/landing/site/shared/examples.js",
+    "website/landing/site/shared/gh.js",
+    "website/landing/site/shared/site.js",
+    "website/landing/site/shared/liquid-worker.js",
+    "website/landing/site/examples/build.mjs",
     "test/*.test.mjs"
   ],
   "project": ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"]

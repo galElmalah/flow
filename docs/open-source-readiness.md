@@ -1,6 +1,6 @@
 # Prepare a public release
 
-The repository remains private. Review [the November 5 multi-agent audit](public-release-review.md) and [the November 13 review](release-review-2026-11-13.md) before publishing. This checklist does not change visibility, post to X or publish packages.
+The source repository is now public. [The November 5 multi-agent audit](public-release-review.md) and [the November 13 review](release-review-2026-11-13.md) record the pre-release state and remain historical. This checklist does not post to X or publish packages; unchecked items below are still open.
 
 ## Verified preparation
 
@@ -15,13 +15,13 @@ The repository remains private. Review [the November 5 multi-agent audit](public
 - Zero npm audit vulnerabilities; dependency and optional-model inventory in [licenses](licenses.md).
 - Portable shipped demo with synthetic metadata; the current Pi mark uses verified MIT-licensed source.
 
-## Before visibility changes
+## Release items
 
 - [ ] Owner clears paper fixture and historical Pi mark rights, and reviews historical demo workspace metadata, or chooses a reviewed source-snapshot/history publication plan. See [asset provenance](asset-provenance.md).
 - [ ] Owner confirms code/license ownership and clears the exact X screenshots/video. Local galleries and account/path data are not public-source assets.
 - [ ] Verify final release commit CI and secret scan.
-- [ ] Verify private vulnerability reporting and enable main protection after public visibility or when the plan permits it. Private-repo checks currently return 404 and 403 respectively.
-- [ ] Make the explicit source-repository visibility change. Keep npm private; no prebuilt binary/bundle or model distribution is included.
+- [ ] Verify private vulnerability reporting and enable main protection now that the repository is public. While it was private, these checks returned 404 and 403 respectively.
+- [x] Make the explicit source-repository visibility change. Keep npm private; no prebuilt binary/bundle or model distribution is included.
 
 ## Documented limitations
 

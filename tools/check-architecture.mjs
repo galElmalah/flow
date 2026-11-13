@@ -18,6 +18,7 @@ const roots = [
   "test",
   "tools",
   "mcp",
+  "website",
 ];
 const files = [];
 async function walk(directory) {

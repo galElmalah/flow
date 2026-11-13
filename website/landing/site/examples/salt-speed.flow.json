@@ -1,0 +1,126 @@
+{
+  "format": "flow",
+  "version": 1,
+  "workflow": {
+    "revision": 0,
+    "id": "salt-speed-campaign-v1",
+    "name": "SALT / SPEED",
+    "projectId": "salt-speed",
+    "nodes": [
+      {
+        "id": "prompt",
+        "type": "prompt",
+        "position": {
+          "x": 0,
+          "y": 420
+        },
+        "data": {
+          "label": "Scenery direction",
+          "text": "A fictional salt-flat racing campaign. Orange equipment, silver surfaces, hard sunlight and open horizons. No incidental lettering or logos."
+        }
+      },
+      {
+        "id": "generate",
+        "type": "generate",
+        "position": {
+          "x": 800,
+          "y": 0
+        },
+        "data": {
+          "label": "Image generation",
+          "count": 1,
+          "seed": 42,
+          "ratio": "3:4",
+          "quality": "high",
+          "providerId": "codex",
+          "model": "native"
+        }
+      },
+      {
+        "id": "output",
+        "type": "output",
+        "position": {
+          "x": 1200,
+          "y": 0
+        },
+        "data": {
+          "label": "Output collection"
+        }
+      },
+      {
+        "id": "seed",
+        "type": "image",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "label": "Seed images",
+          "images": [
+            "/files/uploads/helmet-seed.png"
+          ]
+        }
+      },
+      {
+        "id": "prompts",
+        "type": "prompt-set",
+        "position": {
+          "x": 400,
+          "y": 600
+        },
+        "data": {
+          "label": "Scene prompts",
+          "prompts": [
+            {
+              "seed": 17,
+              "id": "helmet",
+              "label": "The helmet",
+              "scene": "An orange racing helmet on a brushed metal block, salt flats stretching to the horizon."
+            },
+            {
+              "id": "machine",
+              "label": "The machine",
+              "scene": "A silver racing machine standing alone on the salt flats, long shadows in hard sunlight."
+            },
+            {
+              "id": "kit",
+              "label": "The kit",
+              "scene": "An anonymous racer in orange technical clothing, with the helmet tucked under one arm."
+            },
+            {
+              "id": "trace",
+              "label": "The trace",
+              "scene": "Fresh tire tracks sweeping across white salt, an orange vehicle disappearing into the distance."
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "prompt-prompts",
+        "source": "prompt",
+        "target": "prompts",
+        "targetHandle": "text"
+      },
+      {
+        "id": "generate-output",
+        "source": "generate",
+        "target": "output",
+        "targetHandle": "image"
+      },
+      {
+        "id": "seed-generate",
+        "source": "seed",
+        "target": "generate",
+        "targetHandle": "image"
+      },
+      {
+        "id": "prompts-generate",
+        "source": "prompts",
+        "target": "generate",
+        "targetHandle": "text"
+      }
+    ]
+  }
+}

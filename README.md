@@ -1,6 +1,6 @@
 # Flow
 
-**Agents: [read SETUP.md first](SETUP.md).**
+**Agents: [read SETUP.md first](SETUP.md).** · [Documentation](https://gal.overto.work/flow-landing/docs/) · [Website](https://gal.overto.work/flow-landing/flow/)
 
 A local canvas for image, GIF and video workflows. Connect reference images, shared prompts and scene collections, then run parallel batches through your own CLI harnesses, API providers or local models. Outputs keep their resolved prompts, settings, inputs and lineage.
 
@@ -102,6 +102,10 @@ npm run check:licenses
 
 `check` validates architecture and unused code, builds browser assets, then runs behavior tests. CI also scans the complete Git history with a pinned, checksum-verified Gitleaks binary. Tests use local fixtures and fake provider transports; they do not prove live account access. See [CONTRIBUTING.md](CONTRIBUTING.md) and [the architecture map](docs/ARCHITECTURE.md).
 
+## Documentation and website
+
+The [documentation site](https://gal.overto.work/flow-landing/docs/) renders this repository's Markdown, and the [landing page](https://gal.overto.work/flow-landing/flow/) is in `website/landing/`. Both are static; Flow itself always runs locally. Build the docs with `npm run docs:build`; see [website/README.md](website/README.md).
+
 ## License
 
-Flow source and style briefs are MIT licensed: use, modify, redistribute, sublicense or sell them, including commercially, while retaining the license and copyright notice. There is no Flow license fee. Fonts, provider marks, dependencies and downloaded models retain their own terms; paid provider usage is separate. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). The npm package remains private. [The release explainer](docs/launch/index.html) includes product captures, the complete style catalog and the remaining asset/history release gates.
+Flow source and style briefs are MIT licensed: use, modify, redistribute, sublicense or sell them, including commercially, while retaining the license and copyright notice. There is no Flow license fee. Fonts, provider marks, dependencies and downloaded models retain their own terms; paid provider usage is separate. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). The npm package remains private.

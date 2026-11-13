@@ -28,7 +28,10 @@
     "verify:setup": "node tools/verify-setup.mjs",
     "check:release": "node tools/check-release.mjs && node tools/check-doc-links.mjs",
     "check:licenses": "node tools/license-inventory.mjs",
-    "check:unused": "knip"
+    "check:unused": "knip",
+    "docs:build": "node tools/build-docs.mjs",
+    "landing:examples": "node website/landing/build-examples.mjs",
+    "landing:verify": "node website/landing/verify-examples.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",

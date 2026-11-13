@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en" data-github-stats="public">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flow — Images that remember where they came from</title>
+<meta name="description" content="Flow: a local canvas for AI image, GIF and video workflows. Open source, agent-native, with full lineage." />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#000000" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+<link rel="canonical" href="https://gal.overto.work/flow-landing/flow/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Flow" />
+<meta property="og:title" content="Flow — Images that remember where they came from" />
+<meta property="og:description" content="Flow: a local canvas for AI image, GIF and video workflows. Open source, agent-native, with full lineage." />
+<meta property="og:url" content="https://gal.overto.work/flow-landing/flow/" />
+<meta property="og:image" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
+<meta property="og:image:secure_url" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Flow campaign workflow: one helmet seed expanded into four salt-flat racing scenes" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Flow — Images that remember where they came from" />
+<meta name="twitter:description" content="Flow: a local canvas for AI image, GIF and video workflows. Open source, agent-native, with full lineage." />
+<meta name="twitter:image" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
+<meta name="twitter:image:alt" content="Flow campaign workflow: one helmet seed expanded into four salt-flat racing scenes" />
+<script>document.documentElement.classList.add("js")</script>
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="preload" href="assets/Figtree-Variable.woff2" as="font" type="font/woff2" crossorigin />
+<style>
+@font-face { font-family: Figtree; src: url(assets/Figtree-Variable.woff2) format("woff2"); font-weight: 300 900; font-display: swap; }
+@font-face { font-family: Figtree; src: url(assets/Figtree-Italic-Variable.woff2) format("woff2"); font-weight: 300 900; font-style: italic; font-display: swap; }
+:root { color-scheme: dark; --ink: #f2f2f2; --mute: #7d7d7d; --line: rgba(255,255,255,.1); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background-color: #000; background: #000; color: var(--ink); color-scheme: dark; font-family: Figtree, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background-color: #000; background: #000; overflow-x: hidden; }
+html:not(.mouse) .cursor { display: none; }
+html.mouse body, html.mouse a, html.mouse button, html.mouse [data-zoom], html.mouse .tour li { cursor: none; }
+@media (hover: none) { .cursor { display: none; } }
+a { color: inherit; text-decoration: none; }
+::selection { background: #fff; color: #000; }
+.iri { background: linear-gradient(100deg, #b8f3ff, #d7b8ff 30%, #ffc2e2 55%, #fff1b8 80%, #b8f3ff); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: iri 8s linear infinite; }
+@keyframes iri { to { background-position: -200% 0; } }
+
+/* cursor */
+.cursor { position: fixed; z-index: 100; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; mix-blend-mode: difference; pointer-events: none; transition: width .3s, height .3s, margin .3s; }
+.cursor.big { width: 84px; height: 84px; margin: -42px 0 0 -42px; }
+.cursor span { position: absolute; inset: 0; display: grid; place-items: center; color: #000; font-size: 11px; font-weight: 700; letter-spacing: .1em; opacity: 0; transition: opacity .2s; }
+.cursor.big span { opacity: 1; }
+.cursor.ring { width: 36px; height: 36px; margin: -18px 0 0 -18px; background: transparent; border: 1.5px solid #fff; }
+
+nav { position: fixed; z-index: 50; inset: 0 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 22px clamp(20px, 4vw, 56px); mix-blend-mode: difference; }
+nav .l { display: flex; gap: 30px; font-size: 14px; letter-spacing: .02em; }
+nav .brand { font-weight: 800; font-size: 20px; letter-spacing: -.03em; display: flex; align-items: center; gap: 10px; }
+nav .brand i { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+nav .gh { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; letter-spacing: .02em; }
+nav .gh svg { width: 16px; height: 16px; fill: currentColor; }
+nav .gh .sc { font-variant-numeric: tabular-nums; opacity: .6; }
+html:not(.gh-live) nav .gh .sc { display: none; }
+.u { position: relative; }
+.u::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform .4s cubic-bezier(.7,0,.2,1); }
+.u:hover::after { transform: scaleX(1); transform-origin: left; }
+
+/* HERO */
+.hero { position: relative; height: 100svh; min-height: 640px; overflow: hidden; }
+.hero, .end { background: radial-gradient(ellipse at 26% 24%, #677b82 0%, transparent 44%), radial-gradient(ellipse at 75% 28%, #5e486c 0%, transparent 42%), radial-gradient(ellipse at 42% 76%, #6a4c62 0%, transparent 38%), radial-gradient(ellipse at 80% 80%, #31434e 0%, transparent 45%), #080b10; }
+.hero canvas, .end canvas { opacity: 0; transition: opacity .2s; }
+.hero canvas.ready, .end canvas.ready { opacity: 1; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero .word { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); font-size: clamp(120px, 31vw, 520px); font-weight: 850; letter-spacing: -.07em; line-height: .8; color: #fff; mix-blend-mode: difference; user-select: none; white-space: nowrap; }
+.hero .word .l { display: inline-block; }
+.hero .word .l:nth-child(2) { animation-delay: .08s; } .hero .word .l:nth-child(3) { animation-delay: .16s; } .hero .word .l:nth-child(4) { animation-delay: .24s; }
+@keyframes up { to { transform: none; } }
+.hero .clip { overflow: hidden; display: block; padding-bottom: .04em; }
+.hero .meta { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 30px; align-items: end; padding: 0 clamp(20px, 4vw, 56px) 34px; mix-blend-mode: difference; }
+.hero .meta p { max-width: 430px; font-size: 16px; line-height: 1.5; }
+.hero .meta .runs { display: grid; gap: 14px; }
+.hero .meta .runs span { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+.hero .meta .logos { display: flex; gap: 18px; align-items: center; }
+.hero .meta .logos img { width: 24px; height: 24px; }
+.hero .meta a.circle { width: 120px; height: 120px; border-radius: 50%; border: 1px solid #fff; display: grid; place-items: center; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; position: relative; }
+.hero .meta a.circle svg { position: absolute; inset: 0; animation: rot 14s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* statement */
+.statement { padding: clamp(110px, 18vh, 200px) clamp(20px, 4vw, 56px); }
+.statement p { font-size: clamp(32px, 4.6vw, 74px); line-height: 1.05; letter-spacing: -.04em; font-weight: 600; max-width: 22ch; }
+.statement p .w { opacity: .7; transition: opacity .3s; }
+.statement p .w.on { opacity: 1; }
+.statement em { font-style: italic; font-weight: 400; }
+
+/* workflow: four plain steps — seed → scenes → generate → results */
+.pipe { padding: clamp(60px, 10vh, 120px) clamp(20px, 4vw, 56px) clamp(80px, 12vh, 140px); }
+.pipe-title { font-size: clamp(30px, 4vw, 60px); letter-spacing: -.04em; font-weight: 650; text-align: center; }
+.pipe-sub { text-align: center; color: var(--mute); margin: 14px auto 0; max-width: 600px; line-height: 1.55; }
+.flow4 { list-style: none; margin: 56px auto 0; max-width: 1360px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.js .flow4 > li { transition: border-color .3s; }
+.js .flow4 > li.in { opacity: 1; transform: none; }
+.flow4 > li { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #090909; }
+.flow4 > li:not(:last-child)::after { content: "→"; position: absolute; right: -17px; top: 50%; transform: translateY(-50%); color: #555; font-size: 14px; }
+.flow4 .k { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.flow4 .k b { color: #fff; font-weight: 600; margin-right: 6px; }
+.flow4 h3 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+.flow4 p { font-size: 14px; line-height: 1.55; color: #9a9a9a; }
+.flow4 .media { aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; background: #111; }
+.flow4 .media > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scn { list-style: none; display: grid; align-content: center; gap: 0; padding: 4px 12px; border: 1px solid var(--line); background: #0d0d0d; }
+.scn li { display: flex; gap: 12px; padding: 9px 0; font-size: 14px; border-top: 1px solid var(--line); }
+.scn li:first-child { border-top: 0; }
+.scn li i { font-style: normal; color: var(--mute); font-variant-numeric: tabular-nums; }
+.gen { display: grid; place-items: center; align-content: center; gap: 12px; border: 1px solid var(--line); background: #0d0d0d; text-align: center; }
+.gen .prov { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; }
+.gen .prov img { width: 20px; height: 20px; }
+.gen small { font-size: 13px; color: var(--mute); }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #000; }
+.grid4 img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 6px; }
+.media[data-zoom], .grid4 [data-zoom] { transition: opacity .25s; }
+.media[data-zoom]:hover, .grid4 [data-zoom]:hover { opacity: .82; }
+.pipe-foot { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; align-items: center; margin-top: 40px; font-size: 13px; color: var(--mute); }
+.pipe-foot button { background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; font: 600 13px Figtree, sans-serif; padding: 12px 20px; border-radius: 999px; cursor: pointer; transition: background .3s, color .3s; }
+.pipe-foot button:hover { background: #fff; color: #000; }
+
+/* lightbox */
+.lb { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.92); backdrop-filter: blur(8px); display: grid; place-items: center; padding: 4vh 4vw; opacity: 0; pointer-events: none; transition: opacity .35s; }
+.lb.on { opacity: 1; pointer-events: auto; }
+.lb[aria-hidden="true"] { visibility: hidden; }
+.lb img { max-width: 100%; max-height: 86vh; border-radius: 12px; transform: scale(.96); transition: transform .45s cubic-bezier(.2,1,.3,1); }
+.lb.on img { transform: none; }
+.lb .x { position: absolute; top: 18px; right: 22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: #000; color: #fff; font: 22px/1 Figtree, sans-serif; cursor: pointer; }
+.lb .x:hover { background: #fff; color: #000; }
+html.lb-open { overflow: hidden; }
+[data-zoom]:focus-visible, .tour li:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #b8f3ff; outline-offset: 3px; }
+.lb p { position: absolute; left: 0; right: 0; bottom: 3vh; text-align: center; font-size: 13px; color: var(--mute); }
+[data-zoom], .tour li { cursor: pointer; }
+
+/* index list with cursor-follow preview */
+.index { padding: clamp(80px, 12vh, 140px) clamp(20px, 4vw, 56px); position: relative; }
+.index h2 { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); font-weight: 500; margin-bottom: 30px; display: flex; justify-content: space-between; }
+.row { position: relative; display: grid; grid-template-columns: 70px 1fr 1fr; gap: 24px; align-items: baseline; padding: 30px 0; border-top: 1px solid var(--line); transition: padding .5s cubic-bezier(.2,.8,.2,1); }
+.row:last-child { border-bottom: 1px solid var(--line); }
+.row .n { color: var(--mute); font-size: 14px; font-variant-numeric: tabular-nums; }
+.row h3 { font-size: clamp(30px, 4.2vw, 64px); letter-spacing: -.045em; font-weight: 650; line-height: 1; transition: transform .5s cubic-bezier(.2,.8,.2,1), font-style .3s; }
+.row p { color: #9a9a9a; line-height: 1.55; font-size: 15.5px; max-width: 440px; }
+.row:hover { padding: 44px 0; }
+.row:hover h3 { transform: translateX(24px); font-style: italic; font-weight: 450; }
+.row:hover p { opacity: 1; }
+.preview { position: fixed; z-index: 40; left: 0; top: 0; width: 340px; aspect-ratio: 4/3; pointer-events: none; border-radius: 14px; overflow: hidden; opacity: 0; transform: scale(.6); transition: opacity .35s, transform .5s cubic-bezier(.2,.8,.2,1); }
+.preview.on { opacity: 1; transform: scale(1); }
+.preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s, transform .8s; transform: scale(1.2); }
+.preview img.on { opacity: 1; transform: none; }
+
+/* region editing — real SAM 2.1 editor, guided tour */
+.edit { padding: clamp(80px, 12vh, 140px) clamp(20px, 4vw, 56px); border-top: 1px solid var(--line); }
+.edit-head { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: end; margin-bottom: 44px; }
+.edit-body { display: grid; grid-template-columns: 2.1fr 1fr; gap: 40px; align-items: center; }
+.editor { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 1778/1235; background: #0a0a0a; border: 1px solid var(--line); }
+.editor .cam { position: absolute; inset: 0; transform-origin: 0 0; transition: transform 1.1s cubic-bezier(.6,0,.2,1); }
+.editor .cam img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity .8s; }
+.editor .cam img.after { opacity: 0; }
+.editor.after .cam img.after { opacity: 1; }
+.editor .hl { position: absolute; border: 1.5px solid #b8f3ff; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0,0,0,.42); opacity: 0; transition: all 1.1s cubic-bezier(.6,0,.2,1), opacity .4s; pointer-events: none; }
+.editor .hl.on { opacity: 1; }
+.editor .expand { position: absolute; right: 12px; bottom: 12px; z-index: 2; font-size: 12px; padding: 7px 12px; border-radius: 999px; background: rgba(0,0,0,.7); border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(6px); }
+.tour { display: grid; gap: 4px; list-style: none; }
+.tour li { padding: 18px 18px 18px 20px; border-radius: 14px; border: 1px solid transparent; cursor: pointer; transition: background .3s, border-color .3s; position: relative; overflow: hidden; }
+.tour li b { display: block; font-size: 17px; font-weight: 600; color: #969696; transition: color .3s; }
+.tour li p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #8a8a8a; max-height: 0; opacity: 0; overflow: hidden; transition: max-height .5s, opacity .4s; }
+.tour li.on { background: #0c0c0c; border-color: var(--line); }
+.tour li.on b { color: #fff; }
+.tour li.on p { max-height: 120px; opacity: 1; }
+.tour li i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: linear-gradient(90deg, #b8f3ff, #d7b8ff, #ffc2e2); }
+.tour li.on i { animation: prog var(--dur, 4.2s) linear forwards; }
+.tour.paused li.on i { animation: none; width: 0; }
+@keyframes prog { to { width: 100%; } }
+.edit h2, .agent h2, .code h2 { font-size: clamp(36px, 4.6vw, 70px); letter-spacing: -.045em; line-height: .98; font-weight: 650; }
+.edit h2 em, .agent h2 em, .code h2 em { font-weight: 380; font-style: italic; }
+.edit-head p, .agent p, .code p.lead { color: #a0a0a0; line-height: 1.6; font-size: 17px; }
+.agent p { margin-top: 20px; }
+
+/* define it as code */
+.code { padding: clamp(80px, 12vh, 140px) clamp(20px, 4vw, 56px); border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1.35fr; gap: 50px; align-items: start; }
+.code p.lead { margin-top: 20px; }
+.code p code, .code li code { font: .88em ui-monospace, Menlo, monospace; color: #fff; }
+.code ul { list-style: none; margin-top: 28px; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.code li { background: #000; padding: 16px 20px; font-size: 14px; color: #8a8a8a; line-height: 1.5; }
+.code li b { color: #fff; font-weight: 600; display: block; margin-bottom: 2px; font-size: 15px; }
+.ide { min-width: 0; border-radius: 18px; overflow: hidden; background: #070707; border: 1px solid var(--line); position: sticky; top: 90px; }
+.ide .meta { padding: 14px 20px 0; color: #a0a0a0; font-size: 13px; line-height: 1.6; }
+.ide .meta + .meta { padding: 8px 20px 16px; }
+.ide .tabs { display: flex; gap: 2px; padding: 8px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.ide .tabs button { background: none; border: 0; color: #999; font: 500 13px ui-monospace, Menlo, monospace; padding: 8px 12px; border-radius: 8px; white-space: nowrap; transition: background .2s, color .2s; }
+.ide .tabs button.on { background: #161616; color: #fff; }
+.ide pre { margin: 0; padding: 20px 22px 24px; font: 12.5px/1.75 ui-monospace, Menlo, monospace; color: #c9c9c9; overflow: auto; height: 520px; max-height: 65svh; overscroll-behavior: contain; }
+.ide pre .k { color: #d7b8ff; } .ide pre .s { color: #b8f3ff; } .ide pre .n { color: #fff1b8; } .ide pre .c { color: #999; } .ide pre .p { color: #ffc2e2; }
+.ide pre .ln { display: block; }
+@keyframes lnin { from { opacity: 0; transform: translateX(-6px); } }
+
+/* agent */
+.agent { padding: clamp(80px, 12vh, 140px) clamp(20px, 4vw, 56px); display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: start; border-top: 1px solid var(--line); }
+.quote { font-size: clamp(18px, 1.7vw, 24px); line-height: 1.5; font-weight: 400; font-style: italic; color: #ddd; padding: 30px; border-radius: 20px; background: linear-gradient(#0b0b0b, #0b0b0b) padding-box, linear-gradient(120deg, #b8f3ff, #d7b8ff, #ffc2e2, #fff1b8) border-box; border: 1px solid transparent; }
+.quote #q::before { content: "“"; } .quote #q::after { content: "”"; }
+.quote small { display: flex; justify-content: space-between; margin-top: 18px; font-style: normal; font-size: 13px; color: var(--mute); }
+.copy { background: #fff; color: #000; border: 0; padding: 8px 14px; border-radius: 999px; font: 600 12px Figtree, sans-serif; cursor: pointer; }
+.copy.copied { background: #b8f3ff; }
+.surfaces { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: 30px; background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.surfaces div { background: #000; padding: 20px; font-size: 14px; color: #8a8a8a; }
+.surfaces b { display: block; color: #fff; font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.agent p.docs { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--mute); }
+.agent p.docs a { color: #fff; }
+
+/* CTA */
+.end { position: relative; height: 100svh; min-height: 600px; overflow: hidden; display: grid; place-items: center; text-align: center; }
+#gl2 { position: absolute; inset: 0; width: 100%; height: 100%; }
+.end .inner { position: relative; mix-blend-mode: difference; }
+.end h2 { font-size: clamp(60px, 12vw, 220px); letter-spacing: -.065em; font-weight: 850; line-height: .82; }
+.end .row2 { display: flex; justify-content: center; gap: 14px; margin-top: 44px; flex-wrap: wrap; }
+.end .row2 a { display: inline-flex; align-items: center; gap: 12px; padding: 18px 28px; border-radius: 999px; border: 1px solid #fff; font-weight: 650; font-size: 16px; transition: background .3s, color .3s; }
+.end .row2 a:hover { background: #fff; color: #000; }
+.end .row2 b { font-variant-numeric: tabular-nums; }
+html:not(.gh-live) .end .row2 b { display: none; }
+.install-command { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 36px; padding: 0 20px; }
+.end code { font: 14px ui-monospace, Menlo, monospace; opacity: .8; overflow-wrap: anywhere; }
+.install-command .copy { min-width: 118px; min-height: 40px; }
+footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 26px clamp(20px, 4vw, 56px); font-size: 13px; color: var(--mute); border-top: 1px solid var(--line); }
+footer div { display: flex; gap: 22px; } footer a:hover { color: #fff; }
+
+@media (max-width: 900px) {
+  nav .l { display: none; }
+  .hero .meta { grid-template-columns: 1fr; }
+  .hero .meta a.circle { display: none; }
+  .row { grid-template-columns: 40px 1fr; } .row p { grid-column: 2; }
+  .edit-head, .edit-body, .agent, .code { grid-template-columns: 1fr; }
+  .ide { position: static; } .ide pre { min-height: 0; font-size: 11.5px; }
+  .flow4 { grid-template-columns: 1fr 1fr; gap: 16px; } .flow4 > li::after { display: none; }
+  .preview { display: none; }
+}
+@media (max-width: 560px) {
+  .flow4 { grid-template-columns: 1fr; }
+  .end code { white-space: normal; font-size: 12.5px; }
+  footer div { flex-wrap: wrap; gap: 14px 22px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Edge paint hint for iOS / in-app browser chrome sampling; keep from first paint */
+.chrome-edge { position: fixed; left: 0; right: 0; top: 0; height: 20px; background: #000; pointer-events: none; z-index: 1; }
+</style>
+</head>
+<body>
+<div class="chrome-edge" aria-hidden="true"></div>
+<div class="cursor" id="cursor"><span>VIEW</span></div>
+<div class="preview" id="preview"></div>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Image viewer" aria-hidden="true"><button class="x" type="button" aria-label="Close image">×</button><img alt="" /><p>Click anywhere or press Esc to close</p></div>
+
+<nav>
+  <a class="brand" href="#"><i></i>flow</a>
+  <div class="l"><a class="u" href="#workflow">Workflow</a><a class="u" href="#features">Features</a><a class="u" href="#edit">Editing</a><a class="u" href="#agents">Agents</a><a class="u" href="#code">Code</a><a class="u" href="https://gal.overto.work/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a></div>
+  <a class="gh u" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub <span class="sc">★ <span data-stars data-fallback="">·</span></span></a>
+</nav>
+
+<header class="hero">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <h1 class="word" aria-label="Flow"><span class="clip" aria-hidden="true"><span class="l">f</span><span class="l">l</span><span class="l">o</span><span class="l">w</span></span></h1>
+  <div class="meta">
+    <p>A local canvas for image, GIF and video workflows. Shape one direction, fan it into scenes and models, and keep every output's lineage. Open source. Runs on your machine.</p>
+    <div class="runs">
+      <span>Runs locally · on your own subscriptions &amp; keys</span>
+      <div class="logos"><img width="24" height="24" src="assets/marks/claudecode-color.svg" alt="Claude Code" title="Claude Code" /><img width="24" height="24" src="assets/marks/codex-color.svg" alt="Codex" title="Codex" /><img width="24" height="24" src="assets/marks/geminicli-color.svg" alt="Gemini CLI" title="Gemini CLI" /><img width="24" height="24" src="assets/marks/grok-light.svg" alt="Grok" title="Grok" /><img width="24" height="24" src="assets/marks/fal-color.svg" alt="fal" title="fal" /><img width="24" height="24" src="assets/marks/ollama-light.svg" alt="Ollama" title="Ollama" /></div>
+    </div>
+    <a class="circle" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener"><svg viewBox="0 0 120 120"><defs><path id="cp" d="M60,60 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0" /></defs><text fill="#fff" font-size="9.6" letter-spacing="1.6"><textPath href="#cp">STAR ON GITHUB · MIT · STAR ON GITHUB · MIT ·</textPath></text></svg>★</a>
+  </div>
+</header>
+
+<section class="statement" id="work">
+  <p id="statement">Stop pasting prompts into chat boxes. <em>Wire</em> a direction once, run it through every model you own, and get back images that <em>remember exactly</em> where they came from.</p>
+</section>
+
+<section class="pipe" id="workflow">
+  <h2 class="pipe-title">One direction → <span class="iri">four scenes</span> → one campaign</h2>
+  <p class="pipe-sub">A seed image and one shared art direction go in. Four named scenes run through the model you choose. Every image comes back with its lineage.</p>
+  <ol class="flow4" id="flow4">
+    <li>
+      <span class="k"><b>01</b>Seed</span>
+      <h3>The original helmet</h3>
+      <div class="media" data-zoom="assets/helmet-seed-workflow.jpg" role="button" tabindex="0" aria-label="Expand the seed workflow screenshot"><img src="assets/seed-helmet.jpg" width="273" height="222" loading="lazy" decoding="async" alt="Seed image: an orange racing helmet on a metal block on salt flats" /></div>
+      <p>A reference image connected to every scene.</p>
+    </li>
+    <li>
+      <span class="k"><b>02</b>Scenes</span>
+      <h3>One direction, four scenes</h3>
+      <ul class="media scn"><li><i>01</i>The helmet</li><li><i>02</i>The machine</li><li><i>03</i>The kit</li><li><i>04</i>The trace</li></ul>
+      <p>Shared art direction: “SALT / SPEED — a fictional salt-flat racing campaign.” Add reusable rules such as “No incidental lettering”.</p>
+    </li>
+    <li>
+      <span class="k"><b>03</b>Generate</span>
+      <h3>Pick the model</h3>
+      <div class="media gen"><span class="prov"><img width="24" height="24" src="assets/marks/codex-color.svg" alt="" />Codex Image · native</span><small>4 images planned</small></div>
+      <p>Plan shows the job count before anything runs.</p>
+    </li>
+    <li>
+      <span class="k"><b>04</b>Results</span>
+      <h3>The contact sheet</h3>
+      <div class="media grid4">
+        <img data-zoom="assets/helmet-campaign.jpg" role="button" tabindex="0" src="assets/out-helmet.jpg" width="200" height="170" loading="lazy" decoding="async" alt="Result 01: the helmet" />
+        <img data-zoom="assets/helmet-campaign.jpg" role="button" tabindex="0" src="assets/out-machine.jpg" width="200" height="170" loading="lazy" decoding="async" alt="Result 02: the machine" />
+        <img data-zoom="assets/helmet-campaign.jpg" role="button" tabindex="0" src="assets/out-kit.jpg" width="200" height="170" loading="lazy" decoding="async" alt="Result 03: the kit" />
+        <img data-zoom="assets/helmet-campaign.jpg" role="button" tabindex="0" src="assets/out-trace.jpg" width="200" height="170" loading="lazy" decoding="async" alt="Result 04: the trace" />
+      </div>
+      <p>Each image keeps its resolved prompt, settings and inputs.</p>
+    </li>
+  </ol>
+  <div class="pipe-foot"><span>SALT / SPEED — a fictional campaign, made in Flow</span><button data-zoom="assets/helmet-seed-workflow.jpg">View full workflow ↗</button></div>
+</section>
+
+<section class="index" id="features">
+  <h2><span>Index</span><span>06</span></h2>
+  <div class="row" data-img="tile-helmet"><span class="n">01</span><h3>Prompt Sets</h3><p>Named scenes with per-scene copy, seed and aspect overrides, all inheriting one shared art direction.</p></div>
+  <div class="row" data-img="tile-car"><span class="n">02</span><h3>Any provider</h3><p>Codex, Claude Code, Gemini CLI, Pi, OpenAI-compatible, Google video, Grok, fal, Ollama, ComfyUI — chosen explicitly per branch.</p></div>
+  <div class="row" data-img="tile-kit"><span class="n">03</span><h3>Plan before you spend</h3><p>See total image, text and video jobs before inference. Concurrency-limited queues. Failed jobs never silently switch providers.</p></div>
+  <div class="row" data-img="hero-helmet"><span class="n">04</span><h3>Full lineage</h3><p>Resolved prompts, settings, inputs and ancestry on every output. Fork any historical run exactly.</p></div>
+  <div class="row" data-img="cyclist-pink"><span class="n">05</span><h3>Region editing</h3><p>Local SAM 2.1 segmentation, named layers, inline comments, mask-preserving recolor and a version strip.</p></div>
+  <div class="row" data-img="tile-trace"><span class="n">06</span><h3>Local by default</h3><p>Binds to 127.0.0.1. Local storage lives in .flow/. You choose which inputs go to a provider. No hosted Flow account.</p></div>
+</section>
+
+<section class="edit" id="edit">
+  <div class="edit-head">
+    <h2>Point at it. <em>Say it.</em> Done.</h2>
+    <p>The real Flow image editor. SAM 2.1 finds regions on your machine, your selected vision harness names them, and you comment on the exact pixels you mean. Recolor inside the mask, or send the note to an agent.</p>
+  </div>
+  <div class="edit-body">
+    <div class="editor" id="editor" data-zoom="assets/region-comment.jpg" role="button" tabindex="0" aria-label="Expand the image editor screenshot">
+      <div class="cam" id="cam">
+        <img src="assets/region-comment.jpg" width="1778" height="1235" loading="lazy" decoding="async" alt="Flow image editor: the white cycling jersey selected with the comment Make it pink" />
+        <img class="after" src="assets/pink-jersey-result.jpg" width="1778" height="1235" loading="lazy" decoding="async" alt="Flow image editor: the jersey recolored pink, regions carried forward, versions kept" />
+      </div>
+      <div class="hl" id="hl"></div>
+      <span class="expand">⤢ Expand</span>
+    </div>
+    <ol class="tour" id="tour">
+      <li tabindex="0"><b>SAM 2.1 finds regions — locally</b><p>14 regions on this frame, segmented on-device (MPS). Finding masks needs no cloud call.</p><i></i></li>
+      <li tabindex="0"><b>Regions come back with names</b><p>“White cycling jersey”, “Front bicycle wheel”, “Cycling helmet” — named by the vision harness you choose; rename, lock, reorder or export any layer.</p><i></i></li>
+      <li tabindex="0"><b>Comment on exactly that</b><p>Select the jersey, write “Make it pink.” Resolve it, or hand it to an agent with the region attached.</p><i></i></li>
+      <li tabindex="0"><b>Recolor inside the mask</b><p>Every pixel outside the jersey stays put. Regions, names and comments carry into the new version.</p><i></i></li>
+      <li tabindex="0"><b>Every version is kept</b><p>Original, Version 1, Recolor 2 — each one opens back into its workflow with full lineage.</p><i></i></li>
+    </ol>
+  </div>
+</section>
+
+<section class="agent" id="agents">
+  <div>
+    <h2>Built for <em>agents</em> as much as humans.</h2>
+    <p>The CLI, JavaScript client and MCP server use the same services as the canvas. Hand your agent the checkout and one instruction.</p>
+    <div class="surfaces"><div><b>CLI</b>flow plan · run · wait</div><div><b>MCP</b>Discoverable tools</div><div><b>Client</b>FlowClient in JS</div><div><b>Skills</b>Installed for Claude &amp; Codex</div></div>
+    <p class="docs"><span>Docs</span><a class="u" href="https://gal.overto.work/flow-landing/docs/SETUP.html" target="_blank" rel="noopener noreferrer">Setup</a><a class="u" href="https://gal.overto.work/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/installation.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/mcp.html" target="_blank" rel="noopener noreferrer">MCP</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/PROVIDERS.html" target="_blank" rel="noopener noreferrer">Providers</a></p>
+  </div>
+  <div class="quote"><span id="q">Read SETUP.md first, then AGENTS.md. Install dependencies, run setup and verify:setup, then use the Flow CLI/client/MCP to create and plan a workflow for my project. Check provider readiness and planned counts before generating. Keep the returned run ID and report the viewer URL and output lineage.</span><small><span>Paste into Claude Code or Codex</span><button class="copy" data-copy="#q">Copy prompt</button></small></div>
+</section>
+
+<section class="code" id="code">
+  <div>
+    <h2>Or define it <em>as code.</em></h2>
+    <p class="lead">Everything on the canvas is a versioned <code>.flow.json</code> file — seed reference, art direction, rules and scenes. Commit it, diff it in review, let an agent edit it, run it from CI. The canvas and the file are the same graph.</p>
+    <ul>
+      <li><b>Reviewable</b>Rules and scenes are saved with their exact text, so a diff shows precisely what changed in the brief.</li>
+      <li><b>Portable</b>Export, import and plan from the CLI, the JS client or MCP. No image bytes or keys in the file.</li>
+      <li><b>Plan first</b><code>flow plan</code> counts every job before a single image is generated.</li>
+    </ul>
+  </div>
+  <div class="ide"><p class="meta">Register your project with the CLI, install the SDK in that folder, and add <code>helmet-seed.png</code>. The script uploads it and saves a four-scene workflow without starting inference.</p><p class="meta"><a class="u" href="examples/salt-speed.flow.json" download>Download workflow</a> · <a class="u" href="examples/build.mjs" download>Download build.mjs</a> · <a class="u" href="https://gal.overto.work/flow-landing/docs/guide/agents.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK reference</a></p>
+    <div class="tabs" id="tabs"><button class="on" data-t="file">salt-speed.flow.json</button><button data-t="js">build.mjs</button><button data-t="cli">terminal</button></div>
+    <pre id="src"></pre>
+  </div>
+</section>
+
+<section class="end" id="install">
+  <canvas id="gl2" aria-hidden="true"></canvas>
+  <div class="inner">
+    <h2>Make it<br />yours.</h2>
+    <div class="row2"><a href="https://github.com/galElmalah/flow" target="_blank" rel="noopener">★ Star <b data-stars data-fallback="">·</b></a><a href="https://gal.overto.work/flow-landing/docs/SETUP.html" target="_blank" rel="noopener">Run locally →</a></div>
+    <div class="install-command"><code id="install-command">git clone https://github.com/galElmalah/flow.git &amp;&amp; cd flow &amp;&amp; npm ci &amp;&amp; npm run setup &amp;&amp; npm run demo</code><button class="copy" type="button" data-copy="#install-command" aria-live="polite">Copy command</button></div>
+  </div>
+</section>
+
+<footer><span>Flow — MIT licensed. Brand marks belong to their owners.</span><div><a class="u" href="https://gal.overto.work/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a><a class="u" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener noreferrer">GitHub</a><a class="u" href="https://github.com/galElmalah/flow/issues" target="_blank" rel="noopener noreferrer">Issues</a><a class="u" href="https://gal.overto.work/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a></div></footer>
+
+<script defer src="shared/examples.js"></script>
+<script defer src="shared/site.js"></script>
+<script defer src="shared/gh.js"></script>
+</body>
+</html>

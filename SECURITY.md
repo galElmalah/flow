@@ -8,6 +8,6 @@ Cloud providers receive the prompts and references you send to them. Local runti
 
 ## Report a vulnerability
 
-Do not put exploit details or credentials in a public issue. Use [GitHub private vulnerability reporting](https://github.com/galElmalah/flow/security/advisories/new) when it is available. While the repository is private, contact the owner through the repository's existing access channel. If private reporting is unavailable, open an issue that asks for a private channel without including the vulnerability details.
+Do not put exploit details or credentials in a public issue. Use [GitHub private vulnerability reporting](https://github.com/galElmalah/flow/security/advisories/new) when it is available. If private reporting is unavailable, open an issue that asks for a private channel without including the vulnerability details.
 
 The project is pre-release. Security fixes target the current main branch; there is no supported release series yet.

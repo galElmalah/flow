@@ -135,7 +135,11 @@ const documentSources = [
   "LICENSE",
 ];
 const sourceSet = new Set(documentSources);
-const documentation = await buildDocumentation(root, output, documentSources);
+const documentation = await buildDocumentation(
+  root,
+  path.join(root, "docs"),
+  documentSources,
+);
 const safeHtml = linkedHtml.replace(
   /<a\b[^>]*href="([^"]*)"[^>]*>/g,
   (tag, href) => {
