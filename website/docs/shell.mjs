@@ -3,6 +3,7 @@
 // navigation, table of contents, home page and search records around it.
 import path from "node:path";
 import {
+  docsUrl,
   groups,
   landingUrl,
   orderedPages,
@@ -121,7 +122,7 @@ function frame({ current, title, description, bodyClass, main }) {
   const asset = (name) => escape(relative(current, `assets/${name}`));
   const home = escape(relative(current, "index.html"));
   const html = `<!doctype html>
-<html lang="en" class="no-js" data-root="${escape(root)}">
+<html lang="en" class="no-js" data-root="${escape(root)}" data-public-root="${escape(docsUrl)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">

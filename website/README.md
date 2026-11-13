@@ -38,8 +38,17 @@ undeclared file appears.
 Page paths are stable: `SETUP.md` → `SETUP.html`, `docs/mcp.md` →
 `guide/mcp.html`, nested READMEs keep their folders. Assets go under `assets/`
 (Figtree comes from `public/fonts/figtree/`), images under `images/`, and the
-search index is `assets/search-index.js`, loaded on first search. Each page also has a `.page.json` payload containing only its article, contents and metadata. Internal clicks fetch that payload and keep the shell mounted; visited pages are cached in memory. Browser history restores sections and scroll positions. Failed requests retain the current page with retry. Every page still works
-without JavaScript, and direct links return full HTML with an immediate dark background. Links to other repository files open GitHub in a new tab. The
+search index is `assets/search-index.js`, loaded on first search. Each page also
+has a `.page.json` payload containing only its article, contents and metadata.
+Internal clicks fetch that payload and keep the shell mounted; visited pages are
+cached in memory. Browser history restores sections and scroll positions. Failed
+requests retain the current page with retry. Every page still works without
+JavaScript, and direct links return full HTML with an immediate dark background.
+Overto gives hosted pages an opaque origin. Payload requests use credential-free
+CORS against the declared public docs root there; ordinary local previews use
+their own root. No hosting security policy changes are needed.
+
+Links to other repository files open GitHub in a new tab. The
 private release explainer (`node tools/build-explainer.mjs`) keeps its own plain
 layout and is a separate bundle; never publish it here.
 

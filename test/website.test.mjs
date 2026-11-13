@@ -156,7 +156,7 @@ test("every page has the docs shell, its current nav item and contents linked to
     assert.match(html, /<nav class="pager"[^>]*><a class="prev" rel="prev" href="[^"]+">/, file);
   }
   const mcp = pages.get("guide/mcp.html");
-  assert.match(mcp, /<html lang="en" class="no-js" data-root="\.\.\/">/);
+  assert.match(mcp, /<html lang="en" class="no-js" data-root="\.\.\/" data-public-root="https:\/\/gal\.overto\.work\/flow-landing\/docs\/">/);
   assert.match(mcp, /href="\.\.\/assets\/docs\.css"/);
   assert.match(mcp, /href="https:\/\/github\.com\/galElmalah\/flow\/edit\/main\/docs\/mcp\.md" target="_blank" rel="noopener noreferrer"/);
   const last = orderedPages.at(-1);

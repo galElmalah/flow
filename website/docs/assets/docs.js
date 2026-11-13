@@ -498,6 +498,7 @@
   const routes = new Set($$("a[href]", sidebar).map((link) => pageURL(link.href)));
   const cache = new Map();
   let currentPage = pageURL(location.href);
+  const dataRoot = window.origin === "null" ? doc.dataset.publicRoot || root : root;
   let pending, navigation = 0, scrollTimer;
   const initial = {
     path: currentPage.slice(root.length), title: document.title,
@@ -572,9 +573,9 @@
         busy(true);
         if (!data) {
           pending = new AbortController();
-          const payload = page.replace(/\.html$/, ".page.json");
-          const response = await fetch(payload, { signal: AbortSignal.any([pending.signal, AbortSignal.timeout(15000)]), mode: "same-origin" });
-          if (!response.ok || new URL(response.url).origin !== location.origin)
+          const payload = new URL(page.slice(root.length).replace(/\.html$/, ".page.json"), dataRoot);
+          const response = await fetch(payload, { signal: AbortSignal.any([pending.signal, AbortSignal.timeout(15000)]), mode: "cors", credentials: "omit" });
+          if (!response.ok || new URL(response.url).origin !== payload.origin)
             throw new Error("Page unavailable");
           data = await response.json();
           if (data.path !== page.slice(root.length) ||
