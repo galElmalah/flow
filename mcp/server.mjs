@@ -11,6 +11,10 @@ import {
   createImageWorkflow,
   createVideoWorkflow,
 } from "../client/index.mjs";
+import {
+  runOptionsSchema,
+  runSubmissionSchema,
+} from "../shared/run-options.mjs";
 import { workflowSchema, validateGraph } from "../shared/graph.mjs";
 import { organizeOptionsSchema } from "../shared/graph-layout.mjs";
 import {
@@ -47,10 +51,7 @@ import {
 } from "../shared/assets.mjs";
 import { geminiVideoConnectionSchema } from "../shared/gemini-video.mjs";
 import { ruleTemplateSchema } from "../shared/rule-templates.mjs";
-import {
-  promptSetSelectionSchema,
-  promptSettingsSchema,
-} from "../shared/prompt-sets.mjs";
+import { promptSettingsSchema } from "../shared/prompt-sets.mjs";
 import {
   styleIdSchema,
   styleReferenceSchema,
@@ -70,18 +71,7 @@ import {
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 const data = workflowSchema.shape.nodes.element.shape.data.shape;
-const options = z
-  .object({
-    nodeId: id.optional(),
-    count: data.count,
-    seed: data.seed,
-    providerId: data.providerId,
-    model: data.model,
-    promptProviderId: data.providerId,
-    promptModel: data.model,
-    promptSet: promptSetSelectionSchema.optional(),
-  })
-  .strict();
+const runOutput = z.looseObject({ id, status: z.string() });
 const success = (value) => ({
   content: [{ type: "text", text: JSON.stringify(value) }],
   structuredContent: { data: value },
@@ -91,6 +81,12 @@ const failure = (error) => {
     error: {
       message: error.message,
       ...(error.status && { status: error.status }),
+      ...(error.code && { code: error.code }),
+      ...(error.issues && { issues: error.issues }),
+      ...(error.runId && {
+        runId: error.runId,
+        timeoutSeconds: error.timeoutSeconds,
+      }),
       ...providerFailureFields(error),
     },
   };
@@ -122,13 +118,19 @@ export function createMcpServer({
     inputSchema,
     readOnly,
     handler,
-    { idempotent = readOnly, destructive = false, openWorld = false } = {},
+    {
+      idempotent = readOnly,
+      destructive = false,
+      openWorld = false,
+      outputSchema,
+    } = {},
   ) => {
     server.registerTool(
       name,
       {
         description,
         inputSchema,
+        ...(outputSchema && { outputSchema: z.object({ data: outputSchema }) }),
         annotations: {
           readOnlyHint: readOnly,
           destructiveHint: destructive,
@@ -151,6 +153,7 @@ export function createMcpServer({
       throw new FlowError(
         `Workflow ${workflowId} does not belong to project ${flow.projectId}. Fork it explicitly before using it.`,
         409,
+        "PROJECT_SCOPE_MISMATCH",
       );
     return graph;
   };
@@ -315,6 +318,7 @@ export function createMcpServer({
       throw new FlowError(
         `Workflow must belong to project ${flow.projectId}.`,
         409,
+        "PROJECT_SCOPE_MISMATCH",
       );
     return validateGraph({
       ...graph,
@@ -441,11 +445,7 @@ export function createMcpServer({
     "Register a local project {name,root,id?}; root is metadata, never a harness working directory. A project-bound connection can only register its own ID. Does not write a repository manifest; use CLI project init for that.",
     projectInputSchema,
     false,
-    (input) => {
-      if (flow.projectId && input.id !== flow.projectId)
-        throw new FlowError(`Project must be ${flow.projectId}.`, 409);
-      return flow.createProject(input);
-    },
+    (input) => flow.createProject(input),
     { idempotent: true },
   );
   tool(
@@ -455,11 +455,7 @@ export function createMcpServer({
       .object({ projectId: projectIdSchema, changes: projectUpdateSchema })
       .strict(),
     false,
-    ({ projectId, changes }) => {
-      if (flow.projectId && projectId !== flow.projectId)
-        throw new FlowError(`Project must be ${flow.projectId}.`, 409);
-      return flow.updateProject(projectId, changes);
-    },
+    ({ projectId, changes }) => flow.updateProject(projectId, changes),
     { idempotent: true },
   );
   tool(
@@ -942,7 +938,7 @@ export function createMcpServer({
   tool(
     "plan_workflow",
     "Preview exact text/image/video job counts and expanded contexts before inference. Copies multiply records and variations. nodeId scopes one flow and its ancestors.",
-    z.object({ workflowId: id, options: options.optional() }).strict(),
+    z.object({ workflowId: id, options: runOptionsSchema.optional() }).strict(),
     true,
     async ({ workflowId, options }) => {
       await ownGraph(workflowId);
@@ -965,20 +961,18 @@ export function createMcpServer({
   );
   tool(
     "run_workflow",
-    "Start a NEW workflow run, which can consume provider/subscription usage. Plan first. The returned run document uses id (not runId). Preserve it; use inspect_run/wait_run to recover instead of resubmitting. Concurrency changes the shared queue limit.",
+    "Start a NEW workflow run, which can consume provider/subscription usage. Plan first. The returned run document uses id (not runId). Preserve it; use inspect_run/wait_run to recover instead of resubmitting. Use the same requestId and inputs to recover a submission after a lost response. Concurrency caps parallel jobs for this run.",
     z
       .object({
         workflowId: id,
-        options: options.optional(),
-        concurrency: z.number().int().min(1).max(128).optional(),
+        options: runOptionsSchema.optional(),
+        ...runSubmissionSchema.shape,
       })
       .strict(),
     false,
-    async ({ workflowId, options, concurrency }) => {
-      await ownGraph(workflowId);
-      return flow.run(workflowId, options, { concurrency });
-    },
-    { openWorld: true },
+    ({ workflowId, options, ...submission }) =>
+      flow.run(workflowId, options, submission),
+    { openWorld: true, outputSchema: runOutput },
   );
   tool(
     "list_runs",
@@ -993,10 +987,11 @@ export function createMcpServer({
     z.object({ runId: id }).strict(),
     true,
     ({ runId }) => flow.inspect(runId),
+    { outputSchema: runOutput },
   );
   tool(
     "wait_run",
-    "Wait up to 55 seconds for an existing run. A timeout returns the latest state with timedOut=true; it never starts another run.",
+    "Wait up to 55 seconds for an existing run. A timeout returns timedOut=true, runId and the last observed run (null if inspection did not complete); it never starts another run.",
     z
       .object({
         runId: id,
@@ -1011,9 +1006,16 @@ export function createMcpServer({
           timedOut: false,
         };
       } catch (error) {
-        if (!error.message.startsWith("Timed out waiting for run")) throw error;
-        return { run: await flow.inspect(runId), timedOut: true };
+        if (error.code !== "RUN_WAIT_TIMEOUT") throw error;
+        return { run: error.lastRun ?? null, runId, timedOut: true };
       }
+    },
+    {
+      outputSchema: z.object({
+        run: runOutput.nullable(),
+        runId: id.optional(),
+        timedOut: z.boolean(),
+      }),
     },
   );
   tool(

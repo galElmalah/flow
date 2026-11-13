@@ -31,7 +31,7 @@ For a collection of scenes sharing one template, use `workflow create --prompts 
 For provider comparisons, inspect the live schema and pass `--modes /absolute/modes.json`. Each mode has `id`, `label`, `providerId` and optional model/count/settings. The platform records the inputs and output lineage per job. Never put keys into prompts, workflow JSON or project manifests.
 
 1. `plan --project ID --workflow ID --json` previews actual job counts. `--count` is copies per record, not a total. Scope one branch with `--node OUTPUT_ID`.
-2. When generation is requested, `run --project ID --workflow ID --concurrency 4 --json` returns a run ID. Concurrency is a queue ceiling, subject to provider and GPU limits; 4/8/16 are useful batch settings.
+2. When generation is requested, `run --project ID --workflow ID --concurrency 4 --request-id BATCH_ID --json` returns the full run; keep its `id`. Reuse the key and request to recover a lost submission, including after restart. Changed intent returns409 `REQUEST_ID_REUSED`; a new batch needs a new key. Concurrency is a per-run ceiling, subject to provider and GPU limits; 4/8/16 are useful batch settings.
 3. Keep that ID: `wait RUN_ID --timeout 600 --json` and `inspect RUN_ID --json` recover progress. Retry/resume that run rather than submitting it again after a timeout.
 4. `assets --project ID --json` and `asset lineage ASSET_ID --json` expose provenance. Follow the consuming project's review rules before copying outputs into it.
 

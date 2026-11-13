@@ -157,7 +157,7 @@ test("an agent discovers, forks, edits, plans, generates locally, waits and rest
     "--concurrency",
     "2",
   );
-  const finished = await invoke("wait", started.runId, "--timeout", "15");
+  const finished = await invoke("wait", started.id, "--timeout", "15");
   assert.equal(finished.status, "completed");
   assert.equal(finished.jobs.length, plan.total);
   assert.ok(finished.jobs.every((j) => j.output));
@@ -255,7 +255,10 @@ test("project agents discover context, create owned workflows, fork across proje
     serverUrl: config.url,
     defaultWorkflowId: "paper-studies",
   });
-  assert.match(await readFile(path.join(projectRoot, ".gitignore"), "utf8"), /^flow\.project\.json$/m);
+  assert.match(
+    await readFile(path.join(projectRoot, ".gitignore"), "utf8"),
+    /^flow\.project\.json$/m,
+  );
   assert.equal((await invokeAt(nested, "project", "inspect")).id, "quote-app");
   const contextual = await promisify(execFile)(
     process.execPath,
@@ -521,15 +524,27 @@ test("verified shutdown tolerates a slow health response while resources drain",
       setTimeout(() => server.close(() => process.exit(0)), 2300);
     });
   `;
-  const child = execFile(process.execPath, ["-e", script, JSON.stringify(config)]);
-  t.after(() => { if (child.exitCode === null) child.kill("SIGKILL"); });
+  const child = execFile(process.execPath, [
+    "-e",
+    script,
+    JSON.stringify(config),
+  ]);
+  t.after(() => {
+    if (child.exitCode === null) child.kill("SIGKILL");
+  });
   await new Promise((resolve, reject) => {
     child.once("error", reject);
     child.stdout.once("data", resolve);
-    child.once("exit", (code) => { if (code) reject(new Error(`Fixture exited ${code}`)); });
+    child.once("exit", (code) => {
+      if (code) reject(new Error(`Fixture exited ${code}`));
+    });
   });
-  await writeFile(path.join(config.dataRoot, "server.json"), JSON.stringify({
-    pid: child.pid, instanceId: "slow-shutdown-fixture",
-  }));
+  await writeFile(
+    path.join(config.dataRoot, "server.json"),
+    JSON.stringify({
+      pid: child.pid,
+      instanceId: "slow-shutdown-fixture",
+    }),
+  );
   assert.equal((await stopServer(config)).stopped, true);
 });

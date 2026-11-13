@@ -1,6 +1,6 @@
 # Flow: agent entrypoint
 
-Flow is a local canvas and execution platform for image and video workflows. Read [README.md](README.md) for setup and the complete agent command sequence. Keep website work local; never deploy or publish to ChatGPT Sites.
+Flow is a local canvas and execution platform for image and video workflows. Start with [SETUP.md](SETUP.md) for installation and the complete tested agent command sequence. Read [README.md](README.md) for product capabilities. Keep website work local; never deploy or publish to ChatGPT Sites.
 
 ## First clone
 
@@ -40,36 +40,38 @@ Read a workflow before editing. Fork shared work or a recorded run, then save th
 node cli/flow.mjs workflow WORKFLOW_ID --project PROJECT_ID --json
 node cli/flow.mjs fork WORKFLOW_ID --project PROJECT_ID --name "My study" --json
 node cli/flow.mjs plan --workflow FORK_ID --project PROJECT_ID --json
-node cli/flow.mjs run --workflow FORK_ID --project PROJECT_ID --concurrency 4 --json
+node cli/flow.mjs run --workflow FORK_ID --project PROJECT_ID --concurrency 4 --request-id BATCH_ID --json
 node cli/flow.mjs wait RUN_ID --project PROJECT_ID --timeout 600 --json
 node cli/flow.mjs open FORK_ID --project PROJECT_ID
 ```
 
-Creation and forks return `id`. CLI `run --json` without `--wait` returns `runId`; HTTP/client/MCP run submission and completed run documents use `id`. Keep that ID: a client timeout does not cancel server work. Inspect, resume or retry that run rather than resubmitting. `--count` means copies per record/scene and generation mode, not the total. Check planned job counts first.
+Creation, forks and run submission return full documents with `id` (MCP wraps the document in `structuredContent.data`). Keep that ID: a client timeout does not cancel server work. Inspect, resume or retry that run. The optional `--request-id` makes submission retries safe: the same key and request return the existing run, including after restart; changed options return409 `REQUEST_ID_REUSED` with `runId`. New intended batches need a new key. `--count` means copies per record/scene and generation mode, not the total. Check planned job counts first. Concurrency is a per-run ceiling and never changes another run's limit.
+
+`flow help run --json` and `flow run --help --json` work offline and return accepted flags, value constraints, effects and examples. Invalid or irrelevant flags fail before uploads, project discovery or network calls. CLI `--json` failures write `{error:{message,code,status?,runId?,blockers?}}` to stderr and exit nonzero; stdout is reserved for successful results. Planning accepts a saved workflow only and never uploads references. Use explicit workflow creation/import first.
 
 Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`. Canvas and CLI exports use the same schema. Legacy plain graph JSON remains readable. See [Flow files](docs/flow-files.md), `GET /api/schema/flow`, and the JavaScript client's `toFlowFile`/`fromFlowFile` helpers.
 
 ## Navigate the source
 
-| Change                               | Start here                                                                                                                    |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| First-run demo / clone verification | `cli/demo.mjs`, `tools/demo.mjs`, `tools/verify-setup.mjs` |
-| Agent API, CLI and MCP               | `client/index.mjs`, `cli/flow.mjs`, `mcp/server.mjs`, [agent guide](docs/agents.md), [MCP setup](docs/mcp.md)                 |
-| User CLI installation and SDK exports | `cli/install.mjs`, `tools/setup.mjs`, `package.json`, [installation](docs/installation.md) |
-| Project ownership and discovery      | `client/project-context.mjs`, `shared/projects.mjs`, `server/projects.mjs`, `src/projects/`                                   |
-| Graph schema, planning and queue     | `shared/graph.mjs`, `server/graph.mjs`, `server/queue.mjs`                                                                    |
-| Workflow files and upgrades          | `shared/flow-file.mjs`, `cli/migration.mjs`, `server/store.mjs`, [file format](docs/flow-files.md)                            |
-| Persistence and HTTP routes          | `server/store.mjs`, `server/routes/`; `server/index.mjs` composes services                                                    |
-| Canvas nodes and interaction         | `src/nodes/`, `src/canvas/`; register nodes in `index.mjs` and `catalog.mjs`                                                  |
-| Prompt collections                   | `shared/prompt-sets.mjs`, `src/nodes/PromptSetNode.jsx`, `src/panels/PromptSetEditor.jsx`, [Prompt Sets](docs/prompt-sets.md) |
-| Inline agent and streaming           | `shared/agent.mjs`, `server/agent/`, `src/agent/`, [agent guide](docs/inline-agent.md)                                        |
-| Providers and credentials            | `harness-integrations/registry.mjs`, each provider's directory, [provider setup](docs/PROVIDERS.md)                           |
-| Local models and SAM                 | `harness-integrations/local-runtime/`, `image-tools/segmentation/`, `src/settings/`, [local models](docs/local-models.md)     |
-| Image regions, comments and versions | `server/image-editor/`, `shared/image-editor.mjs`, `src/image-editor/`, [versions](docs/image-versions.md)                    |
-| Asset lineage and search             | `server/assets.mjs`, `shared/assets.mjs`, `server/search/`, `src/media/useAssetLineage.mjs`                                   |
-| Styles and reusable rules            | `shared/styles/`, `server/styles.mjs`, `src/styles/`, `shared/rule-templates.mjs`                                             |
-| Skills installed for agents          | `skills/`, `cli/skills.mjs`, [skill setup](docs/agent-skills.md)                                                              |
-| Tracing and latency                  | `observability/`, `src/agent/AgentTiming.jsx`, [OpenTelemetry](docs/observability.md)                                         |
+| Change                                | Start here                                                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| First-run demo / clone verification   | `cli/demo.mjs`, `tools/demo.mjs`, `tools/verify-setup.mjs`                                                                    |
+| Agent API, CLI and MCP                | `client/index.mjs`, `cli/flow.mjs`, `mcp/server.mjs`, [agent guide](docs/agents.md), [MCP setup](docs/mcp.md)                 |
+| User CLI installation and SDK exports | `cli/install.mjs`, `tools/setup.mjs`, `package.json`, [installation](docs/installation.md)                                    |
+| Project ownership and discovery       | `client/project-context.mjs`, `shared/projects.mjs`, `server/projects.mjs`, `src/projects/`                                   |
+| Graph schema, planning and queue      | `shared/graph.mjs`, `server/graph.mjs`, `server/queue.mjs`                                                                    |
+| Workflow files and upgrades           | `shared/flow-file.mjs`, `cli/migration.mjs`, `server/store.mjs`, [file format](docs/flow-files.md)                            |
+| Persistence and HTTP routes           | `server/store.mjs`, `server/routes/`; `server/index.mjs` composes services                                                    |
+| Canvas nodes and interaction          | `src/nodes/`, `src/canvas/`; register nodes in `index.mjs` and `catalog.mjs`                                                  |
+| Prompt collections                    | `shared/prompt-sets.mjs`, `src/nodes/PromptSetNode.jsx`, `src/panels/PromptSetEditor.jsx`, [Prompt Sets](docs/prompt-sets.md) |
+| Inline agent and streaming            | `shared/agent.mjs`, `server/agent/`, `src/agent/`, [agent guide](docs/inline-agent.md)                                        |
+| Providers and credentials             | `harness-integrations/registry.mjs`, each provider's directory, [provider setup](docs/PROVIDERS.md)                           |
+| Local models and SAM                  | `harness-integrations/local-runtime/`, `image-tools/segmentation/`, `src/settings/`, [local models](docs/local-models.md)     |
+| Image regions, comments and versions  | `server/image-editor/`, `shared/image-editor.mjs`, `src/image-editor/`, [versions](docs/image-versions.md)                    |
+| Asset lineage and search              | `server/assets.mjs`, `shared/assets.mjs`, `server/search/`, `src/media/useAssetLineage.mjs`                                   |
+| Styles and reusable rules             | `shared/styles/`, `server/styles.mjs`, `src/styles/`, `shared/rule-templates.mjs`                                             |
+| Skills installed for agents           | `skills/`, `cli/skills.mjs`, [skill setup](docs/agent-skills.md)                                                              |
+| Tracing and latency                   | `observability/`, `src/agent/AgentTiming.jsx`, [OpenTelemetry](docs/observability.md)                                         |
 
 Use [the architecture map](docs/ARCHITECTURE.md) for subsystem boundaries. UI choices use `src/components/Autocomplete.jsx`. Background tabs release SSE streams and refresh durable state when visible again; see `src/studio/workspace-events.mjs`.
 

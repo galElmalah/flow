@@ -6,11 +6,11 @@ The repository remains private. Review [the November 5 multi-agent audit](public
 
 - MIT source license, security policy, contributor/agent guides and third-party notices.
 - Full-history Gitleaks has no findings; private data, keys, model weights and development screenshots remain excluded. Four selected README captures are included in `docs/images/`; see [asset provenance](asset-provenance.md).
-- Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration. Setup installs a safe user CLI launcher; local package exports expose the JavaScript SDK and 257-style catalog. See [installation](installation.md).
+- Canonical Flow CLI/client/configuration, flow.project.json, .flow.json workflows and tested local migration. Setup installs a safe user CLI launcher; local package exports expose the JavaScript SDK and 257-style catalog. Agent onboarding starts in [SETUP.md](../SETUP.md). See [installation](installation.md).
 - Fixed private-file reference traversal and credential-bearing request metadata, with synthetic regressions.
 - Explicit search-model download; cached weights work offline. Local-processing demo makes no implicit model download.
 - Source-only clean-HOME install/build/serve, CLI/MCP, four local-processing outputs and idempotent/preserved user skills.
-- All 375 tests pass on macOS Node 24.22.1 and minimum Node 22.13.0; architecture/build/source/link checks pass.
+- All 389 tests pass locally on macOS Node 24; architecture/build/source/link checks pass. Minimum Node 22.13.0 is included in final-commit CI.
 - CI configured for Linux Node 22.13.0/24 and macOS Node 24; check final Actions results.
 - Zero npm audit vulnerabilities; dependency and optional-model inventory in [licenses](licenses.md).
 - Portable shipped demo with synthetic metadata; current Pi marks use verified MIT-licensed source.

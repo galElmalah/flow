@@ -1,4 +1,13 @@
-import { mkdir, readFile, writeFile, rename, readdir, stat, copyFile, chmod } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  writeFile,
+  rename,
+  readdir,
+  stat,
+  copyFile,
+  chmod,
+} from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { builtInRules, ruleTemplateSchema } from "../shared/rule-templates.mjs";
@@ -18,20 +27,34 @@ export class Store {
       await mkdir(path.join(this.root, name), { recursive: true });
     this.databasePath = path.join(this.root, "flow.sqlite");
     const legacyDatabase = path.join(this.root, "weft.sqlite");
-    const present = async (file) => Boolean(await stat(file).catch((error) => {
-      if (error.code !== "ENOENT") throw error;
-      return null;
-    }));
-    if (await present(legacyDatabase) || await present(legacyDatabase + "-wal") || await present(legacyDatabase + "-shm")) {
-      if (await present(legacyDatabase) && await present(this.databasePath))
-        throw new Error("Both legacy and Flow databases exist. Resolve the storage conflict before starting.");
+    const present = async (file) =>
+      Boolean(
+        await stat(file).catch((error) => {
+          if (error.code !== "ENOENT") throw error;
+          return null;
+        }),
+      );
+    if (
+      (await present(legacyDatabase)) ||
+      (await present(legacyDatabase + "-wal")) ||
+      (await present(legacyDatabase + "-shm"))
+    ) {
+      if ((await present(legacyDatabase)) && (await present(this.databasePath)))
+        throw new Error(
+          "Both legacy and Flow databases exist. Resolve the storage conflict before starting.",
+        );
       const backup = path.join(this.root, "migration-backup", "database");
       await mkdir(backup, { recursive: true, mode: 0o700 });
       for (const suffix of ["", "-wal", "-shm"]) {
         if (!(await present(legacyDatabase + suffix))) continue;
         if (await present(this.databasePath + suffix))
-          throw new Error("Conflicting database sidecars found; neither database was opened.");
-        await copyFile(legacyDatabase + suffix, path.join(backup, "legacy.sqlite" + suffix));
+          throw new Error(
+            "Conflicting database sidecars found; neither database was opened.",
+          );
+        await copyFile(
+          legacyDatabase + suffix,
+          path.join(backup, "legacy.sqlite" + suffix),
+        );
         await rename(legacyDatabase + suffix, this.databasePath + suffix);
       }
     }
@@ -57,6 +80,10 @@ export class Store {
       );
       CREATE INDEX IF NOT EXISTS runs_workflow_created ON runs(workflow_id, created_at);
       CREATE INDEX IF NOT EXISTS runs_status ON runs(status);
+      CREATE UNIQUE INDEX IF NOT EXISTS runs_submission ON runs(
+        json_extract(document, '$.submission.scope'),
+        json_extract(document, '$.submission.requestId')
+      ) WHERE json_extract(document, '$.submission.requestId') IS NOT NULL;
       CREATE VIEW IF NOT EXISTS jobs AS
         SELECT runs.id AS run_id, json_extract(job.value, '$.id') AS id,
           json_extract(job.value, '$.nodeId') AS node_id,
@@ -434,6 +461,16 @@ export class Store {
     this.runs.set(run.id, run);
     await this.write(path.join(this.root, "runs", run.id, "run.json"), run);
   }
+  findRunSubmission(scope, requestId) {
+    const row = this.db
+      .prepare(
+        `SELECT id, document FROM runs
+      WHERE json_extract(document, '$.submission.scope') = ?
+        AND json_extract(document, '$.submission.requestId') = ?`,
+      )
+      .get(scope, requestId);
+    return row && (this.runs.get(row.id) || JSON.parse(row.document));
+  }
   listRuns({ archived } = {}) {
     return [...this.runs.values()]
       .filter(
@@ -479,6 +516,8 @@ export function summarize(run) {
     projectId: run.projectId,
     project: run.project,
     status: run.status,
+    concurrency: run.concurrency,
+    ...(run.submission && { requestId: run.submission.requestId }),
     createdAt: run.createdAt,
     finishedAt: run.finishedAt,
     total: run.jobs.length,

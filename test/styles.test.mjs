@@ -90,6 +90,15 @@ test("style discovery, favorites and starting a saved project workflow preserve 
     catalog.sourceCollections.some((source) => source.id === "adsoftheworld"),
   );
   const baselineWorkflow = await client.startStyle(style.id);
+  const localWorkflow = await client.startStyle(style.id, {
+    providerId: "local-color",
+    model: "color-study",
+  });
+  const localGenerator = localWorkflow.nodes.find(
+    (node) => node.type === "generate",
+  );
+  assert.equal(localGenerator.data.providerId, "local-color");
+  assert.equal(localGenerator.data.model, "color-study");
   assert.equal(
     baselineWorkflow.nodes.find((node) => node.id === "prompt").data.text,
     style.scene,

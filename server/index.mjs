@@ -260,6 +260,9 @@ app.use((error, req, res, next) => {
   console.error(error.message);
   res.status(error.status || 400).json({
     ...providerFailureFields(error),
+    ...(error.code && { code: error.code }),
+    ...(error.runId && { runId: error.runId }),
+    ...(error.issues && { issues: error.issues }),
     error:
       error.issues
         ?.map((x) => `${x.path.join(".")}: ${x.message}`)

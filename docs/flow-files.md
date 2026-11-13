@@ -20,8 +20,10 @@ The `workflow` value follows the graph schema at `GET /api/schema/workflow`. The
 ```sh
 node cli/flow.mjs export WORKFLOW_ID --output campaign.flow.json
 node cli/flow.mjs import --from campaign.flow.json --json
-node cli/flow.mjs plan --from campaign.flow.json --json
+node cli/flow.mjs plan --workflow WORKFLOW_ID --json
 ```
+
+Use the imported graph's returned `id` for `WORKFLOW_ID`. CLI planning accepts saved workflows and never imports graphs or uploads references as a side effect. The SDK can also plan an explicit graph snapshot through `client.plan(graph)` without saving it.
 
 The canvas imports and exports the same format. The JavaScript client exports `toFlowFile`, `fromFlowFile` and `flowFileName`. Files contain graph settings and local reference URLs, not image bytes or provider credentials. Upload or copy referenced assets when transferring a workflow to another installation.
 

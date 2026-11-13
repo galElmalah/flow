@@ -96,6 +96,11 @@ export const startStyleSchema = z
     subject: z.string().max(16000).optional(),
     name: z.string().min(1).max(120).optional(),
     referenceUrl: z.string().max(500).optional(),
+    providerId: z
+      .string()
+      .regex(/^[a-zA-Z0-9_-]{1,80}$/)
+      .optional(),
+    model: z.string().min(1).max(120).optional(),
   })
   .strict();
 export const styleListSchema = z

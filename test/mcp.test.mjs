@@ -195,6 +195,10 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
       return res.end(
         JSON.stringify({ id: "qa-run", projectId: "qa", status: "running" }),
       );
+    if (req.url.split("?")[0] === "/api/runs/pending")
+      return res.end(
+        JSON.stringify({ id: "pending", projectId: "qa", status: "running" }),
+      );
     if (req.url.split("?")[0] === "/api/runs/qa-run")
       return res.end(
         JSON.stringify({
@@ -685,14 +689,43 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
     beforeInvalid,
     "SDK validation prevents invalid HTTP calls",
   );
+  for (const name of ["plan_workflow", "run_workflow"])
+    assert.equal(
+      (await call(name, { workflowId: "fixture", options: { copies: 2 } }))
+        .isError,
+      true,
+    );
+  assert.equal(requests.length, beforeInvalid);
   const run = await call("run_workflow", {
     workflowId: "fixture",
     options: { count: 2 },
+    requestId: "fixture-request",
   });
+  assert.equal(
+    requests.length,
+    beforeInvalid + 1,
+    "submission reaches durable receipt lookup without a workflow read",
+  );
+  assert.equal(requests.at(-1).body.requestId, "fixture-request");
+  assert.ok(
+    tools.find((t) => t.name === "run_workflow").outputSchema.properties.data
+      .properties.id,
+  );
   assert.equal(run.structuredContent.data.id, "qa-run");
   const waited = await call("wait_run", { runId: "qa-run", timeoutSeconds: 1 });
   assert.equal(waited.structuredContent.data.run.status, "completed");
   assert.equal(waited.structuredContent.data.timedOut, false);
+  const pending = await call("wait_run", {
+    runId: "pending",
+    timeoutSeconds: 0.1,
+  });
+  assert.equal(pending.structuredContent.data.timedOut, true);
+  assert.equal(pending.structuredContent.data.runId, "pending");
+  assert.equal(pending.structuredContent.data.run.status, "running");
+  assert.equal(
+    requests.filter((r) => r.url.startsWith("/api/runs/pending?")).length,
+    1,
+  );
   assert.equal(
     (await call("inspect_run", { runId: "other-run" })).isError,
     true,

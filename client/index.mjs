@@ -1,13 +1,40 @@
 import { providerFailureFields } from "../shared/provider-errors.mjs";
+import {
+  runOptionsSchema,
+  runSubmissionSchema,
+} from "../shared/run-options.mjs";
 import { resolveViewer } from "./viewer.mjs";
 const encoded = (id) => encodeURIComponent(id);
 
 export class FlowError extends Error {
-  constructor(message, status) {
+  constructor(message, status, code) {
     super(message);
     this.name = "FlowError";
     this.status = status;
+    if (code) this.code = code;
   }
+}
+
+function parseRunInput(schema, value) {
+  const parsed = schema.safeParse(value);
+  if (parsed.success) return parsed.data;
+  throw Object.assign(
+    new FlowError(
+      parsed.error.issues.map((issue) => issue.message).join("; "),
+      400,
+      "INVALID_ARGUMENT",
+    ),
+    { issues: parsed.error.issues },
+  );
+}
+
+function assertProjectScope(boundProject, target) {
+  if (boundProject && boundProject !== target)
+    throw new FlowError(
+      `Project must be ${boundProject}.`,
+      409,
+      "PROJECT_SCOPE_MISMATCH",
+    );
 }
 
 /** A small local HTTP client. All durable writes go through the platform. */
@@ -34,7 +61,13 @@ export class FlowClient {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw Object.assign(
-        new FlowError(data.error || response.statusText, response.status),
+        new FlowError(
+          data.error || response.statusText,
+          response.status,
+          typeof data.code === "string" ? data.code : undefined,
+        ),
+        typeof data.runId === "string" && { runId: data.runId },
+        Array.isArray(data.issues) && { issues: data.issues },
         providerFailureFields(data),
       );
     }
@@ -269,9 +302,11 @@ export class FlowClient {
     return this.request(`/api/projects/${encoded(id)}`);
   }
   createProject(project) {
+    assertProjectScope(this.projectId, project.id);
     return this.post("/api/projects", project);
   }
   updateProject(id, changes) {
+    assertProjectScope(this.projectId, id);
     return this.put(`/api/projects/${encoded(id)}`, changes);
   }
   workflows(projectId = this.projectId, { archived, summary } = {}) {
@@ -308,11 +343,12 @@ export class FlowClient {
     );
   }
   createWorkflow(graph) {
+    if (graph.projectId !== undefined)
+      assertProjectScope(this.projectId, graph.projectId);
     return this.post("/api/workflows", {
       ...graph,
-      projectId: Object.hasOwn(graph, "projectId")
-        ? graph.projectId
-        : this.projectId,
+      projectId:
+        graph.projectId === undefined ? this.projectId : graph.projectId,
     });
   }
   async saveWorkflow(graph) {
@@ -331,15 +367,11 @@ export class FlowClient {
         `Workflow ${graph.id} belongs to project ${existing.projectId}, not ${this.projectId}. Fork explicitly before editing it.`,
         409,
       );
-    const explicitOwner = Object.hasOwn(graph, "projectId");
+    const explicitOwner = graph.projectId !== undefined;
     const projectId = explicitOwner
       ? graph.projectId
       : (this.projectId ?? existing?.projectId);
-    if (this.projectId && projectId && projectId !== this.projectId)
-      throw new FlowError(
-        `Workflow belongs to project ${projectId}, not ${this.projectId}. Fork explicitly to change projects.`,
-        409,
-      );
+    assertProjectScope(this.projectId, projectId);
     if (existing?.projectId && projectId && existing.projectId !== projectId)
       throw new FlowError(
         `Workflow ${graph.id} belongs to project ${existing.projectId}. Fork explicitly to change projects.`,
@@ -356,6 +388,7 @@ export class FlowClient {
     });
   }
   fork(id, { name, workflow, projectId = this.projectId } = {}) {
+    assertProjectScope(this.projectId, projectId);
     return this.post(`/api/workflows/${encoded(id)}/fork`, {
       name,
       workflow,
@@ -365,10 +398,10 @@ export class FlowClient {
   plan(workflow, options = {}) {
     return this.post("/api/plan", this.runBody(workflow, options));
   }
-  run(workflow, options = {}, { concurrency } = {}) {
+  run(workflow, options = {}, submission = {}) {
     return this.post("/api/runs", {
       ...this.runBody(workflow, options),
-      concurrency,
+      ...parseRunInput(runSubmissionSchema, submission),
     });
   }
   runBody(workflow, options) {
@@ -377,7 +410,7 @@ export class FlowClient {
         ? { workflowId: workflow }
         : { workflow }),
       projectId: this.projectId,
-      options,
+      options: parseRunInput(runOptionsSchema, options),
     };
   }
   runs(projectId = this.projectId) {
@@ -604,32 +637,65 @@ export class FlowClient {
     if (!id) throw new Error("Provide a run ID.");
     if (!Number.isFinite(timeout) || timeout <= 0)
       throw new Error("Timeout must be a positive number of seconds.");
-    const deadline = Date.now() + timeout * 1000;
-    for (;;) {
-      signal?.throwIfAborted();
-      const run = await this.inspect(id, { signal });
-      onProgress?.(run);
-      if (!["running", "paused"].includes(run.status)) return run;
-      if (Date.now() >= deadline)
-        throw new Error(
+    if (!Number.isFinite(interval) || interval <= 0)
+      throw new FlowError(
+        "Poll interval must be a positive number of milliseconds.",
+        400,
+        "INVALID_ARGUMENT",
+      );
+    const deadline = Date.now() + Math.ceil(timeout * 1000);
+    let lastRun;
+    const timedOut = () =>
+      Object.assign(
+        new FlowError(
           `Timed out waiting for run ${id}. It continues on the server; inspect or wait again.`,
-        );
-      await new Promise((resolve, reject) => {
-        const done = () => {
-          signal?.removeEventListener("abort", abort);
-          resolve();
-        };
-        const timer = setTimeout(
-          done,
-          Math.min(interval, deadline - Date.now()),
-        );
-        const abort = () => {
-          clearTimeout(timer);
-          signal.removeEventListener("abort", abort);
-          reject(signal.reason);
-        };
-        signal?.addEventListener("abort", abort, { once: true });
-      });
+          408,
+          "RUN_WAIT_TIMEOUT",
+        ),
+        { runId: id, timeoutSeconds: timeout, lastRun },
+      );
+    const controller = new AbortController();
+    const waitSignal = signal
+      ? AbortSignal.any([signal, controller.signal])
+      : controller.signal;
+    // Re-arm long waits because platform timers take a signed 32-bit delay.
+    let timer;
+    const armDeadline = () => {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) controller.abort(timedOut());
+      else timer = setTimeout(armDeadline, Math.min(remaining, 2 ** 31 - 1));
+    };
+    armDeadline();
+    try {
+      for (;;) {
+        waitSignal.throwIfAborted();
+        const run = await this.inspect(id, { signal: waitSignal });
+        if (Date.now() >= deadline) throw timedOut();
+        lastRun = run;
+        onProgress?.(run);
+        if (!["running", "paused"].includes(run.status)) return run;
+        await new Promise((resolve, reject) => {
+          const abort = () => {
+            clearTimeout(poll);
+            reject(waitSignal.reason);
+          };
+          const poll = setTimeout(
+            () => {
+              waitSignal.removeEventListener("abort", abort);
+              resolve();
+            },
+            Math.min(interval, 2 ** 31 - 1),
+          );
+          waitSignal.addEventListener("abort", abort, { once: true });
+          if (waitSignal.aborted) abort();
+        });
+      }
+    } catch (error) {
+      // Response body readers may wrap the caller's abort reason.
+      waitSignal.throwIfAborted();
+      throw error;
+    } finally {
+      clearTimeout(timer);
     }
   }
 }

@@ -104,11 +104,14 @@ URL. `update_style` takes `styleId` and changed fields; `references` replaces th
 saved list. These operations never start inference. See [custom styles](styles.md)
 for the shared payload and source attribution fields.
 
-Plan before inference. `run_workflow` always submits a new run and can consume
-subscription/API usage; a timeout is not a reason to submit again. Keep its run
-ID and use `inspect_run` or `wait_run`. Waiting lasts at most 55 seconds and
+Plan before inference. `run_workflow` can consume subscription/API usage. Pass a
+stable optional `requestId` for an intended batch: the same key, workflow selector,
+overrides and concurrency replay its saved run after a lost response or restart.
+Changed intent returns409 `REQUEST_ID_REUSED` with `runId`; use a new key for a new
+batch. Omitting the key creates a new run. Keep `structuredContent.data.id` and
+use `inspect_run` or `wait_run`. Waiting lasts at most 55 seconds and
 returns `{run, timedOut}`. Repeat the wait for long jobs. `concurrency`, when
-specified, changes the shared platform queue limit for all agents.
+specified, is saved as this run's ceiling; it does not change other runs' limits.
 
 Provider keys stay in private platform configuration. MCP has no tool to read
 keys or export private provider configuration. BYOK and harness dispatch remain

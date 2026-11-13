@@ -396,7 +396,8 @@ export class StyleLibrary {
       }),
       node("generate", "generate", 460, 120, {
         label: `${style.name} · image`,
-        providerId: "codex",
+        providerId: options.providerId || "codex",
+        ...(options.model && { model: options.model }),
         count: 1,
         seed: 42,
         ratio: "1:1",

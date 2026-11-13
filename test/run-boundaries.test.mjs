@@ -63,10 +63,12 @@ test("scoped runs validate only planned seed assets and invalid requests leave c
   const reads = [];
   let preflights = 0;
   let starts = 0;
+  let controls;
   const queue = {
     concurrency: 4,
-    async create(graph, options, plan) {
+    async create(graph, options, plan, settings) {
       starts++;
+      controls = settings;
       return { id: "fixture-run", graph, jobs: plan.jobs };
     },
   };
@@ -113,13 +115,14 @@ test("scoped runs validate only planned seed assets and invalid requests leave c
   assert.deepEqual(reads, ["/chosen.png"]);
   assert.equal(preflights, 1);
   assert.equal(starts, 1);
-  assert.equal(queue.concurrency, 8);
+  assert.equal(queue.concurrency, 4);
+  assert.equal(controls.concurrency, 8);
   const invalidConcurrency = await send({ ...scoped, concurrency: 0 });
   assert.equal(invalidConcurrency.status, 400);
   assert.equal(preflights, 1);
   const invalidSeed = await send({ ...scoped, options: {}, concurrency: 16 });
   assert.equal(invalidSeed.status, 400);
-  assert.equal(queue.concurrency, 8);
+  assert.equal(queue.concurrency, 4);
   assert.equal(preflights, 1);
   assert.equal(starts, 1);
 });

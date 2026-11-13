@@ -188,7 +188,7 @@ test("agent CLI covers durable UI actions through the supported API with scoped 
     requests.some((r) => r.url === "/api/runs/foreign/download"),
     false,
   );
-  await assert.rejects(command("providers", "typo"), /Use providers/);
+  await assert.rejects(command("providers", "typo"), /flow help providers/);
   await assert.rejects(
     command("project", "update", "--workflow", "fixture", "--clear-default"),
     /Choose --workflow/,

@@ -5,6 +5,7 @@ import { planWorkflow } from "../graph.mjs";
 import { summarize } from "../store.mjs";
 import { galleryItems } from "../search/documents.mjs";
 import { archiveFilterSchema } from "../../shared/archive.mjs";
+import { runOptionsSchema } from "../../shared/run-options.mjs";
 import {
   generationKind,
   isMediaJob,
@@ -72,9 +73,15 @@ export function registerRunRoutes(
       if (!graph) throw new Error("Choose a workflow first.");
       projects.assertWorkflow(graph, req.body.projectId);
       projects.assertActive(graph);
-      const plan = planWorkflow(graph, req.body.options);
+      const plan = planWorkflow(
+        graph,
+        runOptionsSchema.parse(req.body.options ?? {}),
+      );
       res.json({
         workflowId: plan.graph.id,
+        revision: plan.graph.revision,
+        countSemantics:
+          "Copies per enabled scene/record and generation mode; total includes upstream prompt jobs.",
         projectId: plan.graph.projectId,
         total: plan.total,
         textJobs: plan.textJobs,
@@ -103,9 +110,11 @@ export function registerRunRoutes(
         { projects, queue, providers, assetPath },
         {
           graph,
+          workflowId: req.body.workflow ? undefined : req.body.workflowId,
           projectId: req.body.projectId,
           options: req.body.options,
           concurrency: req.body.concurrency,
+          requestId: req.body.requestId,
         },
       );
       res.status(201).json(run);

@@ -7,6 +7,7 @@ import {
   generationModesSchema,
   imageSettingsSchema,
 } from "../shared/generation-modes.mjs";
+import { runOptionsSchema } from "../shared/run-options.mjs";
 import { generationKind } from "../shared/media.mjs";
 import {
   promptItemsSchema,
@@ -49,7 +50,7 @@ export function runOptions(values) {
       nodeId: values["prompt-set"],
       itemIds: values.items?.split(",").map((s) => s.trim()),
     });
-  return options;
+  return runOptionsSchema.parse(options);
 }
 export async function prepareWorkflow(
   client,

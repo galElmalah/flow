@@ -37,7 +37,12 @@ export class Queue extends EventEmitter {
     this.active = new Map();
     this.stopping = false;
   }
-  async create(graph, options = {}, plan = planWorkflow(graph, options)) {
+  async create(
+    graph,
+    options = {},
+    plan = planWorkflow(graph, options),
+    { concurrency = this.concurrency, submission } = {},
+  ) {
     const providerIds = [
       ...new Set(plan.jobs.map((job) => job.providerId || "codex")),
     ];
@@ -53,12 +58,36 @@ export class Queue extends EventEmitter {
       name: graph.name,
       createdAt: new Date().toISOString(),
       status: "running",
+      concurrency,
+      ...(submission && { submission }),
       provider: providerIds.length === 1 ? providerIds[0] : "mixed",
       providerIds,
       graph: plan.graph,
       jobs: plan.jobs,
     };
-    await this.store.saveRun(run);
+    try {
+      await this.store.saveRun(run);
+    } catch (error) {
+      // SQLite can commit before the JSON mirror fails. Preserve an actionable
+      // receipt without dispatching work the caller was told did not start.
+      if (this.store.runs.has(run.id)) {
+        run.status = "paused";
+        run.error =
+          "Run saved, but its file mirror could not be written. Resolve storage and resume this run.";
+        try {
+          this.store.persistRun(run);
+        } catch {
+          /* The original storage error remains the cause. */
+        }
+        this.emit("event", { type: "run", run: summarize(run) });
+        throw Object.assign(new Error(run.error, { cause: error }), {
+          status: 503,
+          code: "RUN_PERSISTENCE_INCOMPLETE",
+          runId: run.id,
+        });
+      }
+      throw error;
+    }
     this.emit("event", { type: "run", run: summarize(run) });
     this.pump();
     return run;
@@ -85,7 +114,11 @@ export class Queue extends EventEmitter {
       )
         continue;
       const byId = new Map(run.jobs.map((j) => [j.id, j]));
+      const atCapacity =
+        [...this.active.values()].filter((entry) => entry.runId === run.id)
+          .length >= (run.concurrency ?? this.concurrency);
       for (const job of run.jobs) {
+        if (atCapacity) break;
         if (job.status !== "queued") continue;
         const lane = this.executionLane(job);
         if (
@@ -127,7 +160,13 @@ export class Queue extends EventEmitter {
   }
   pump() {
     if (this.stopping) return;
-    while (this.active.size < this.concurrency) {
+    const capacity = Math.max(
+      this.concurrency,
+      ...[...this.store.runs.values()]
+        .filter((run) => run.status === "running")
+        .map((run) => run.concurrency ?? this.concurrency),
+    );
+    while (this.active.size < capacity) {
       const next = this.next();
       if (!next) break;
       const { run, job } = next,

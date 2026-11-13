@@ -25,81 +25,17 @@ import {
 import { parseArgs } from "node:util";
 import { startServer, stopServer } from "./server.mjs";
 import { openViewer } from "./viewer.mjs";
-const { values, positionals: args } = parseArgs({
-  allowPositionals: true,
-  options: {
-    target: { type: "string" },
-    workflow: { type: "string" },
-    run: { type: "string" },
-    project: { type: "string" },
-    scope: { type: "string" },
-    root: { type: "string" },
-    id: { type: "string" },
-    ratio: { type: "string" },
-    quality: { type: "string" },
-    media: { type: "string" },
-    resolution: { type: "string" },
-    "output-format": { type: "string" },
-    frames: { type: "string" },
-    "frame-delay": { type: "string" },
-    complexity: { type: "string" },
-    background: { type: "string" },
-    modes: { type: "string" },
-    geometry: { type: "string" },
-    duration: { type: "string" },
-    "video-mode": { type: "string" },
-    name: { type: "string" },
-    timeout: { type: "string" },
-    provider: { type: "string" },
-    model: { type: "string" },
-    reasoning: { type: "string" },
-    "prompt-provider": { type: "string" },
-    "prompt-model": { type: "string" },
-    "prompt-instructions": { type: "string" },
-    seed: { type: "string" },
-    prompt: { type: "string" },
-    subject: { type: "string" },
-    search: { type: "string" },
-    category: { type: "string" },
-    favorites: { type: "boolean" },
-    unfavorite: { type: "boolean" },
-    count: { type: "string" },
-    concurrency: { type: "string" },
-    "seed-image": { type: "string", multiple: true },
-    from: { type: "string" },
-    records: { type: "string" },
-    prompts: { type: "string" },
-    "prompt-set": { type: "string" },
-    items: { type: "string" },
-    node: { type: "string" },
-    template: { type: "string" },
-    plan: { type: "boolean" },
-    wait: { type: "boolean" },
-    json: { type: "boolean" },
-    help: { type: "boolean" },
-    version: { type: "boolean", short: "v" },
-    url: { type: "string" },
-    output: { type: "string" },
-    port: { type: "string" },
-    force: { type: "boolean" },
-    gallery: { type: "boolean" },
-    styles: { type: "boolean" },
-    projects: { type: "boolean" },
-    archived: { type: "boolean" },
-    editor: { type: "string" },
-    image: { type: "string" },
-    regions: { type: "string" },
-    mode: { type: "string" },
-    color: { type: "string" },
-    strength: { type: "string" },
-    "print-url": { type: "boolean" },
-    "clear-default": { type: "boolean" },
-  },
-});
-let base =
-  values.url ||
-  process.env.FLOW_URL ||
-  `http://localhost:${values.port || process.env.PORT || 4310}`;
+import {
+  hasRecipeFlags,
+  parserOptions,
+  commandHelp,
+  renderHelp,
+  validateInvocation,
+} from "../shared/commands.mjs";
+
+let values = {},
+  args = [],
+  base;
 let client;
 const request = (...args) => client.request(...args);
 const print = (x) =>
@@ -110,7 +46,6 @@ const print = (x) =>
         ? x
         : JSON.stringify(x, null, 2),
   );
-const post = (route, data) => client.post(route, data);
 async function waitForRun(id) {
   const run = await client.wait(id, {
     timeout: Number(values.timeout ?? 3600),
@@ -187,36 +122,71 @@ async function registerProject({
       return "";
     });
     if (!ignore.split(/\r?\n/).includes(manifestName))
-      await appendFile(ignorePath, `\n# Local Flow project pointer\n${manifestName}\n`);
+      await appendFile(
+        ignorePath,
+        `\n# Local Flow project pointer\n${manifestName}\n`,
+      );
   }
   return { project, manifestPath, manifest };
 }
 try {
+  ({ values, positionals: args } = parseArgs({
+    allowPositionals: true,
+    options: parserOptions,
+  }));
+  if (values.help || args[0] === "help" || (!args.length && !values.version)) {
+    if (
+      !args.length &&
+      !values.help &&
+      Object.keys(values).some((key) => key !== "json")
+    )
+      throw new Error("Choose a command. Use flow help.");
+    const help = commandHelp(args[0] === "help" ? args.slice(1) : args);
+    print(values.json ? help : renderHelp(help));
+    process.exit(0);
+  }
   if (values.version) {
-    const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    if (
+      args.length ||
+      Object.keys(values).some((key) => !["version", "json"].includes(key))
+    )
+      throw new Error("Use flow --version [--json].");
+    const { version } = JSON.parse(
+      await readFile(new URL("../package.json", import.meta.url), "utf8"),
+    );
     print(values.json ? { name: "flow", version } : version);
     process.exit(0);
   }
+  validateInvocation(args, values);
   const [command, id] = args;
+  if (["run", "plan"].includes(command) && id) values.workflow = id;
+  const options = ["run", "plan"].includes(command)
+    ? runOptions(values)
+    : undefined;
   if (command === "migrate") {
     const { migrateInstallation } = await import("./migration.mjs");
-    print(await migrateInstallation({
-      root: resolve(import.meta.dirname, ".."),
-      url: values.url || process.env.FLOW_URL || `http://localhost:${values.port || process.env.PORT || 4310}`,
-      plan: Boolean(values.plan),
-    }));
+    print(
+      await migrateInstallation({
+        root: resolve(import.meta.dirname, ".."),
+        url:
+          values.url ||
+          process.env.FLOW_URL ||
+          `http://localhost:${values.port || process.env.PORT || 4310}`,
+        plan: Boolean(values.plan),
+      }),
+    );
     process.exit(0);
   }
   if (command === "skills") {
     const { manageSkills } = await import("./skills.mjs");
     const result = await manageSkills({
-      action: values.help ? "status" : id,
+      action: id,
       target: values.target,
     });
     print(result);
     process.exit(0);
   }
-  const context = values.help || !command || command === "help" || ["serve", "stop", "restart"].includes(command)
+  const context = ["serve", "stop", "restart"].includes(command)
     ? null
     : await findProjectContext(values.root || process.cwd());
   base =
@@ -229,17 +199,6 @@ try {
   const projectId = values.project || context?.manifest.projectId;
   let defaultWorkflowId;
   client = new FlowClient({ url: base, projectId });
-  if (
-    values.timeout !== undefined &&
-    (!Number.isFinite(Number(values.timeout)) || Number(values.timeout) <= 0)
-  )
-    throw new Error("Timeout must be a positive number of seconds.");
-  if (values.help || !command || command === "help") {
-    console.log(
-      `Flow · local image and video workflow CLI\n\n  flow skills install|status               Install/check bundled user-wide agent skills\n  flow migrate [--plan]                    Upgrade local data and project pointers to Flow\n  flow serve                               Start the local server in the background\n  flow stop                                Stop this workspace’s idle server\n  flow restart                             Restart this workspace’s server\n  flow mcp [--project ID]                   Serve MCP tools over stdio\n  flow status                              Check Codex login and image generation\n  flow open [WORKFLOW_ID]                   Open the local viewer; project default if omitted\n  flow providers [reload]                   List or reload configured providers\n  flow local status [ollama|comfyui]        Inspect local runtime, models and setup progress\n  flow local setup|start ollama --wait      Install/start a managed local engine (also comfyui)\n  flow local pull ollama --model NAME --wait Download local text weights\n  flow local pull comfyui --from weights.json --wait Download hashed local model weights\n  flow local install moss-image-sft --wait Download/setup the bundled MOSS image model\n  flow local profile save --from api-profile.json  Register image/video workflow bindings\n  flow local checkpoint --from recipe.json  Create a core local checkpoint image recipe\n  flow local profile validate PROFILE_ID    Check local nodes, models and bindings\n  flow providers usage --json               Read subscription quotas without inference\n  flow providers codex                      Read Codex harness/OAuth/API-key status\n  flow providers configure-codex --from private.json  Select auth source; key via private file\n  flow providers login-codex                Start ChatGPT device sign-in\n  flow providers cancel-codex-login         Cancel pending sign-in\n  flow providers fal                        Read fal image/video API setup\n  flow providers configure-fal --from private.json  Configure a private fal API key\n  flow providers grok                       Read native xAI image/video connection status\n  flow providers configure-grok --from private.json  Configure a private xAI API key\n  flow providers gemini-video               Read Gemini video API setup, without secrets\n  flow providers configure-video --from private.json  Configure API key or Google ADC auth\n  flow guide --json                         Discover the local API and options\n  flow schema --json                        Workflow JSON Schema\n  flow styles [ID] --search realism         Discover reusable styles and local references\n  flow style create --from style.json [--seed-image ./ref.png]  Add your own gallery style\n  flow style update ID --from changes.json   Edit a custom gallery entry\n  flow style start ID --subject "A scene"  Create a style workflow without inference\n  flow style favorite ID [--unfavorite]     Set a durable style favorite\n  flow style import-run RUN_ID              Bind completed catalog reference images\n  flow rules --json                         List built-in rules, presets and custom rules\n  flow rules save --from rule.json          Save a reusable local rule template\n  flow providers create --from connection.json  Create private BYOK connection\n  flow providers save ID --from connection.json  Update connection (write-only key actions)\n  flow providers test|remove ID             Test endpoint models or remove connection\n  flow upload ./seed.png                   Upload references; returns local asset URLs\n  flow assets --project ID                 List generated/reference assets with fingerprints\n  flow asset lineage ASSET_ID               Inspect exact values and ancestry\n  flow asset annotate ID --from labels.json Save revisioned captions, tags and review labels\n  flow dataset export --mode all --output assets.jsonl Export provenance and annotations\n  flow gallery                             List project generated images and videos with all inputs\n  flow results WORKFLOW_ID                  Latest output jobs by node\n  flow manifest RUN_ID --output run.json    Export exact recorded inputs and outputs\n  flow search-status                       Inspect local semantic index/setup\n  flow search-retry                        Download/retry the local search model explicitly\n  flow agent schema                        Describe page-aware context JSON\n  flow agent session [--from session.json]  Open/reuse this project’s assistant conversation\n  flow agent read SESSION_ID                Read assistant messages and progress\n  flow agent ask [SESSION_ID] --workflow ID --prompt "Change sports"  Request an edit proposal\n  flow agent ask SESSION_ID --from ask.json  Submit a stable message ID and page context\n  flow agent apply|cancel|undo SESSION_ID TURN_ID  Apply/undo draft changes or cancel text inference\n  flow editor open --image /files/...       Create/read per-image region editor\n  flow editor segment ID                   Detect masks with local SAM 2.1; auto-name with vision\n  flow editor name ID [--provider codex-text]  Name remaining regions; preserves manual names\n  flow editor cancel-naming ID             Stop vision naming; keep existing masks/names\n  flow editor patch ID --from change.json   Edit layers or add/resolve region comments\n  flow editor prepare ID --from edit.json   Prepare region/recolor/whole version; no inference\n  flow editor send EDITOR_ID REQUEST_ID     Queue prepared image version; idempotent\n  flow editor list|status|setup|inspect|variations ID   Discover editors or install local model\n  flow open --editor ID                     Open the image region editor\n  flow projects [--search NAME]             Search registered local projects\n  flow project update [ID] --name NAME --workflow ID | --clear-default\n  flow project init --project ID --root PATH [--workflow ID]\n  flow project register --from PATH/flow.project.json\n  flow project archive|restore ID           Archive or restore a local project\n  flow workflow archive|restore ID          Archive or restore a workflow\n  flow project inspect [ID]                 Inspect a registered project\n  flow workflows [--project ID]             List project workflows\n  flow workflow create --name "Studies" --prompt "A scene" --seed-image ./seed.png\n  flow workflow create --media video --name "Motion studies" --prompt "A cyclist accelerates" --resolution 720p\n  flow workflow organize ID [--plan]  Arrange cards; --geometry FILE supplies measured bounds\n  flow workflow <id> --json                 Inspect nodes, edges and fork lineage\n  flow fork <id> --name "My exploration"    Save an independent workflow fork (optional --run RUN_ID snapshot)\n  flow import --from campaign.flow.json              Validate and save a workflow\n  flow prompt-set preview WORKFLOW_ID --node SET_ID --items SCENE_ID  Inspect a scene without inference\n  flow plan --workflow paper-studies        Preview jobs without inference\n  flow wait <run-id> --json                 Wait for completion; single JSON result\n  flow run --workflow paper-studies         Run a saved workflow\n  flow run --seed-image ./seed.png --prompt "Your brief" --count 100 --concurrency 4 --wait\n  flow run --from ./workflow.json --seed 42  Run an exported workflow\n  flow search "meaning" --project ID       Search generated images by meaning\n  flow search "meaning" --workflow ID --provider codex --count 20 --json\n  flow runs                                List run history\n  flow inspect <run-id>                     Show jobs and outputs\n  flow pause|resume|retry|cancel <run-id>    Control a run\n  flow download <run-id> --output images.zip  Download all completed images and videos\n  flow export <workflow-id> --output campaign.flow.json\n\nOptions: --prompts FILE (scene array on workflow creation) --prompt-set SET_ID --items ID,ID (scoped plan/run)\n         --node NODE_ID (run a node or output flow) --records CSV_OR_JSON --template TEMPLATE_FILE --plan (preview without inference)\n         --modes modes.json (named providers/models/copies on one generator)\n         --output-format png|jpeg|webp|gif|svg --frames 2–16 --frame-delay MS --complexity low|medium|high --background auto|opaque|transparent\n         --media image|video --resolution RESOLUTION --duration SECONDS --video-mode text|image|reference\n         --seed N  --count N (copies per variation)  --concurrency 1–128\n         --seed-image PATH (repeatable)  --prompt TEXT  --provider ID --model ID  --prompt-provider ID --prompt-model ID --prompt-instructions TEXT  --wait  --json\n         --timeout SECONDS (wait limit; default 3600)\n         editor prepare: --mode region|recolor|whole --regions ID,ID --prompt TEXT --color "#RRGGBB" --strength 0–1\n         agent ask: --reasoning inherit|off|on|minimal|low|medium|high|xhigh|max (provider/model support varies)\n         projects/workflows: --archived (recoverable archived items)\n         styles: [STYLE_ID] --search TEXT --category NAME --favorites\n         style start ID: --subject TEXT --project ID --name NAME\n         open: --project ID --node ID --run ID --gallery | --styles | --projects --print-url (no browser launch)\n         search: --workflow ID --run ID --provider ID --count 1–200 (default 100) --scope all|unassigned|project:ID|workflow:ID (unbound only)\n         --project ID --root PATH (discover project manifest); --id ID --name NAME --ratio RATIO --quality QUALITY\n         --url http://localhost:4310  --port N  --force (interrupt active jobs on stop)\n\nStart the local server: npm run build && node cli/flow.mjs serve\nSeed behavior depends on the provider. Codex uses variation labels; Local color lab supports deterministic seeds.\n`,
-    );
-    process.exit(0);
-  }
   let viewerServer;
   if (["open", "mcp"].includes(command)) {
     const root = resolve(import.meta.dirname, "..");
@@ -513,6 +472,8 @@ try {
       print(
         await client.startStyle(args[2], {
           subject: values.subject || values.prompt,
+          providerId: values.provider,
+          model: values.model,
           name: values.name,
         }),
       );
@@ -956,7 +917,10 @@ try {
   } else if (command === "export") {
     const graph = await loadWorkflow(client, id);
     if (values.output) {
-      await writeFile(resolve(values.output), JSON.stringify(toFlowFile(graph), null, 2) + "\n");
+      await writeFile(
+        resolve(values.output),
+        JSON.stringify(toFlowFile(graph), null, 2) + "\n",
+      );
       print("Saved " + resolve(values.output));
     } else print(toFlowFile(graph));
   } else if (command === "prompt-set" && id === "preview") {
@@ -974,15 +938,21 @@ try {
       await client.previewPromptItem(workflowId, values.node, values.items),
     );
   } else if (["run", "plan"].includes(command)) {
-    const workflow = await prepareWorkflow(client, values, {
-      workflowId:
-        values.workflow || (!values.from ? defaultWorkflowId : undefined),
-    });
-    const options = runOptions(values);
-    if (values.plan || command === "plan")
-      print(await client.plan(workflow, options));
+    const workflowId =
+      values.workflow || (!values.from ? defaultWorkflowId : undefined);
+    const preview = values.plan || command === "plan";
+    if ((preview || values["request-id"]) && !workflowId)
+      throw new Error(
+        "Choose a saved workflow ID or set a project default workflow.",
+      );
+    const workflow =
+      workflowId && !hasRecipeFlags(values)
+        ? workflowId
+        : await prepareWorkflow(client, values, { workflowId });
+    if (preview) print(await client.plan(workflow, options));
     else {
       const run = await client.run(workflow, options, {
+        requestId: values["request-id"],
         concurrency:
           values.concurrency === undefined
             ? undefined
@@ -992,22 +962,34 @@ try {
       else
         print(
           values.json
-            ? {
-                runId: run.id,
-                workflowId: run.workflowId,
-                projectId: run.projectId,
-                total: run.jobs.length,
-                status: run.status,
-              }
+            ? run
             : `Run ${run.id} · ${run.jobs.length} jobs\n${base} · Outputs stay in the local workspace`,
         );
     }
   } else throw new Error("Unknown command. Run flow --help.");
 } catch (error) {
-  console.error(
+  const message =
     error.cause?.code === "ECONNREFUSED"
       ? `Flow is not running at ${base}. Start it with npm run dev.`
-      : error.message,
+      : error.message;
+  const json = values.json || process.argv.slice(2).includes("--json");
+  const code =
+    error.code ||
+    error.cause?.code ||
+    (error.status ? "HTTP_ERROR" : "CLI_ERROR");
+  console.error(
+    json
+      ? JSON.stringify({
+          error: {
+            code,
+            message,
+            ...(error.status && { status: error.status }),
+            ...(error.runId && { runId: error.runId }),
+            ...(error.issues && { issues: error.issues }),
+            ...(error.blockers && { blockers: error.blockers }),
+          },
+        })
+      : message,
   );
   process.exitCode = 1;
 }

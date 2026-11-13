@@ -21,19 +21,39 @@ function fixture(graph, projectId) {
   });
   return { client, writes };
 }
-test("the client preserves intentional null ownership on create/save and refuses a foreign overwrite before writing", async () => {
+test("project-bound writes respect ownership and unbound writes can explicitly unassign", async () => {
   const graph = createImageWorkflow({
     id: "trial",
     projectId: "first",
     prompt: "Scenery",
   });
   const { client, writes } = fixture(graph, "first");
+  const unbound = fixture(graph);
+  for (const projectId of [null, "second"]) {
+    assert.throws(() => client.createWorkflow({ ...graph, projectId }), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+    await assert.rejects(client.saveWorkflow({ ...graph, projectId }), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+    assert.throws(() => client.fork(graph.id, { projectId }), {
+      code: "PROJECT_SCOPE_MISMATCH",
+    });
+  }
+  assert.throws(() => client.updateProject("second", { name: "Changed" }), {
+    code: "PROJECT_SCOPE_MISMATCH",
+  });
+  assert.throws(() => client.createProject({ id: "second" }), {
+    code: "PROJECT_SCOPE_MISMATCH",
+  });
   assert.equal(
-    (await client.createWorkflow({ ...graph, projectId: null })).projectId,
+    (await unbound.client.createWorkflow({ ...graph, projectId: null }))
+      .projectId,
     null,
   );
   assert.equal(
-    (await client.saveWorkflow({ ...graph, projectId: null })).projectId,
+    (await unbound.client.saveWorkflow({ ...graph, projectId: null }))
+      .projectId,
     null,
   );
   assert.equal(createImageWorkflow({ projectId: null }).projectId, null);
@@ -51,7 +71,7 @@ test("the client preserves intentional null ownership on create/save and refuses
     /Assign an unowned workflow explicitly/,
   );
   assert.equal((await unowned.client.saveWorkflow(graph)).projectId, "first");
-  assert.equal(writes.length, 2);
+  assert.equal(writes.length, 0);
 });
 test("saved workflow prompt-instructions override reaches the actual planned harness job without altering the saved graph", async () => {
   const graph = createImageWorkflow({
@@ -329,7 +349,76 @@ test("the search CLI searches the discovered project without its default workflo
       cwd: directory,
       env: { ...process.env, FLOW_URL: url },
     }),
-    (error) => /Search result count must be/.test(error.stderr),
+    (error) => /--count/.test(error.stderr),
   );
   assert.equal(requests.length, 2, "invalid limits never submit a search");
+});
+
+test("run options and submission controls are strict before HTTP serialization", async () => {
+  const { client, writes } = fixture({});
+  for (const invalid of [{ count: NaN }, { copies: 3 }, { seed: 2147483648 }]) {
+    for (const operation of ["plan", "run"])
+      assert.throws(() => client[operation]("graph", invalid), {
+        code: "INVALID_ARGUMENT",
+      });
+  }
+  for (const invalid of [
+    { concurrency: NaN },
+    { unknown: true },
+    { requestId: "" },
+  ])
+    assert.throws(() => client.run("graph", {}, invalid), {
+      code: "INVALID_ARGUMENT",
+    });
+  assert.equal(writes.length, 0);
+  await client.run(
+    "graph",
+    { count: 3 },
+    { requestId: "task.2", concurrency: 1 },
+  );
+  assert.deepEqual(writes, [
+    {
+      workflowId: "graph",
+      options: { count: 3 },
+      requestId: "task.2",
+      concurrency: 1,
+    },
+  ]);
+});
+
+test("a wait deadline aborts a real pending HTTP body and preserves the run ID", async (t) => {
+  const { createServer } = await import("node:http");
+  const api = createServer((_request, response) => {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.write("{");
+  });
+  await new Promise((resolve) => api.listen(0, "127.0.0.1", resolve));
+  t.after(() => {
+    api.closeAllConnections();
+    return new Promise((resolve) => api.close(resolve));
+  });
+  const client = new FlowClient({
+    url: `http://127.0.0.1:${api.address().port}`,
+  });
+  await assert.rejects(
+    client.wait("queued-run", {
+      timeout: 0.05,
+      signal: AbortSignal.timeout(3000),
+    }),
+    {
+      code: "RUN_WAIT_TIMEOUT",
+      status: 408,
+      runId: "queued-run",
+      timeoutSeconds: 0.05,
+    },
+  );
+  for (const interval of [NaN, 0, -1])
+    await assert.rejects(client.wait("queued-run", { interval }), {
+      code: "INVALID_ARGUMENT",
+    });
+  const reason = new Error("caller stopped waiting");
+  await assert.rejects(
+    client.wait("queued-run", { signal: AbortSignal.abort(reason) }),
+    (error) => error === reason,
+  );
 });

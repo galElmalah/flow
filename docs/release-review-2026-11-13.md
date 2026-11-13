@@ -61,3 +61,36 @@ The four selected JPEG captures have no detected EXIF, IPTC, XMP or comment
 metadata. Their inclusion in the private report was requested; public clearance
 of depicted artwork and seed/reference materials is still pending. See
 [asset provenance](asset-provenance.md) and [the release checklist](open-source-readiness.md).
+
+## Agent interface follow-up
+
+Two Astra reviewers compared interface designs and reproduced failures against
+isolated storage. A separate agent completed three baseline usage rounds and two
+final rounds through the actual CLI, SDK and stdio MCP. The final rounds passed
+24 checks without inherited credentials or paid inference.
+
+- [SETUP.md](../SETUP.md) is the first-clone entrypoint, prominently linked in
+  README and enforced by release checks. It includes installation, discovery,
+  local outputs, provider setup boundaries, errors and recovery.
+- One shared CLI catalog supplies scoped offline help and early argument
+  validation, also exposed at `/api/help`. Invalid numbers and irrelevant flags
+  no longer silently disappear. Help cannot invoke migration or uploads.
+- Explicit workflow selectors and style provider/model choices are honored.
+  CLI planning is read-only; run submission returns the full run with `id`.
+- Shared schemas validate HTTP, SDK and MCP run controls. Project-bound SDK
+  writes reject foreign ownership. Wait deadlines cover pending HTTP reads.
+- Optional stable submission keys prevent duplicate runs after concurrent
+  requests, a lost response or restart. Conflicting intent returns the original
+  run ID. A SQLite uniqueness constraint protects durable receipts.
+- Concurrency is persisted per run. File-mirror failures after a database commit
+  preserve a paused, recoverable receipt instead of stuck or duplicated jobs.
+- MCP submit, inspect and wait advertise output schemas. Protocol-level invalid
+  tool arguments can still return SDK diagnostic text rather than application
+  structured errors; the MCP guide documents that distinction.
+
+All **389 behavior tests**, architecture checks and the production build passed
+locally after these fixes. The isolated setup verifier again produced four real
+local outputs and checked their lineage. Release/source checks, documentation
+links and the 418-package license inventory passed. See
+[the design decision](design/agent-contract.md). Final-commit CI and full-history
+secret-scan status must be checked separately; no visibility change is included.

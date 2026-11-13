@@ -6,6 +6,11 @@ import { flowFileSchema } from "../../shared/flow-file.mjs";
 import { projectSchema } from "../../shared/projects.mjs";
 import { agentContextSchema, askAgentSchema } from "../../shared/agent.mjs";
 import { summarize } from "../store.mjs";
+import { commandHelp } from "../../shared/commands.mjs";
+import {
+  runOptionsSchema,
+  runSubmissionSchema,
+} from "../../shared/run-options.mjs";
 
 export function registerDiscoveryRoutes(
   app,
@@ -21,6 +26,21 @@ export function registerDiscoveryRoutes(
       workflowFileExtension: ".flow.json",
       projectSchema: "/api/schema/project",
       projectManifest: "flow.project.json",
+      setup: "/api/guide/setup",
+      commandHelp: "/api/help?command=run",
+      runOptionsSchema: "/api/schema/run",
+      runSubmission: {
+        result:
+          "Full run document; its durable identifier is id on HTTP, SDK and CLI (MCP structuredContent.data.id).",
+        retries:
+          "Optional requestId (1–128 identifier characters) scopes an idempotent submission to the project context. Retry the same selector/options/concurrency with the same key to recover the existing run, including after restart. Changed intent returns409 REQUEST_ID_REUSED with runId. Omit key only for deliberately new runs.",
+        concurrency:
+          "Persisted per-run ceiling, 1–128; a new run cannot reduce another run's limit. Aggregate capacity is the maximum of default 4 and active run ceilings, subject to provider execution lanes.",
+        count:
+          "options.count is copies per enabled scene/record and generation mode, not the total. Plan reports total, textJobs, imageJobs and videoJobs.",
+        planning:
+          "Planning is read-only and checks the graph. Submission separately checks provider prerequisites before creating jobs; no automatic provider fallback.",
+      },
       integrations: "harness-integrations/",
       codexAuthentication: {
         settings: "/settings/providers",
@@ -122,7 +142,7 @@ export function registerDiscoveryRoutes(
         categories: "Filter ?category=NAME",
         search: "?search=TEXT",
         start:
-          "POST /api/styles/:id/workflows {projectId?,subject?,name?,referenceUrl?}",
+          "POST /api/styles/:id/workflows {projectId?,subject?,name?,referenceUrl?,providerId?,model?}",
         note: "Starting from a style saves a workflow without inference. Exact style prompts and reference URLs are snapshotted in node.data.style.",
       },
       imageEditor: {
@@ -263,7 +283,7 @@ export function registerDiscoveryRoutes(
         [
           "POST",
           "/api/styles/:id/workflows",
-          "Create saved style workflow {projectId?,subject?,name?,referenceUrl?}; no inference",
+          "Create saved style workflow {projectId?,subject?,name?,referenceUrl?,providerId?,model?}; no inference",
         ],
         [
           "POST",
@@ -454,12 +474,45 @@ export function registerDiscoveryRoutes(
         "Project manifests contain local routing information only; API keys stay in private platform connections.",
         "Plan before running to check the total job count.",
         "Fork before changing a shared workflow; runs and outputs are not copied.",
-        "Record the returned run ID; submitting POST /api/runs again starts another run.",
+        "Record run.id. Submit the same requestId/selector/overrides to recover an accepted run; omitting requestId creates another run.",
         "Retry/resume preserves completed jobs. Interrupted work requires explicit resume.",
         "Local color lab needs no inference service; other harnesses can consume subscription/API usage.",
       ],
     }),
   );
+  app.get("/api/help", (req, res, next) => {
+    try {
+      if (
+        req.query.command !== undefined &&
+        typeof req.query.command !== "string"
+      )
+        throw new Error(
+          "command must be a CLI command name, such as style start.",
+        );
+      res.json(
+        commandHelp(
+          (req.query.command || "").trim().split(/\s+/).filter(Boolean),
+        ),
+      );
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.get("/api/schema/run", (_, res) =>
+    res.json({
+      options: z.toJSONSchema(runOptionsSchema),
+      submission: z.toJSONSchema(runSubmissionSchema),
+    }),
+  );
+  app.get("/api/guide/setup", async (_, res, next) => {
+    try {
+      res
+        .type("text/markdown")
+        .send(await readFile(path.join(root, "SETUP.md"), "utf8"));
+    } catch (error) {
+      next(error);
+    }
+  });
   app.get("/api/schema/flow", (_, res) =>
     res.json(z.toJSONSchema(flowFileSchema)),
   );

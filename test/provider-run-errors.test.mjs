@@ -108,9 +108,9 @@ async function fixture(t) {
   let starts = 0;
   const queue = {
     concurrency: 4,
-    create: async () => {
+    create: async (graph, options, plan, { concurrency }) => {
       starts++;
-      return { id: "run", status: "queued" };
+      return { id: "run", status: "queued", concurrency };
     },
   };
   const app = express();
@@ -185,9 +185,10 @@ test("scoping a run excludes unrelated blockers and a configured branch can star
   );
   f.ready.add("grok-image");
   const started = await request();
-  assert.equal(started.status, 201, JSON.stringify(await started.json()));
+  assert.equal(started.status, 201);
+  assert.equal((await started.json()).concurrency, 8);
   assert.equal(f.starts(), 1);
-  assert.equal(f.queue.concurrency, 8);
+  assert.equal(f.queue.concurrency, 4);
 });
 
 test("browser and agent clients preserve actionable provider errors and reject arbitrary settings links", async (t) => {

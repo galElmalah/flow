@@ -1,5 +1,10 @@
 # Agent workflows
 
+For a fresh checkout, begin with [SETUP.md](../SETUP.md). Offline
+`flow help COMMAND --json` describes accepted options, constraints and effects.
+The live equivalent is `GET /api/help?command=run`; accepted run overrides and
+submission controls are described by `GET /api/schema/run`.
+
 GIF animations use the existing image-generation and output nodes, not video. See [image formats](image-outputs.md) for Codex sprite-sheet GIFs, GPT Image 2.6 API formats/complexity, CLI flags, MCP settings and lineage. Inspect live `modelDetails.outputFormats` before choosing a provider.
 
 Run `npm run setup` from the Flow installation to install its bundled user-wide skills. See [agent skill setup](agent-skills.md) for discovery paths, maintenance commands and launchers that work from consuming repositories.
@@ -96,17 +101,32 @@ flow workflows --project my-app --json
 flow workflow WORKFLOW_ID --json
 flow providers --json
 flow plan --root /absolute/path/to/my-app --workflow WORKFLOW_ID --json
-flow run --root /absolute/path/to/my-app --workflow WORKFLOW_ID --concurrency 4 --json
+flow run --root /absolute/path/to/my-app --workflow WORKFLOW_ID --concurrency 4 --request-id BATCH_ID --json
 flow wait RUN_ID --timeout 600 --json
 flow inspect RUN_ID --json
 flow download RUN_ID --output ./studies.zip
 ```
 
-When the manifest has a default workflow, `plan` and `run` can omit `--workflow`. Use `--node COLLECTION_ID` for one independent flow and its ancestors. `--count` is copies per record/variation, not the total number of images: ten records and count 10 produce 100 image jobs. AI prompt jobs are separate and retain their own provider. Always review the plan before starting inference. A new `run` submission creates a new run; preserve its returned run ID and use `wait`, `retry` or `resume` rather than submitting again to recover a previous run.
+When the manifest has a default workflow, `plan` and `run` can omit `--workflow`. An explicit positional workflow ID also selects that workflow; conflicting positional and flag selectors fail. Use `--node COLLECTION_ID` for one independent flow and its ancestors. `--count` is copies per record/variation and generation mode, not the total number of images: ten records and count 10 produce 100 image jobs for one mode. AI prompt jobs are separate and retain their own provider. Always review the plan before starting inference. Planning never uploads or saves: create/import a workflow first.
+
+`run --json` returns the full run document with `id`, matching HTTP and SDK.
+MCP exposes that document at `structuredContent.data`. Persist the ID and use
+`wait`, `retry` or `resume` for recovery. An optional `--request-id BATCH_ID`
+identifies one intended submission: the same project context, saved selector,
+overrides and concurrency replay its durable receipt, including after restart.
+Saved graph edits after acceptance do not cause a duplicate run. Reusing the key
+with changed inputs returns409 `REQUEST_ID_REUSED` and the original `runId`.
+Use a new key for a different batch. Without a key, every submission is new.
+Concurrency is saved per run; submitting another run never reduces its ceiling.
+
+With `--json`, CLI failures exit nonzero and write a JSON `error` object to stderr;
+stdout is for successful results. Errors include `message`, `code`, and applicable
+`status`, `runId`, `issues` or provider `blockers`. Invalid flags, numbers and
+irrelevant options fail before project discovery, uploads or network calls.
 
 For an inference-free orchestration check, use a seed-image workflow with `--provider local-color --model color-study`. This performs real local image processing. It does not replace upstream AI prompt nodes, so choose an image-only workflow for this check. Executable detection and protocol tests do not prove that a CLI harness is authenticated; inspect provider readiness and run the specifically intended harness when inference is required. Compatible API connections use their selected base URL/model and explicit key; there is no automatic switch from a signed-in harness to a paid API.
 
-A run blocked by provider setup returns HTTP `412`, `code: "PROVIDER_NOT_READY"`, and `blockers` containing `providerId`, `name`, `message`, `nodeIds` and `setupPath`. All missing providers in the planned scope are reported before any jobs are created or queue concurrency changes. The JavaScript client error and MCP error expose the same fields; CLI errors include the provider messages. Configure the named providers, then explicitly submit the intended run. A configured API key still requires actual account access and billing when the provider executes.
+A run blocked by provider setup returns HTTP `412`, `code: "PROVIDER_NOT_READY"`, and `blockers` containing `providerId`, `name`, `message`, `nodeIds` and `setupPath`. All missing providers in the planned scope are reported before any jobs are created. The JavaScript client error and MCP error expose the same fields; CLI errors include the provider messages. Configure the named providers, then explicitly submit the intended run. Planning checks graph structure and counts; it does not prove provider entitlement. A configured API key still requires actual account access and billing when the provider executes.
 
 ## Open the viewer
 
@@ -154,13 +174,29 @@ const graph = await flow.createWorkflow(
 );
 const plan = await flow.plan(graph.id, { count: 10 });
 // Review plan.total, plan.textJobs and plan.imageJobs before running.
-const run = await flow.run(graph.id, { count: 10 }, { concurrency: 4 });
+const run = await flow.run(
+  graph.id,
+  { count: 10 },
+  {
+    concurrency: 4,
+    requestId: "scene-studies-batch-001",
+  },
+);
 const finished = await flow.wait(run.id, { timeout: 600 });
 if (finished.status !== "completed")
   throw new Error(`Run ${finished.id}: ${finished.status}`);
 ```
 
 `createImageWorkflow` also accepts uploaded `images`, canonical `records`, a record `template`, `promptProviderId`/`promptModel`/`promptInstructions`, seed, count and aspect ratio. Template substitution belongs in a template node; a plain prompt string is not a template. `upload([{name, data, type?}])` returns asset URLs for image references. `project`, `projects`, `createProject`, `updateProject`, `workflows`, `workflow`, `createWorkflow`, `saveWorkflow`, `fork`, `plan`, `run`, `wait`, `inspect`, `runs`, `control`, `providers` and `download` share the same HTTP/error handling as the CLI. `FlowError.status` distinguishes HTTP failures; `wait` returns the final run, including unsuccessful status, and throws only for transport/timeout/abort errors.
+
+Run overrides and submission controls reject unknown fields, invalid numbers and
+unsupported shapes before a request is sent. A project-bound client cannot create,
+save or move workflows into another project or change another project's metadata.
+The SDK's `run(workflow, options, {concurrency,requestId})` returns a full run.
+`wait` applies its deadline to network calls and polling. A deadline throws
+`FlowError` with `code: "RUN_WAIT_TIMEOUT"`, `status:408`, `runId`,
+`timeoutSeconds` and optional `lastRun`; server work continues. An explicit caller
+abort preserves its supplied reason.
 
 Read `GET /api` or `flow guide --json` for route discovery and `flow schema --json` for the complete graph schema. All live state mutations use the API/CLI/client; never edit SQLite or JSON mirrors directly.
 

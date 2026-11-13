@@ -195,7 +195,7 @@ async function main() {
       );
       if (active.length)
         throw new Error(
-          "Another run is active; do not change its shared concurrency limit.",
+          "Another run is active; wait until it finishes to measure this run's concurrency in isolation.",
         );
       phase.submissionStartedAt = new Date().toISOString();
       phase.submittedAt = Date.now();

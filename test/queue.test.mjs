@@ -68,6 +68,37 @@ test("100 jobs finish, never exceeding the parallel job limit, and restore from 
   assert.equal(restored.runs.get(run.id).status, "completed");
   assert.equal(restored.runs.get(run.id).jobs.length, 100);
 });
+test("parallel settings belong to each run and a small run cannot throttle another", async (t) => {
+  const gate = Promise.withResolvers();
+  const { queue, store } = await setup(t, () => gate.promise);
+  const smallGraph = structuredClone(starter);
+  smallGraph.nodes.find((n) => n.type === "generate").data.count = 4;
+  const small = await queue.create(smallGraph, { count: 4 }, undefined, {
+    concurrency: 1,
+  });
+  const large = await queue.create(
+    structuredClone(starter),
+    { count: 16 },
+    undefined,
+    { concurrency: 8 },
+  );
+  try {
+    await waitFor(() => queue.active.size === 8);
+    const activeFor = (run) =>
+      [...queue.active.values()].filter((entry) => entry.runId === run.id)
+        .length;
+    assert.equal(activeFor(small), 1);
+    assert.equal(activeFor(large), 7);
+    assert.equal(queue.concurrency, 4);
+    assert.equal(store.runs.get(small.id).concurrency, 1);
+    assert.equal(store.runs.get(large.id).concurrency, 8);
+  } finally {
+    gate.resolve();
+  }
+  await waitFor(
+    () => small.status === "completed" && large.status === "completed",
+  );
+});
 test("downstream jobs wait for generated references; failed parents block children and retry succeeds", async (t) => {
   let fail = true;
   const done = new Set();

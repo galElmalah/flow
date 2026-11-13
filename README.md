@@ -1,13 +1,15 @@
 # Flow
 
+**Agents: [read SETUP.md first](SETUP.md).**
+
 A local canvas for image, GIF and video workflows. Connect reference images, shared prompts and scene collections, then run parallel batches through your own CLI harnesses, API providers or local models. Outputs keep their resolved prompts, settings, inputs and lineage.
 
 ![Flow canvas showing the SALT / SPEED helmet campaign, shared art direction, four scenes and generated images](docs/images/helmet-campaign.jpg)
 
 One shared direction, four scenes, one campaign. [See the workflow with its original helmet seed.](docs/images/helmet-seed-workflow.jpg)
 
-| Comment on a selected region | Keep editing the result |
-| --- | --- |
+| Comment on a selected region                                                                                           | Keep editing the result                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | ![Selected cycling jersey with the inline comment Make it pink and named image layers](docs/images/region-comment.jpg) | ![Pink cycling jersey recolor with preserved image regions and version history](docs/images/pink-jersey-result.jpg) |
 
 Select a region, leave an inline comment, and choose an edit. This example uses local recoloring to keep the scene intact and carry regions into the new version. AI edits can regenerate the whole image.
@@ -16,36 +18,11 @@ Flow runs on your computer. Each clone starts with its own local database and co
 
 ## Run locally
 
-Requires Node.js 22.13 or newer and npm. Python and GPUs are optional unless you enable a local model. Existing installations should follow [the migration guide](docs/flow-files.md#upgrade-an-existing-weft-installation) first. Start without provider credentials:
+Use Node.js 22.13 or newer and npm on macOS or Linux. Follow [SETUP.md](SETUP.md) to clone, install, verify, and create the local demo. The guide includes a complete agent sequence for discovery, saved workflows, planning, runs, and output lineage.
 
-```sh
-git clone https://github.com/galElmalah/flow.git
-cd flow
-npm ci
-npm run setup
-npm run verify:setup
-npm run demo
-```
+Setup installs the `flow` command and managed agent skills. The demo produces four real images through Local color lab without accounts, model downloads, or paid inference. Reopening it preserves edits and reuses its run. For command locations, PATH, SDK imports, and removal, see [CLI and SDK installation](docs/installation.md).
 
-`setup` builds Flow, installs the `flow` executable in `~/.local/bin`, and installs its agent skills for your user account. It does not sign in to providers or download models. If you only want the UI, use `npm run build` instead of setup.
-
-If that directory is not on your PATH, setup prints the executable's absolute path. Add it for your shell session with `export PATH="$HOME/.local/bin:$PATH"`; add the same line to your shell configuration to keep it. No shell configuration is edited automatically. Then use `flow --version`, `flow serve`, and `flow open --projects` from any directory. The launcher uses this checkout, so keep it in place. See [CLI and SDK installation](docs/installation.md) for custom locations, upgrades and removal.
-
-`verify:setup` starts a disposable workspace on a free port, processes four images, checks saved lineage, workflow files, installed skill launchers and real MCP discovery, then removes its temporary data. It inherits no provider credentials and blocks external fetches. It does not touch your current workspace or user skills. Success prints `"ok": true`.
-
-`demo` starts or reuses your local server, creates a **Flow demo** project and a saved four-image workflow, then opens it in your browser. It uses Local color lab, a deterministic image processor requiring no account or model. Repeating the command reopens the same demo and run. For a terminal-only agent or headless machine:
-
-```sh
-node tools/demo.mjs --json
-```
-
-The JSON includes `projectId`, `workflowId`, `runId`, `url` and output asset IDs. If you edit the demo, rerunning this command preserves your changes and does not submit another batch.
-
-Open **http://localhost:4310** for the normal workspace. `npm run serve` starts the background server without a demo. Stop it with `node cli/flow.mjs stop`; use `npm run dev` for foreground development.
-
-For AI generation, open **Settings → Providers** and connect your own installed harness or API key. Local models and SAM are explicit optional downloads in Settings. Semantic search uses cached weights offline; **Download search model** in the gallery or `node cli/flow.mjs search-retry --json` fetches its pinned embedding model.
-
-If setup reports a modified existing skill, it leaves that skill intact. Use `npm run build` and `npm run demo` to continue with the app, then resolve the skill separately. If port 4310 belongs to another app, use `node tools/demo.mjs --url http://localhost:4311`; Flow never stops an unrelated process.
+Open **http://localhost:4310** for the normal workspace. `npm run serve` starts the background server. Stop it with `node cli/flow.mjs stop`; use `npm run dev` for foreground development. Connect your selected AI provider in **Settings → Providers** when needed. Local models, SAM, and semantic search have explicit optional downloads.
 
 ## Work on the canvas
 
@@ -72,49 +49,9 @@ The style catalog includes reusable style and scene prompts. Generated thumbnail
 
 Point your agent at this checkout and give it this instruction:
 
-> Read AGENTS.md. Install dependencies, run setup and verify:setup, then use the Flow CLI/client/MCP to create and plan a workflow for my project. Check provider readiness and planned counts before generating. Keep the returned run ID and report the viewer URL and output lineage.
+> Read SETUP.md first, then AGENTS.md. Set up and verify Flow, create and plan a saved workflow for my project, and inspect provider readiness before running. Keep the returned run ID and report the viewer URL and output lineage.
 
-[AGENTS.md](AGENTS.md) is the machine-facing entry point. The CLI, JavaScript client and MCP server use the same platform services as the UI. All commands below run from this checkout. From a consuming project, use the installed `flow-workflows` skill helper by its absolute path.
-
-Register an existing local project once. This writes its local `flow.project.json` pointer without generating images:
-
-```sh
-node cli/flow.mjs project init --project my-app --name "My app" \
-  --root /absolute/path/to/my-app --json
-```
-
-Use this sequence for each task:
-
-```sh
-node cli/flow.mjs guide --json
-node cli/flow.mjs schema --json
-node cli/flow.mjs providers --json
-node cli/flow.mjs workflows --project my-app --json
-node cli/flow.mjs workflow create --project my-app --name "Seed study" \
-  --seed-image ./public/assets/paper-seed.png --prompt "Explore violet and warm peach" \
-  --provider local-color --model color-study --count 4 --json
-node cli/flow.mjs plan --project my-app --workflow WORKFLOW_ID --json
-node cli/flow.mjs run --project my-app --workflow WORKFLOW_ID --concurrency 4 --json
-node cli/flow.mjs wait RUN_ID --project my-app --timeout 600 --json
-node cli/flow.mjs open WORKFLOW_ID --project my-app
-```
-
-Creation returns `id`: use it as `WORKFLOW_ID`. Planning returns `total`, `imageJobs`, `textJobs` and `videoJobs`; inspect those before running. CLI submission without `--wait` returns `runId`: use it as `RUN_ID`. HTTP/client/MCP submissions and completed run documents use `id`. Waiting returns the completed run and its jobs. `open` launches the viewer; add `--print-url` to return its URL without opening a browser.
-
-Read or fork existing workflows before changing them. Save through the client/API with the current `revision`; a stale save returns HTTP 409. For results, use `inspect RUN_ID`, `gallery --project my-app`, and `asset lineage ASSET_ID`. Never place keys in graph nodes, prompts or project pointers.
-
-`--count` means copies per prompt variation and generation mode. Use `plan` to check the total before inference. A timeout does not cancel server work. Keep the returned run ID and inspect or retry it rather than submitting the same batch again.
-
-To install Flow's workflow, image-editing and style-library skills for your user account:
-
-```sh
-npm run setup
-node cli/flow.mjs skills status --json
-```
-
-Setup builds the app and installs managed skills into `~/.agents/skills` and `~/.claude/skills`. It preserves unrelated or locally modified skills. Plain `npm ci` does not install global skills or sign into providers.
-
-Use [AGENTS.md](AGENTS.md) for source navigation, [the agent guide](docs/agents.md) for project registration and batches, and [MCP setup](docs/mcp.md) for agent-host configuration. The canonical command is `flow`, installed by setup or optional `npm link`, or `node cli/flow.mjs`. Configuration uses `FLOW_*` variables.
+[SETUP.md](SETUP.md) contains the command sequence. [AGENTS.md](AGENTS.md) covers repository contracts and source navigation. Use [agent workflows](docs/agents.md) for project context and graph edits, [managed skills](docs/agent-skills.md) for installed agent helpers, and [MCP setup](docs/mcp.md) for host configuration. The CLI, SDK, MCP, and canvas use the same local platform services.
 
 ## JavaScript SDK
 
