@@ -32,10 +32,13 @@ export async function renderSite(root) {
     if (entry.source === "LICENSE") markdown = "# MIT license\n\n" + markdown;
     const { html, headings } = renderMarkdown(entry.source, markdown, sources, layout);
     const title = headings.find(({ level }) => level === 1)?.text || entry.title;
-    generated.push([pagePath(entry.source), renderPage({ entry, title, html, headings })]);
+    const rendered = renderPage({ entry, title, html, headings });
+    const target = pagePath(entry.source);
+    generated.push([target, rendered.html], [target.replace(/\.html$/, ".page.json"), JSON.stringify(rendered.data)]);
     records.push(searchRecord({ entry, title, html, headings }));
   }
-  generated.push(["index.html", renderHome()]);
+  const home = renderHome();
+  generated.push(["index.html", home.html], ["index.page.json", JSON.stringify(home.data)]);
   // Loaded on demand by docs.js; a script (not JSON) so search also works from file://.
   generated.push([
     "assets/search-index.js",

@@ -1,11 +1,11 @@
 // Flow documentation enhancements: search, navigation drawer, contents
 // scrollspy, reading progress and copy buttons. Every page works without it.
-// User text is only ever inserted with textContent / text nodes.
+// Search text uses text nodes. Navigation loads only our compiled page payloads.
 (() => {
   "use strict";
   const doc = document.documentElement;
   doc.classList.replace("no-js", "js");
-  const root = doc.dataset.root || "./";
+  const root = new URL(doc.dataset.root || "./", location.href).href;
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const narrow = matchMedia("(max-width: 959px)");
@@ -19,6 +19,7 @@
     node.append(...children);
     return node;
   };
+  const initialContent = $("#content").outerHTML;
   const live = el("div", { class: "sr-only", "aria-live": "polite" });
   document.body.append(live);
   const announce = (text) => {
@@ -123,33 +124,44 @@
       return false;
     }
   }
-  for (const block of $$(".code-block")) {
-    const code = $("code", block);
-    const label = block.dataset.language ? `Copy ${block.dataset.language} code` : "Copy code";
-    const button = el("button", { type: "button", class: "copy", "aria-label": label }, "Copy");
-    let timer;
-    button.addEventListener("click", async () => {
-      const copied = await copy(code.textContent, code, button);
-      button.classList.remove("copied", "failed");
-      button.classList.add(copied ? "copied" : "failed");
-      button.textContent = copied ? "Copied" : mac ? "Press ⌘C" : "Press Ctrl+C";
-      announce(copied ? "Copied to clipboard" : "Copying is blocked here. The code is selected; copy it with your keyboard.");
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        button.textContent = "Copy";
+  function enhanceContent(scope) {
+    for (const block of $$(".code-block", scope)) {
+      const code = $("code", block);
+      const label = block.dataset.language ? `Copy ${block.dataset.language} code` : "Copy code";
+      const button = el("button", { type: "button", class: "copy", "aria-label": label }, "Copy");
+      let timer;
+      button.addEventListener("click", async () => {
+        const copied = await copy(code.textContent, code, button);
         button.classList.remove("copied", "failed");
-      }, copied ? 1800 : 4000);
-    });
-    block.append(button);
+        button.classList.add(copied ? "copied" : "failed");
+        button.textContent = copied ? "Copied" : mac ? "Press ⌘C" : "Press Ctrl+C";
+        announce(copied ? "Copied to clipboard" : "Copying is blocked here. The code is selected; copy it with your keyboard.");
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          button.textContent = "Copy";
+          button.classList.remove("copied", "failed");
+        }, copied ? 1800 : 4000);
+      });
+      block.append(button);
+    }
+
   }
 
   /* ---------- contents scrollspy and reading progress ---------- */
-  const tocLinks = $$(".toc-list a");
-  const headings = [...new Set(tocLinks.map((link) => decodeURIComponent(link.hash.slice(1))))]
-    .map((id) => document.getElementById(id))
-    .filter(Boolean);
-  const marker = $(".toc-marker");
-  const tocScroll = $(".toc-scroll");
+  let tocLinks, headings, marker, tocScroll;
+  function mountContent() {
+    const content = $("#content");
+    enhanceContent(content);
+    enhanceSearch(content);
+    tocLinks = $$(".toc-list a", content);
+    headings = [...new Set(tocLinks.map((link) => decodeURIComponent(link.hash.slice(1))))]
+      .map((id) => document.getElementById(id)).filter(Boolean);
+    marker = $(".toc-marker", content);
+    tocScroll = $(".toc-scroll", content);
+    active = undefined;
+    content.addEventListener("load", schedule, true);
+    update();
+  }
   const bar = $(".progress i");
   const topbar = $(".topbar");
   let active;
@@ -196,9 +208,7 @@
   addEventListener("resize", schedule);
   addEventListener("hashchange", schedule);
   addEventListener("load", schedule);
-  update();
-  for (const link of $$(".toc-inline a"))
-    link.addEventListener("click", () => (link.closest("details").open = false));
+
 
   /* ---------- pointer light on cards ---------- */
   document.addEventListener(
@@ -444,11 +454,16 @@
     if (reduced.matches) done();
     else closing = setTimeout(done, 180);
   }
-  for (const trigger of $$(".search-trigger").map(toButton)) {
-    trigger.setAttribute("aria-haspopup", "dialog");
-    trigger.addEventListener("click", () => openSearch());
-    trigger.addEventListener("pointerenter", () => loadIndex().catch(() => {}), { once: true });
+  function enhanceSearch(scope) {
+    for (const trigger of $$(".search-trigger", scope).map(toButton)) {
+      trigger.setAttribute("aria-haspopup", "dialog");
+      trigger.addEventListener("click", () => openSearch());
+      trigger.addEventListener("pointerenter", () => loadIndex().catch(() => {}), { once: true });
+    }
   }
+  enhanceSearch($(".topbar"));
+  mountContent();
+
   const typing = (target) => target.closest?.("input, textarea, select, [contenteditable='true']");
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
@@ -459,5 +474,161 @@
       event.preventDefault();
       openSearch();
     } else if (event.key === "Escape" && drawerOpen()) setDrawer(false);
+  });
+
+  /* ---------- persistent shell and article navigation ---------- */
+  if (!/^https?:$/.test(location.protocol)) return;
+  // Resolve links before history changes the document's relative URL. The same
+  // sidebar, header, search dialog and fonts survive every article transition.
+  function resolveLinks(scope, base) {
+    for (const node of $$("[href], [src]", scope))
+      for (const attribute of ["href", "src"]) {
+        const value = node.getAttribute(attribute);
+        if (value && !value.startsWith("#"))
+          node.setAttribute(attribute, new URL(value, base).href);
+      }
+  }
+  resolveLinks(document.head, location.href);
+  resolveLinks(document.body, location.href);
+  const pageURL = (value) => {
+    const url = new URL(value, location.href);
+    if (url.href.split(/[?#]/)[0] === root) url.pathname += "index.html";
+    return url.origin + url.pathname;
+  };
+  const routes = new Set($$("a[href]", sidebar).map((link) => pageURL(link.href)));
+  const cache = new Map();
+  let currentPage = pageURL(location.href);
+  let pending, navigation = 0, scrollTimer;
+  const initial = {
+    path: currentPage.slice(root.length), title: document.title,
+    description: $('meta[name="description"]').content,
+    bodyClass: document.body.className, main: initialContent,
+  };
+  cache.set(currentPage, initial);
+
+  function savePosition() {
+    clearTimeout(scrollTimer);
+    history.replaceState({ ...history.state, flowDocs: true, scroll: [scrollX, scrollY] }, "");
+  }
+  savePosition();
+  history.scrollRestoration = "manual";
+  addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(savePosition, 150);
+  }, { passive: true });
+  addEventListener("pagehide", savePosition);
+
+  function busy(on) {
+    doc.classList.toggle("navigating", on);
+    if (on) $("#content").setAttribute("aria-busy", "true");
+    else $("#content").removeAttribute("aria-busy");
+  }
+  function scrollToPage(url, position) {
+    let target;
+    try { target = url.hash && document.getElementById(decodeURIComponent(url.hash.slice(1))); }
+    catch { /* A malformed fragment still opens its article. */ }
+    if (position) window.scrollTo({ left: position[0], top: position[1], behavior: "instant" });
+    else if (target) target.scrollIntoView({ behavior: "instant", block: "start" });
+    else window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    update();
+  }
+  function selectPage(page) {
+    for (const link of $$("a[href]", sidebar)) {
+      if (pageURL(link.href) === page) {
+        link.setAttribute("aria-current", "page");
+        const group = link.closest("details");
+        if (group) group.open = true;
+      } else link.removeAttribute("aria-current");
+    }
+    revealCurrent();
+  }
+  function navigationError(url, restore) {
+    $(".navigation-error")?.remove();
+    const retry = el("button", { type: "button" }, "Retry");
+    retry.addEventListener("click", () => navigate(url, { restore }));
+    const full = el("a", { href: url.href, "data-full-page": "" }, "Open page directly");
+    const notice = el("div", { class: "navigation-error", role: "alert" },
+      el("span", {}, "That page could not load. Your current page is still here."), retry, full);
+    $("#content").prepend(notice);
+  }
+  async function navigate(url, { restore } = {}) {
+    const page = pageURL(url);
+    const id = ++navigation;
+    pending?.abort();
+    pending = null;
+    clearTimeout(scrollTimer);
+    $(".navigation-error")?.remove();
+    if (!restore) savePosition();
+    if (drawerOpen()) setDrawer(false);
+    if (dialog?.open) {
+      clearTimeout(closing);
+      closing = null;
+      dialog.classList.remove("on");
+      dialog.close();
+    }
+    try {
+      let data = cache.get(page);
+      if (page !== currentPage) {
+        busy(true);
+        if (!data) {
+          pending = new AbortController();
+          const payload = page.replace(/\.html$/, ".page.json");
+          const response = await fetch(payload, { signal: AbortSignal.any([pending.signal, AbortSignal.timeout(15000)]), mode: "same-origin" });
+          if (!response.ok || new URL(response.url).origin !== location.origin)
+            throw new Error("Page unavailable");
+          data = await response.json();
+          if (data.path !== page.slice(root.length) ||
+              ![data.title, data.description, data.bodyClass, data.main].every((value) => typeof value === "string"))
+            throw new Error("Invalid page payload");
+        }
+        if (id !== navigation) return;
+        // Payloads are emitted from the same sanitized Markdown as the static
+        // pages. Parse inertly; never execute scripts from navigation responses.
+        const parsed = new DOMParser().parseFromString(data.main, "text/html");
+        const content = parsed.body.firstElementChild;
+        if (content?.tagName !== "MAIN" || content.id !== "content" ||
+            parsed.body.children.length !== 1 || content.querySelector("script, iframe, object, embed, base"))
+          throw new Error("Invalid page content");
+        resolveLinks(content, page);
+        if (!restore && url.href !== location.href)
+          history.pushState({ flowDocs: true }, "", url);
+        $("#content").replaceWith(document.importNode(content, true));
+        document.body.className = data.bodyClass;
+        document.title = data.title;
+        $('meta[name="description"]').content = data.description;
+        currentPage = page;
+        cache.delete(page);
+        cache.set(page, data);
+        if (cache.size > 12) cache.delete(cache.keys().next().value);
+        mountContent();
+        selectPage(page);
+        $("#content").focus({ preventScroll: true });
+        announce(data.title.replace(/ · Flow docs$/, ""));
+      } else if (!restore && url.href !== location.href) {
+        history.pushState({ flowDocs: true }, "", url);
+      }
+      scrollToPage(url, restore?.scroll);
+      savePosition();
+    } catch (error) {
+      if (id === navigation && error.name !== "AbortError") navigationError(url, restore);
+    } finally {
+      if (id === navigation) { pending = null; busy(false); }
+    }
+  }
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.("a[href]");
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey ||
+        event.shiftKey || event.altKey || link.hasAttribute("download") || link.hasAttribute("data-full-page") ||
+        (link.target && link.target !== "_self")) return;
+    const url = new URL(link.href);
+    if (url.origin !== location.origin || !routes.has(pageURL(url))) return;
+    event.preventDefault();
+    const inline = link.closest(".toc-inline");
+    if (inline) inline.open = false;
+    void navigate(url);
+  });
+  addEventListener("popstate", (event) => {
+    if (routes.has(pageURL(location.href)))
+      void navigate(new URL(location.href), { restore: event.state || {} });
   });
 })();

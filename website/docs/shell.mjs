@@ -120,7 +120,7 @@ function frame({ current, title, description, bodyClass, main }) {
   const root = relative(current, "index.html").replace(/index\.html$/, "") || "./";
   const asset = (name) => escape(relative(current, `assets/${name}`));
   const home = escape(relative(current, "index.html"));
-  return `<!doctype html>
+  const html = `<!doctype html>
 <html lang="en" class="no-js" data-root="${escape(root)}">
 <head>
 <meta charset="utf-8">
@@ -128,6 +128,7 @@ function frame({ current, title, description, bodyClass, main }) {
 <title>${escape(title)}</title>
 <meta name="description" content="${escape(description)}">
 <meta name="color-scheme" content="dark">
+<style>html,body{background:#060607;color:#f4f1ea}</style>
 <meta name="theme-color" content="#060607">
 <link rel="icon" href="${asset("favicon.svg")}" type="image/svg+xml">
 <link rel="preload" href="${asset("Figtree-Variable.woff2")}" as="font" type="font/woff2" crossorigin>
@@ -151,6 +152,7 @@ ${main}
 </body>
 </html>
 `;
+  return { html, data: { path: current, title, description, bodyClass, main } };
 }
 
 function tocList(headings) {

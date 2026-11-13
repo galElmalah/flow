@@ -193,7 +193,7 @@ test("search index covers every page and its real section anchors", async () => 
   }
   const script = await readFile(path.join(root, "website/docs/assets/docs.js"), "utf8");
   assert.match(script, /assets\/search-index\.js/);
-  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|eval\(|new Function|fetch\(/);
+  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|eval\(|new Function/);
 });
 
 test("search records keep complete section text, however long", () => {
@@ -225,7 +225,7 @@ test("enhanced triggers are real buttons, text never fades in and touch copy tar
   assert.match(script, /el\("button", \{ type: "button", class: link\.className \}\)/);
   assert.match(script, /link\.replaceWith\(button\)/);
   assert.match(script, /const menu = toButton\(\$\("\.menu-btn"\)\)/);
-  assert.match(script, /\$\$\("\.search-trigger"\)\.map\(toButton\)/);
+  assert.match(script, /\$\$\("\.search-trigger", scope\)\.map\(toButton\)/);
   assert.doesNotMatch(script, /"role", "button"/);
   const css = await readFile(path.join(root, "website/docs/assets/docs.css"), "utf8");
   const enter = css.match(/@keyframes enter \{([^}]*\})\s*\}/)[1];
@@ -271,4 +271,19 @@ test("the rendered bundle declares every asset, resolves links and section fragm
     })(),
     /names a missing section/,
   );
+});
+
+
+test("navigation payloads contain exactly the matching article and metadata without the shell", async () => {
+  const pages = await bundle();
+  const htmlPages = [...pages].filter(([file]) => file.endsWith(".html"));
+  assert.equal([...pages.keys()].filter((file) => file.endsWith(".page.json")).length, htmlPages.length);
+  for (const [file, html] of htmlPages) {
+    const payload = JSON.parse(pages.get(file.replace(/\.html$/, ".page.json")));
+    assert.equal(payload.path, file);
+    assert.ok(payload.title && payload.description && payload.bodyClass);
+    assert.equal(payload.main, html.match(/<main id="content"[\s\S]*?<\/main>/)[0], file);
+    assert.doesNotMatch(payload.main, /<script|<header class="topbar"|id="sidebar"/, file);
+    assert.match(html, /<style>html,body\{background:#060607;color:#f4f1ea\}<\/style>/, "direct loads start dark before CSS arrives");
+  }
 });

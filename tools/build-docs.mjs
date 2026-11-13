@@ -77,6 +77,7 @@ const mediaTypes = {
   ".html": "text/html",
   ".css": "text/css",
   ".js": "text/javascript",
+  ".json": "application/json",
   ".jpg": "image/jpeg",
   ".svg": "image/svg+xml",
   ".woff2": "font/woff2",
@@ -93,7 +94,7 @@ const manifest = {
 };
 for (const file of [...files].sort()) {
   const bytes = await readFile(path.join(output, file));
-  if (/\.(?:html|js)$/.test(file) && /\/(?:Users|home)\/[^/\s]+\//.test(bytes))
+  if (/\.(?:html|js|json)$/.test(file) && /\/(?:Users|home)\/[^/\s]+\//.test(bytes))
     throw new Error(`${file}: contains a machine-specific path`);
   const mediaType = mediaTypes[path.posix.extname(file).toLowerCase()];
   if (!mediaType) throw new Error(`${file}: no declared media type`);

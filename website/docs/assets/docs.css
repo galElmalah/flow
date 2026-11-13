@@ -400,3 +400,11 @@ a:hover > .ext { transform: translate(1px, -1px); opacity: 1; }
   .doc th { background: #eee; color: #000; }
   .doc-foot, .doc-foot a { color: #444; }
 }
+
+/* Article requests retain the shell and readable current content. */
+.navigating .progress i { transform: scaleX(.8) !important; animation: navigation-progress 1s ease-in-out infinite alternate; }
+@keyframes navigation-progress { from { opacity: .45; } to { opacity: 1; } }
+.navigation-error { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 24px 0; padding: 16px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--bg); color: var(--text); }
+.navigation-error span { flex: 1 1 240px; }
+.navigation-error button, .navigation-error a { padding: 8px 12px; color: var(--ink); font: inherit; border: 1px solid var(--line-2); border-radius: 8px; background: transparent; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .navigating .progress i { animation: none; } }

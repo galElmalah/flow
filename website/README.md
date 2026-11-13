@@ -21,7 +21,7 @@ npm run docs:build
 
 The command deletes and rebuilds the ignored `website/build/docs/`, then writes
 `website/build/docs.manifest.json`: an inventory whose `files` entries are
-`{path, mediaType, size, sha256}` (HTML, CSS, JavaScript, JPEG, SVG, WOFF2 and
+`{path, mediaType, size, sha256}` (HTML, JSON, CSS, JavaScript, JPEG, SVG, WOFF2 and
 text). Upload exactly those files. The build fails if a declared page is missing or
 Git-ignored, a local link, image or `#section` target does not exist, an external
 link lacks a separate-tab target, a stylesheet asset is undeclared, or an
@@ -38,8 +38,8 @@ undeclared file appears.
 Page paths are stable: `SETUP.md` → `SETUP.html`, `docs/mcp.md` →
 `guide/mcp.html`, nested READMEs keep their folders. Assets go under `assets/`
 (Figtree comes from `public/fonts/figtree/`), images under `images/`, and the
-search index is `assets/search-index.js`, loaded on first search. Every page works
-without JavaScript. Links to other repository files open GitHub in a new tab. The
+search index is `assets/search-index.js`, loaded on first search. Each page also has a `.page.json` payload containing only its article, contents and metadata. Internal clicks fetch that payload and keep the shell mounted; visited pages are cached in memory. Browser history restores sections and scroll positions. Failed requests retain the current page with retry. Every page still works
+without JavaScript, and direct links return full HTML with an immediate dark background. Links to other repository files open GitHub in a new tab. The
 private release explainer (`node tools/build-explainer.mjs`) keeps its own plain
 layout and is a separate bundle; never publish it here.
 
