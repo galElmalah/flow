@@ -36,7 +36,7 @@ test("landing page links resolve inside its bundle and open other sites separate
       assert.match(tag, /target="_blank"/, href);
       assert.match(tag, /rel="[^"]*noopener/, href);
     } else if (!href.startsWith("#"))
-      assert.ok(existsSync(path.join(site, href)), `missing ${href}`);
+      assert.ok(existsSync(path.join(site, href.split(/[?#]/)[0])), `missing ${href}`);
   }
   const nav = html.match(/<nav>[\s\S]*?<\/nav>/)[0];
   assert.match(
@@ -157,7 +157,7 @@ test("every page has the docs shell, its current nav item and contents linked to
     assert.match(html, /<nav class="pager"[^>]*><a class="prev" rel="prev" href="[^"]+">/, file);
   }
   const mcp = pages.get("guide/mcp.html");
-  assert.match(mcp, /<html lang="en" class="no-js" data-root="\.\.\/" data-public-root="https:\/\/gal\.overto\.work\/flow-landing\/docs\/">/);
+  assert.match(mcp, /<html lang="en" class="no-js" data-root="\.\.\/" data-public-root="https:\/\/gal\.overto\.run\/flow-landing\/docs\/">/);
   assert.match(mcp, /href="\.\.\/assets\/docs\.css"/);
   assert.match(mcp, /href="https:\/\/github\.com\/galElmalah\/flow\/edit\/main\/docs\/mcp\.md" target="_blank" rel="noopener noreferrer"/);
   const last = orderedPages.at(-1);
@@ -314,13 +314,25 @@ test('both sites publish real icons and unfurl images, with correct deep-link me
     assert.equal(image.height, Number(meta.get('og:image:height')));
     assert.equal(meta.get('og:image:type'), image.format === 'jpeg' ? 'image/jpeg' : `image/${image.format}`);
     assert.ok(image.width >= 1200 && image.height >= 630);
-    for (const [rel, type, width] of [['icon', 'image/svg+xml', null], ['icon', 'image/png', 32], ['apple-touch-icon', undefined, 180]]) {
+    for (const [rel, type, width] of [['icon', 'image/x-icon', null], ['icon', 'image/svg+xml', null], ['icon', 'image/png', 32], ['apple-touch-icon', undefined, 180]]) {
       const icon = links.find((a) => a.rel === rel && (!type || a.type === type));
       assert.ok(icon, `${pathname}: ${rel} ${type || ''}`);
       const url = new URL(icon.href, canonical);
       assert.ok(url.href.startsWith(base));
-      const bytes = await readFile(resolve(url.href.slice(base.length)));
-      if (width) assert.equal((await sharp(bytes).metadata()).width, width);
+      const bytes = await readFile(resolve(url.pathname.slice(new URL(base).pathname.length)));
+      if (type === 'image/x-icon') {
+        assert.equal(bytes.readUInt16LE(0), 0);
+        assert.equal(bytes.readUInt16LE(2), 1);
+        assert.equal(bytes.readUInt16LE(4), 3);
+        for (let i = 0; i < 3; i++) {
+          const position = 6 + 16 * i, length = bytes.readUInt32LE(position + 8), offset = bytes.readUInt32LE(position + 12);
+          assert.ok(offset + length <= bytes.length);
+          const metadata = await sharp(bytes.subarray(offset, offset + length)).metadata();
+          assert.equal(metadata.width, [16, 32, 48][i]);
+          assert.equal(metadata.height, metadata.width);
+        }
+      }
+      else if (width) assert.equal((await sharp(bytes).metadata()).width, width);
       else assert.match(bytes.toString(), /<svg/);
     }
   };
@@ -332,7 +344,14 @@ test('both sites publish real icons and unfurl images, with correct deep-link me
     });
   }
   await checkPage(await readFile(path.join(site, 'index.html'), 'utf8'),
-    'https://gal.overto.work/flow-landing/flow/', 'index.html', (asset) => path.join(site, asset));
+    'https://gal.overto.run/flow-landing/flow/', 'index.html', (asset) => path.join(site, asset));
   assert.deepEqual(await readFile(path.join(site, 'assets/favicon.svg')),
     await readFile(path.join(root, 'website/docs/assets/favicon.svg')));
+  const video = await readFile(path.join(root, 'website/launch-video/index.html'), 'utf8');
+  const videoLinks = [...video.matchAll(/<link\b[^>]*>/g)].map(([tag]) => attributes(tag));
+  for (const name of ['favicon.ico', 'favicon.png', 'favicon.svg', 'apple-touch-icon.png']) {
+    const icon = videoLinks.find(link => link.href.split('?')[0] === `assets/${name}`);
+    assert.ok(icon, `launch video: ${name}`);
+    assert.ok((await readFile(path.join(root, 'website/docs/assets', name))).length);
+  }
 });

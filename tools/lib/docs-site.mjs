@@ -13,7 +13,7 @@ const escape = (text) =>
     .replaceAll("<", "&lt;");
 const relative = (from, to) =>
   posix.relative(posix.dirname(from), to) || posix.basename(to);
-/** Product captures in `docs/images/`; the only images rendered inline. */
+/** Product captures in `docs/images/`, alongside the approved brand image. */
 export const documentationImages = [
   "helmet-campaign.jpg",
   "helmet-seed-workflow.jpg",
@@ -85,9 +85,10 @@ export function documentationLink(
       : null;
   if (document)
     return { href: relative(pagePath(source), pagePath(document)) + suffix };
-  if (imagePaths.has(resolved))
+  const image = layout.images?.[resolved] || imagePaths.get(resolved);
+  if (image)
     return {
-      href: relative(pagePath(source), imagePaths.get(resolved)) + suffix,
+      href: relative(pagePath(source), image) + suffix,
     };
   // Source files outside the documentation bundle remain deliberate external links.
   if (resolved.startsWith("../")) return {};

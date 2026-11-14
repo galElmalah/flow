@@ -517,6 +517,7 @@ export function summarize(run) {
     project: run.project,
     status: run.status,
     concurrency: run.concurrency,
+    ...(run.telemetry?.traceId && { telemetry: run.telemetry }),
     ...(run.submission && { requestId: run.submission.requestId }),
     createdAt: run.createdAt,
     finishedAt: run.finishedAt,

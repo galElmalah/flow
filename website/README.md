@@ -6,16 +6,30 @@ rules (connection, version fence, audience, hosted checks) are in
 
 | Slug    | Public URL                                    | Bundle directory        | Source                                      |
 | ------- | --------------------------------------------- | ----------------------- | ------------------------------------------- |
-| `flow`  | https://gal.overto.work/flow-landing/flow/    | `website/landing/site/` | The files in that directory                 |
-| `docs`  | https://gal.overto.work/flow-landing/docs/    | `website/build/docs/`   | Repository Markdown, via `npm run docs:build` |
+| `flow`  | https://gal.overto.run/flow-landing/flow/    | `website/landing/site/` | The files in that directory                 |
+| `docs`  | https://gal.overto.run/flow-landing/docs/    | `website/build/docs/`   | Repository Markdown, via `npm run docs:build` |
 
-Both publish SVG and PNG favicons, an Apple touch icon, Open Graph metadata and
+Both publish SVG, PNG and multi-size ICO favicons, an Apple touch icon, Open Graph metadata and
 a large-image X/Twitter card. Docs deep links have their own canonical URL and
 page title; preview images are public bundle assets. Regenerate both icon sets
-with `npm run website:icons` after editing `website/docs/assets/favicon.svg`.
+with `npm run website:icons` after editing the approved vector master at
+`public/branding/flow-liquid.svg`. The command also updates the local app icons,
+both website headers' shared mark, and `public/branding/flow-liquid.png` for the
+GitHub README. Favicon declarations use `?v=liquid` to replace cached legacy icons.
 
 Both use entry `index.html`, relative paths and no SPA fallback. Neither runs Flow;
 the app is local.
+
+Use the public `.run` URLs above for sharing, canonical metadata and cross-site
+links. The `.work` URLs are workspace/review addresses; private viewer or login
+pages have their own document head and do not inherit an embedded site's icon.
+Always take the current public URL from Overto's artifact permissions response.
+
+The separate `launch-video` artifact retains its existing audience. Its HTML
+source is `website/launch-video/index.html`; publish it with the same shared icon
+assets and preserve the current MP4 and poster files from the reviewed immutable
+manifest. This source directory is not a complete media bundle. Video files do
+not belong in Git. A favicon change does not authorize making a private video public.
 
 ## Documentation
 

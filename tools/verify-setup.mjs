@@ -116,6 +116,12 @@ globalThis.fetch=(input,options)=>{
     assert.ok(lineage.asset.parents.length);
   }
   checks.push("four local outputs and saved lineage");
+  const telemetry = await client.runTrace(demo.runId);
+  assert.ok(telemetry.traceId);
+  assert.ok(telemetry.spans.some((span) => span.name === "workflow.submit"));
+  assert.ok(telemetry.spans.some((span) => span.name === "provider.execute"));
+  assert.match(await (await fetch(`${url}/api/guide/observability`)).text(), /Inspect traces and metrics/);
+  checks.push("local OpenTelemetry run traces and agent guide");
   const edited = await client.workflow(demo.workflowId);
   edited.nodes.find((node) => node.id === "prompt").data.text =
     "Keep my edited demo direction.";

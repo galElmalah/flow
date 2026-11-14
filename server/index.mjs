@@ -284,16 +284,22 @@ const server = app.listen(port, "127.0.0.1", async () => {
     `\n  Flow — local image studio\n  http://localhost:${port}\n  Data: ${dataRoot}\n`,
   );
 });
+let stopping = false;
 for (const sig of ["SIGINT", "SIGTERM"])
   process.on(sig, async () => {
+    if (stopping) return;
+    stopping = true;
+    ready = false;
+    setTimeout(() => process.exit(0), 5000).unref();
+    closeEvents();
+    const stopped = new Promise((done) => server.close(done));
     await agent.close();
-    await queue.stop();
+    await queue.stop({ drain: true });
     await editors.close();
     await providers.runtimes.close();
     providers.codex.close();
     await search.close();
+    await stopped;
     await closeTracing();
-    closeEvents();
-    server.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 5000).unref();
+    process.exit(0);
   });

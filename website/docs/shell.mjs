@@ -151,9 +151,10 @@ function frame({ current, title, description, bodyClass, main }) {
 <meta name="color-scheme" content="dark">
 <style>html,body{background:#060607;color:#f4f1ea}</style>
 <meta name="theme-color" content="#060607">
-<link rel="icon" href="${asset("favicon.png")}" type="image/png" sizes="32x32">
-<link rel="icon" href="${asset("favicon.svg")}" type="image/svg+xml" sizes="any">
-<link rel="apple-touch-icon" href="${asset("apple-touch-icon.png")}" sizes="180x180">
+<link rel="icon" href="${asset("favicon.ico?v=liquid")}" type="image/x-icon" sizes="16x16 32x32 48x48">
+<link rel="icon" href="${asset("favicon.png?v=liquid")}" type="image/png" sizes="32x32">
+<link rel="icon" href="${asset("favicon.svg?v=liquid")}" type="image/svg+xml" sizes="any">
+<link rel="apple-touch-icon" href="${asset("apple-touch-icon.png?v=liquid")}" sizes="180x180">
 <link rel="preload" href="${asset("Figtree-Variable.woff2")}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${asset("docs.css")}">
 <script defer src="${asset("docs.js")}"></script>
@@ -162,7 +163,7 @@ function frame({ current, title, description, bodyClass, main }) {
 <a class="skip" href="#content">Skip to content</a>
 <header class="topbar">
 <a class="menu-btn" href="${home}#browse" aria-controls="sidebar" aria-label="All pages">${icons.menu}</a>
-<a class="brand" href="${home}" aria-label="Flow documentation home"><i aria-hidden="true"></i>flow<span>docs</span></a>
+<a class="brand" href="${home}" aria-label="Flow documentation home"><img src="${asset("flow-liquid.svg")}" width="40" height="40" alt="" aria-hidden="true"><span>docs</span></a>
 <a class="search-btn search-trigger" href="${home}#browse" aria-label="Search documentation" aria-keyshortcuts="Meta+K Control+K">${icons.search}<span class="label">Search docs</span><kbd aria-hidden="true">⌘K</kbd></a>
 <nav class="top-links" aria-label="Flow">${external(landingUrl, "Website")}${external(repository, "GitHub")}</nav>
 <div class="progress" aria-hidden="true"><i></i></div>

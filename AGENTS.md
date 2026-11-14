@@ -7,8 +7,8 @@ Flow is a local canvas and execution platform for image and video workflows. Sta
 | What                         | Location                                                                                              |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Source (public, MIT)         | https://github.com/galElmalah/flow                                                                    |
-| Landing page                 | https://gal.overto.work/flow-landing/flow/                                                            |
-| Documentation                | https://gal.overto.work/flow-landing/docs/                                                            |
+| Landing page                 | https://gal.overto.run/flow-landing/flow/                                                            |
+| Documentation                | https://gal.overto.run/flow-landing/docs/                                                            |
 | The Flow app, CLI, SDK, MCP  | Your computer. There is no hosted Flow app; the server listens on `http://localhost:4310` by default. |
 
 The landing page and docs are static sites built from this repository. They never connect to a Flow server or account. To use Flow, clone it and follow [SETUP.md](SETUP.md). Discover the interfaces from the checkout: `node cli/flow.mjs help --json` and `node cli/flow.mjs help COMMAND --json` work offline; `guide`, `schema` and `providers` describe the running local server. The SDK is `import { FlowClient } from "flow"` ([installation](docs/installation.md)); MCP host setup is in [docs/mcp.md](docs/mcp.md).
@@ -58,7 +58,7 @@ node cli/flow.mjs open FORK_ID --project PROJECT_ID
 
 Creation, forks and run submission return full documents with `id` (MCP wraps the document in `structuredContent.data`). Keep that ID: a client timeout does not cancel server work. Inspect, resume or retry that run. The optional `--request-id` makes submission retries safe: the same key and request return the existing run, including after restart; changed options return409 `REQUEST_ID_REUSED` with `runId`. New intended batches need a new key. `--count` means copies per record/scene and generation mode, not the total. Check planned job counts first. Concurrency is a per-run ceiling and never changes another run's limit.
 
-`flow help run --json` and `flow run --help --json` work offline and return accepted flags, value constraints, effects and examples. Invalid or irrelevant flags fail before uploads, project discovery or network calls. CLI `--json` failures write `{error:{message,code,status?,runId?,blockers?}}` to stderr and exit nonzero; stdout is reserved for successful results. Planning accepts a saved workflow only and never uploads references. Use explicit workflow creation/import first.
+`flow help run --json` and `flow run --help --json` work offline and return accepted flags, value constraints, effects and examples. Invalid or irrelevant flags fail before uploads, project discovery or network calls. CLI `--json` failures write `{error:{message,code,status?,runId?,traceId?,blockers?}}` to stderr and exit nonzero; stdout is reserved for successful results. Planning accepts a saved workflow only and never uploads references. Use explicit workflow creation/import first.
 
 Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`. Canvas and CLI exports use the same schema. Legacy plain graph JSON remains readable. See [Flow files](docs/flow-files.md), `GET /api/schema/flow`, and the JavaScript client's `toFlowFile`/`fromFlowFile` helpers.
 
@@ -84,6 +84,7 @@ Workflow files use `*.flow.json` with `{format:"flow",version:1,workflow:{...}}`
 | Skills installed for agents           | `skills/`, `cli/skills.mjs`, [skill setup](docs/agent-skills.md)                                                              |
 | Tracing and latency                   | `observability/`, `src/agent/AgentTiming.jsx`, [OpenTelemetry](docs/observability.md)                                         |
 | Public landing page and docs site     | `website/landing/`, `website/docs/`, `tools/build-docs.mjs`, [website guide](website/README.md)                                |
+| Flow branding and icons               | `public/branding/flow-liquid.svg`, `src/components/Logo.jsx`, `website/build-icons.mjs`; regenerate with `npm run website:icons` |
 
 Use [the architecture map](docs/ARCHITECTURE.md) for subsystem boundaries. UI choices use `src/components/Autocomplete.jsx`. Background tabs release SSE streams and refresh durable state when visible again; see `src/studio/workspace-events.mjs`.
 

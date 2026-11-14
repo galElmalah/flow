@@ -7,10 +7,19 @@ import { planWorkflow } from "./graph.mjs";
 import { summarize } from "./store.mjs";
 import { mkdir, writeFile, stat } from "node:fs/promises";
 import { mediaKind, mediaArtifact } from "../shared/media.mjs";
+import {
+  startSpan,
+  inSpan,
+  traced,
+  traceIdentity,
+  parentFromIdentity,
+  observeJob,
+} from "../observability/tracing.mjs";
 const terminal = new Set(["completed", "failed", "blocked", "cancelled"]);
 function resetJob(job) {
   job.status = "queued";
   job.attempts = 0;
+  job.queuedAt = new Date().toISOString();
   delete job.error;
   delete job.message;
   delete job.startedAt;
@@ -65,9 +74,19 @@ export class Queue extends EventEmitter {
       graph: plan.graph,
       jobs: plan.jobs,
     };
+    const span = startSpan("workflow.submit", {
+      "flow.run_id": run.id,
+      "flow.workflow_id": run.workflowId,
+      "flow.project_id": run.projectId,
+      "flow.node_count": graph.nodes.length,
+    });
+    const identity = traceIdentity(span);
+    if (identity.traceId) run.telemetry = identity;
+    for (const job of run.jobs) job.queuedAt = run.createdAt;
     try {
       await this.store.saveRun(run);
     } catch (error) {
+      span.setStatus({ code: 2 });
       // SQLite can commit before the JSON mirror fails. Preserve an actionable
       // receipt without dispatching work the caller was told did not start.
       if (this.store.runs.has(run.id)) {
@@ -87,6 +106,8 @@ export class Queue extends EventEmitter {
         });
       }
       throw error;
+    } finally {
+      span.end();
     }
     this.emit("event", { type: "run", run: summarize(run) });
     this.pump();
@@ -180,179 +201,232 @@ export class Queue extends EventEmitter {
         runId: run.id,
         lane: this.executionLane(job),
       });
-      this.execute(run, job, controller).catch((error) =>
+      const task = this.execute(run, job, controller).catch((error) =>
         console.error("Queue error:", error.message),
       );
+      this.active.get(job.id).task = task;
     }
   }
   async execute(run, job, controller) {
-    try {
-      if (!(await this.update(run, job)))
-        throw new Error("Run paused because its state could not be saved.");
-      const byId = new Map(run.jobs.map((j) => [j.id, j]));
-      job.prompt = (job.promptParts || [{ literal: job.prompt }])
-        .map((part) => {
-          if (part.literal !== undefined) return part.literal;
-          const parent = byId.get(part.jobId);
-          if (
-            parent?.kind !== "text" ||
-            parent.status !== "completed" ||
-            !parent.resultText
-          )
-            throw new Error("Missing completed prompt result.");
-          return parent.resultText;
-        })
-        .filter(Boolean)
-        .join("\n\n");
-      let images = [
-        ...new Set(
-          job.images.map((ref) => {
-            if (ref.asset) return this.resolveAsset(ref.asset);
-            const parent = byId.get(ref.jobId);
-            if (
-              !parent ||
-              mediaKind(parent) !== "image" ||
-              parent.status !== "completed"
-            )
-              throw new Error(
-                "Image inputs require a completed image, not a video.",
-              );
-            return path.join(
-              this.store.root,
-              "runs",
-              run.id,
-              ref.jobId,
-              mediaArtifact(parent).basename,
-            );
-          }),
-        ),
-      ];
-      await this.assets?.captureInputs(run, job);
-      for (const file of images) {
-        await verifyImage(file);
-        const metadata = await sharp(file, {
-          limitInputPixels: 64_000_000,
-        }).metadata();
-        if (
-          !["png", "jpeg", "webp"].includes(metadata.format) ||
-          !metadata.width ||
-          !metadata.height
-        )
-          throw new Error(
-            "Image inputs must be valid PNG, JPEG or WebP rasters.",
-          );
-      }
-      if (this.assets && !(await this.update(run, job)))
-        throw new Error("Could not save captured generation inputs.");
-      const directory = path.join(this.store.root, "runs", run.id, job.id);
-      await mkdir(directory, { recursive: true });
-      if (this.assets) {
-        images = await this.assets.freezeImages(run, job, directory, images);
-        if (!(await this.update(run, job)))
-          throw new Error("Could not save captured input snapshots.");
-      }
-      const result = await this.adapter({
-        job,
-        directory,
-        imagePaths: images,
-        signal: controller.signal,
-        checkpoint: async ({ providerOperation, message }) => {
-          if (!["image", "video"].includes(mediaKind(job)))
-            throw new Error("Only media jobs have remote provider operations.");
-          if (providerOperation === null) delete job.providerOperation;
-          else if (providerOperation !== undefined) {
-            if (
-              providerOperation.providerId !== job.providerId ||
-              !["submitting", "accepted"].includes(providerOperation.state)
-            )
-              throw new Error("Invalid provider operation receipt.");
-            job.providerOperation = structuredClone(providerOperation);
-          }
-          if (message !== undefined) job.message = message;
-          if (!(await this.update(run, job)))
-            throw new Error(
-              "Could not persist the provider operation. Resume after storage recovers.",
-            );
-        },
-        onProgress: (message) => {
-          job.message = message;
-          this.emit("event", {
-            type: "progress",
-            runId: run.id,
-            jobId: job.id,
-            message,
-          });
-        },
-      });
-      if (!controller.signal.aborted) {
-        await this.assets?.verifySnapshots(job, directory);
-        if (result?.kind && result.kind !== mediaKind(job))
-          throw new Error("Provider returned the wrong output kind.");
-        if (
-          job.kind === "video" &&
-          (result?.kind !== "video" ||
-            !(await stat(path.join(directory, "output.mp4"))).size)
-        )
-          throw new Error("Provider returned no video.");
-        if (result?.metadata) job.metadata = result.metadata;
-        if (job.kind === "text") {
-          if (result?.kind !== "text" || !result.text?.trim())
-            throw new Error("Provider returned no prompt text.");
-          job.resultText = result.text;
-          await writeFile(path.join(directory, "output.txt"), result.text);
-        } else
-          job.output = `/files/runs/${run.id}/${job.id}/${mediaArtifact(job).basename}`;
-        await this.assets?.complete(run, job, directory);
-        job.status = "completed";
-        job.finishedAt = new Date().toISOString();
-      } else job.status = this.stopping ? "interrupted" : "cancelled";
-    } catch (error) {
-      if (controller.signal.aborted) {
-        job.status = this.stopping ? "interrupted" : "cancelled";
-        if (job.providerOperation)
-          job.message =
-            "Stopped locally; remote generation may continue. Resume this run to check the same operation.";
-      } else if (
-        /429|rate.?limit|too many requests/i.test(error.message) &&
-        job.attempts < 3
-      ) {
-        job.status = "retrying";
-        job.error = "Rate limited. Waiting before retrying.";
-        const wait = setTimeout(
-          () => {
-            if (
-              !this.stopping &&
-              job.status === "retrying" &&
-              run.status !== "cancelled"
-            ) {
-              job.status = "queued";
-              this.update(run, job);
-              this.pump();
-            }
-          },
-          Math.min(120000, 15000 * 2 ** job.attempts),
-        );
-        wait.unref?.();
-      } else {
-        job.status = "failed";
-        job.error = error.message.slice(0, 1600);
-        job.finishedAt = new Date().toISOString();
-      }
-    } finally {
-      const active = this.active.get(job.id);
-      if (
-        active?.restartRequested &&
-        run.status !== "cancelled" &&
-        !this.stopping
-      )
-        resetJob(job);
+    const span = startSpan(
+      "workflow.job",
+      {
+        "flow.run_id": run.id,
+        "flow.workflow_id": run.workflowId,
+        "flow.project_id": run.projectId,
+        "flow.job_id": job.id,
+        "flow.job.kind": job.kind || "image",
+        "flow.job.attempt": job.attempts,
+        "flow.provider_id": job.providerId,
+        "gen_ai.request.model": job.model,
+      },
+      parentFromIdentity(run.telemetry),
+    );
+    const started = performance.now();
+    const queueMs = Math.max(
+      0,
+      Date.parse(job.startedAt) - Date.parse(job.queuedAt || run.createdAt),
+    );
+    const identity = traceIdentity(span);
+    if (identity.traceId) job.telemetry = identity;
+    return inSpan(span, async () => {
       try {
-        await this.update(run, job);
-      } catch {}
-      this.active.delete(job.id);
-      this.next();
-      this.pump();
-    }
+        if (!(await this.update(run, job)))
+          throw new Error("Run paused because its state could not be saved.");
+        const byId = new Map(run.jobs.map((j) => [j.id, j]));
+        job.prompt = (job.promptParts || [{ literal: job.prompt }])
+          .map((part) => {
+            if (part.literal !== undefined) return part.literal;
+            const parent = byId.get(part.jobId);
+            if (
+              parent?.kind !== "text" ||
+              parent.status !== "completed" ||
+              !parent.resultText
+            )
+              throw new Error("Missing completed prompt result.");
+            return parent.resultText;
+          })
+          .filter(Boolean)
+          .join("\n\n");
+        let images = [
+          ...new Set(
+            job.images.map((ref) => {
+              if (ref.asset) return this.resolveAsset(ref.asset);
+              const parent = byId.get(ref.jobId);
+              if (
+                !parent ||
+                mediaKind(parent) !== "image" ||
+                parent.status !== "completed"
+              )
+                throw new Error(
+                  "Image inputs require a completed image, not a video.",
+                );
+              return path.join(
+                this.store.root,
+                "runs",
+                run.id,
+                ref.jobId,
+                mediaArtifact(parent).basename,
+              );
+            }),
+          ),
+        ];
+        await traced("asset.inputs.capture", {}, () =>
+          this.assets?.captureInputs(run, job),
+        );
+        for (const file of images) {
+          await verifyImage(file);
+          const metadata = await sharp(file, {
+            limitInputPixels: 64_000_000,
+          }).metadata();
+          if (
+            !["png", "jpeg", "webp"].includes(metadata.format) ||
+            !metadata.width ||
+            !metadata.height
+          )
+            throw new Error(
+              "Image inputs must be valid PNG, JPEG or WebP rasters.",
+            );
+        }
+        if (this.assets && !(await this.update(run, job)))
+          throw new Error("Could not save captured generation inputs.");
+        const directory = path.join(this.store.root, "runs", run.id, job.id);
+        await mkdir(directory, { recursive: true });
+        if (this.assets) {
+          images = await traced("asset.inputs.freeze", {}, () =>
+            this.assets.freezeImages(run, job, directory, images),
+          );
+          if (!(await this.update(run, job)))
+            throw new Error("Could not save captured input snapshots.");
+        }
+        const result = await traced(
+          "provider.execute",
+          {
+            "flow.provider_id": job.providerId,
+            "gen_ai.request.model": job.model,
+          },
+          () =>
+            this.adapter({
+              job,
+              directory,
+              imagePaths: images,
+              signal: controller.signal,
+              checkpoint: async ({ providerOperation, message }) => {
+                if (!["image", "video"].includes(mediaKind(job)))
+                  throw new Error(
+                    "Only media jobs have remote provider operations.",
+                  );
+                if (providerOperation === null) delete job.providerOperation;
+                else if (providerOperation !== undefined) {
+                  if (
+                    providerOperation.providerId !== job.providerId ||
+                    !["submitting", "accepted"].includes(
+                      providerOperation.state,
+                    )
+                  )
+                    throw new Error("Invalid provider operation receipt.");
+                  job.providerOperation = structuredClone(providerOperation);
+                }
+                if (message !== undefined) job.message = message;
+                if (!(await this.update(run, job)))
+                  throw new Error(
+                    "Could not persist the provider operation. Resume after storage recovers.",
+                  );
+              },
+              onProgress: (message) => {
+                job.message = message;
+                this.emit("event", {
+                  type: "progress",
+                  runId: run.id,
+                  jobId: job.id,
+                  message,
+                });
+              },
+            }),
+        );
+        if (!controller.signal.aborted) {
+          await this.assets?.verifySnapshots(job, directory);
+          if (result?.kind && result.kind !== mediaKind(job))
+            throw new Error("Provider returned the wrong output kind.");
+          if (
+            job.kind === "video" &&
+            (result?.kind !== "video" ||
+              !(await stat(path.join(directory, "output.mp4"))).size)
+          )
+            throw new Error("Provider returned no video.");
+          if (result?.metadata) job.metadata = result.metadata;
+          if (job.kind === "text") {
+            if (result?.kind !== "text" || !result.text?.trim())
+              throw new Error("Provider returned no prompt text.");
+            job.resultText = result.text;
+            await writeFile(path.join(directory, "output.txt"), result.text);
+          } else
+            job.output = `/files/runs/${run.id}/${job.id}/${mediaArtifact(job).basename}`;
+          await this.assets?.complete(run, job, directory);
+          job.status = "completed";
+          job.finishedAt = new Date().toISOString();
+        } else job.status = this.stopping ? "interrupted" : "cancelled";
+      } catch (error) {
+        if (controller.signal.aborted) {
+          job.status = this.stopping ? "interrupted" : "cancelled";
+          if (job.providerOperation)
+            job.message =
+              "Stopped locally; remote generation may continue. Resume this run to check the same operation.";
+        } else if (
+          /429|rate.?limit|too many requests/i.test(error.message) &&
+          job.attempts < 3
+        ) {
+          job.status = "retrying";
+          job.error = "Rate limited. Waiting before retrying.";
+          const wait = setTimeout(
+            () => {
+              if (
+                !this.stopping &&
+                job.status === "retrying" &&
+                run.status !== "cancelled"
+              ) {
+                job.status = "queued";
+                job.queuedAt = new Date().toISOString();
+                this.update(run, job);
+                this.pump();
+              }
+            },
+            Math.min(120000, 15000 * 2 ** job.attempts),
+          );
+          wait.unref?.();
+        } else {
+          job.status = "failed";
+          job.error = error.message.slice(0, 1600);
+          job.finishedAt = new Date().toISOString();
+        }
+      } finally {
+        const outcome = job.status;
+        const active = this.active.get(job.id);
+        if (
+          active?.restartRequested &&
+          run.status !== "cancelled" &&
+          !this.stopping
+        )
+          resetJob(job);
+        try {
+          await this.update(run, job);
+        } catch {}
+        span.setAttribute("flow.status", outcome);
+        if (["failed", "retrying", "interrupted"].includes(outcome))
+          span.setStatus({ code: 2 });
+        observeJob({
+          kind: job.kind || "image",
+          providerId: job.providerId,
+          status: outcome,
+          durationMs: performance.now() - started,
+          queueMs,
+        });
+        span.end();
+        this.active.delete(job.id);
+        this.next();
+        this.pump();
+      }
+    });
   }
   action(id, action) {
     const run = this.store.runs.get(id);
@@ -394,7 +468,7 @@ export class Queue extends EventEmitter {
     this.pump();
     return run;
   }
-  async stop() {
+  async stop({ drain = false } = {}) {
     this.stopping = true;
     const updates = [];
     for (const run of this.store.runs.values()) {
@@ -412,6 +486,10 @@ export class Queue extends EventEmitter {
     }
     for (const { controller } of this.active.values()) controller.abort();
     await Promise.all(updates);
+    if (drain)
+      await Promise.allSettled(
+        [...this.active.values()].map(({ task }) => task),
+      );
     await this.store.flush();
   }
 }

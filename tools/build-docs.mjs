@@ -74,6 +74,7 @@ if (extra.length) throw new Error(`Undeclared output: ${extra.join(", ")}`);
 // Each `files` entry is usable as-is in an Overto site manifest; the wrapper
 // fields describe where this inventory belongs and are not part of that request.
 const mediaTypes = {
+  ".ico": "image/x-icon",
   ".html": "text/html",
   ".css": "text/css",
   ".js": "text/javascript",

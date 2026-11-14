@@ -1,7 +1,7 @@
 // The public documentation inventory: which repository Markdown is published,
 // how it is grouped in the navigation, and where each page lives in the bundle.
-export const docsUrl = "https://gal.overto.work/flow-landing/docs/";
-export const landingUrl = "https://gal.overto.work/flow-landing/flow/";
+export const docsUrl = "https://gal.overto.run/flow-landing/docs/";
+export const landingUrl = "https://gal.overto.run/flow-landing/flow/";
 export const repository = "https://github.com/galElmalah/flow";
 
 const adapters = [
@@ -79,7 +79,8 @@ export const groups = [
       page("docs/image-versions.md", "Image versions", "Regions, comments and edits"),
       page("docs/image-region-names.md", "Region names", "Naming SAM masks with a vision harness"),
       page("docs/canvas-organization.md", "Organize the canvas", "Layout and section frames"),
-      page("docs/observability.md", "OpenTelemetry", "Tracing and latency"),
+      page("docs/observability.md", "OpenTelemetry", "Inspect traces, metrics and streaming latency"),
+      page("docs/opentelemetry-reference.md", "Telemetry reference", "Configuration, coverage and privacy"),
       page("examples/quoture/README.md", "Record branches", "One shared direction feeding several branches"),
     ],
   },

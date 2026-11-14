@@ -113,12 +113,12 @@ kbd {
   color: var(--contrast);
   width: 36px;
   height: 36px;
-  padding: 6px;
+  padding: 0;
   margin: 0 0 34px;
 }
-.brand svg {
-  width: 25px;
-  height: 25px;
+.brand img {
+  width: 36px;
+  height: 36px;
 }
 .rail-main,
 .rail-bottom {

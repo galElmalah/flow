@@ -81,6 +81,7 @@ const failure = (error) => {
     error: {
       message: error.message,
       ...(error.status && { status: error.status }),
+      ...(error.traceId && { traceId: error.traceId }),
       ...(error.code && { code: error.code }),
       ...(error.issues && { issues: error.issues }),
       ...(error.runId && {
@@ -976,6 +977,13 @@ export function createMcpServer({
     true,
     ({ runId }) => flow.inspect(runId),
     { outputSchema: runOutput },
+  );
+  tool(
+    "read_run_trace",
+    "Read locally retained OpenTelemetry spans for this run's branch only. Includes job attempts and provider execution, with no prompt or response content. Empty spans are valid for active, disabled, historical or rotated traces.",
+    z.object({ runId: id }).strict(),
+    true,
+    ({ runId }) => flow.runTrace(runId),
   );
   tool(
     "wait_run",

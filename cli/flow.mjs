@@ -870,6 +870,7 @@ async function main() {
     );
   } else if (command === "runs") print(await client.runs());
   else if (command === "inspect") print(await client.inspect(id));
+  else if (command === "trace") print(await client.runTrace(id));
   else if (["pause", "resume", "retry", "cancel"].includes(command))
     print(await client.control(id, command));
   else if (command === "download") {
@@ -951,6 +952,7 @@ try {
             message,
             ...(error.status && { status: error.status }),
             ...(error.runId && { runId: error.runId }),
+            ...(error.traceId && { traceId: error.traceId }),
             ...(error.run && { run: error.run }),
             ...(error.issues && { issues: error.issues }),
             ...(error.blockers && { blockers: error.blockers }),

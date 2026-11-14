@@ -104,6 +104,7 @@ flow plan --root /absolute/path/to/my-app --workflow WORKFLOW_ID --json
 flow run --root /absolute/path/to/my-app --workflow WORKFLOW_ID --concurrency 4 --request-id BATCH_ID --json
 flow wait RUN_ID --timeout 600 --json
 flow inspect RUN_ID --json
+flow trace RUN_ID --json
 flow download RUN_ID --output ./studies.zip
 ```
 
@@ -130,6 +131,13 @@ after an accepted `run --wait` retain its `runId`.
 For an inference-free orchestration check, use a seed-image workflow with `--provider local-color --model color-study`. This performs real local image processing. It does not replace upstream AI prompt nodes, so choose an image-only workflow for this check. Executable detection and protocol tests do not prove that a CLI harness is authenticated; inspect provider readiness and run the specifically intended harness when inference is required. Compatible API connections use their selected base URL/model and explicit key; there is no automatic switch from a signed-in harness to a paid API.
 
 A run blocked by provider setup returns HTTP `412`, `code: "PROVIDER_NOT_READY"`, and `blockers` containing `providerId`, `name`, `message`, `nodeIds` and `setupPath`. All missing providers in the planned scope are reported before any jobs are created. The JavaScript client error and MCP error expose the same fields; CLI errors include the provider messages. Configure the named providers, then explicitly submit the intended run. Planning checks graph structure and counts; it does not prove provider entitlement. A configured API key still requires actual account access and billing when the provider executes.
+
+## Inspect execution traces
+
+For execution timing, `flow trace RUN_ID --project PROJECT_ID --json`,
+`client.runTrace(runId)` and MCP `read_run_trace` return locally retained run spans.
+Use `inspect` for durable status; active, unsampled, historical or rotated traces
+can be empty. See [observability setup](observability.md).
 
 ## Open the viewer
 

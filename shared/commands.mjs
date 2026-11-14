@@ -112,6 +112,13 @@ add(
 );
 add("wait", "timeout", "RUN_ID");
 add("inspect", "", "RUN_ID");
+add(
+  "trace",
+  "",
+  "RUN_ID",
+  "read",
+  "flow trace RUN_ID --project PROJECT_ID --json",
+);
 add("pause|resume|retry|cancel", "", "RUN_ID", "control-run");
 add("download", "output", "RUN_ID", "write-file");
 add("results", "", "WORKFLOW_ID");

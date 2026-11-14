@@ -11,9 +11,12 @@ import { highlight, renderHome, renderPage, searchRecord } from "./shell.mjs";
 
 /** Files copied unchanged: [bundle path, repository source]. */
 export const staticFiles = [
+  ["assets/flow-liquid.svg", "public/branding/flow-liquid.svg"],
+  ["assets/flow-liquid.png", "public/branding/flow-liquid.png"],
   ["assets/docs.css", "website/docs/assets/docs.css"],
   ["assets/docs.js", "website/docs/assets/docs.js"],
   ["assets/favicon.svg", "website/docs/assets/favicon.svg"],
+  ["assets/favicon.ico", "website/docs/assets/favicon.ico"],
   ["assets/favicon.png", "website/docs/assets/favicon.png"],
   ["assets/apple-touch-icon.png", "website/docs/assets/apple-touch-icon.png"],
   ["assets/og.jpg", "website/docs/assets/og.jpg"],
@@ -27,7 +30,7 @@ export const staticFiles = [
 /** Every generated file as [bundle path, contents], in a stable order. */
 export async function renderSite(root) {
   const sources = new Set(publicDocumentSources);
-  const layout = { page: pagePath, highlight, headingAnchors: true };
+  const layout = { page: pagePath, highlight, headingAnchors: true, images: { "public/branding/flow-liquid.png": "assets/flow-liquid.png" } };
   const generated = [];
   const records = [];
   for (const entry of orderedPages) {

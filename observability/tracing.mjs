@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import {
   mkdir,
   appendFile,
@@ -8,7 +7,18 @@ import {
   rm,
 } from "node:fs/promises";
 import path from "node:path";
-import { ROOT_CONTEXT, trace, SpanStatusCode } from "@opentelemetry/api";
+import {
+  ROOT_CONTEXT,
+  context,
+  propagation,
+  metrics,
+  trace,
+  SpanKind,
+  SpanStatusCode,
+} from "@opentelemetry/api";
+import { W3CTraceContextPropagator } from "@opentelemetry/core";
+import { telemetryConfig } from "./config.mjs";
+import packageInfo from "../package.json" with { type: "json" };
 
 const allowed = new Set([
   "gen_ai.request.model",
@@ -19,6 +29,8 @@ const allowed = new Set([
   "flow.project_id",
   "flow.provider_id",
   "flow.job_id",
+  "flow.job.kind",
+  "flow.job.attempt",
   "flow.run_id",
   "flow.status",
   "flow.phase",
@@ -30,6 +42,7 @@ const allowed = new Set([
   "http.request.method",
   "http.route",
   "http.response.status_code",
+  "error.type",
   "ui.elapsed_ms",
   "ui.prepare_ms",
   "ui.accepted_ms",
@@ -52,6 +65,7 @@ function spanRecord(span) {
     traceId: span.spanContext().traceId,
     spanId: span.spanContext().spanId,
     parentSpanId: span.parentSpanContext?.spanId,
+    kind: span.kind,
     startTime: milliseconds(span.startTime),
     durationMs: milliseconds(span.duration),
     attributes: safeAttributes(span.attributes),
@@ -134,62 +148,146 @@ class LocalSpanExporter {
     return this.pending;
   }
 }
-const scope = new AsyncLocalStorage();
 let runtime;
 export async function initializeTracing({
   dataRoot,
-  otlpEndpoint = process.env.FLOW_OTEL_OTLP_ENDPOINT,
-  enabled = process.env.FLOW_OTEL_ENABLED !== "0",
+  otlpEndpoint,
+  enabled,
+  env = process.env,
 } = {}) {
   if (runtime) return runtime;
-  if (!enabled) return null;
-  const { NodeTracerProvider, SimpleSpanProcessor } =
+  const config = telemetryConfig(env, { otlpEndpoint, enabled });
+  if (!config.enabled) return null;
+  const { NodeTracerProvider, SimpleSpanProcessor, BatchSpanProcessor } =
     await import("@opentelemetry/sdk-trace-node");
-  const { resourceFromAttributes } = await import("@opentelemetry/resources");
+  const { resourceFromAttributes, defaultResource } = await import(
+    "@opentelemetry/resources"
+  );
   const local = new LocalSpanExporter(path.join(dataRoot, "telemetry"));
   await local.init();
   const processors = [new SimpleSpanProcessor(local)];
-  if (otlpEndpoint) {
+  if (config.traces.url) {
     const { OTLPTraceExporter } =
-      await import("@opentelemetry/exporter-trace-otlp-http");
-    const url = new URL(otlpEndpoint);
-    if (
-      !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
-      !["http:", "https:"].includes(url.protocol) ||
-      url.username ||
-      url.password
-    )
-      throw new Error(
-        "OTLP export must use a local collector URL without credentials.",
-      );
+      config.traces.protocol === "http/json"
+        ? await import("@opentelemetry/exporter-trace-otlp-http")
+        : await import("@opentelemetry/exporter-trace-otlp-proto");
     processors.push(
-      new SimpleSpanProcessor(
-        new OTLPTraceExporter({ url: url.href, timeoutMillis: 2000 }),
+      new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: config.traces.url,
+          timeoutMillis: config.traces.timeoutMillis,
+        }),
       ),
     );
   }
+  const resource = defaultResource().merge(
+    resourceFromAttributes({
+      "service.name": config.serviceName,
+      "service.version": packageInfo.version,
+    }),
+  );
   const provider = new NodeTracerProvider({
     spanProcessors: processors,
-    resource: resourceFromAttributes({
-      "service.name": "flow",
-      "service.version": "0.1.0",
-    }),
+    resource,
   });
-  runtime = { provider, local, tracer: provider.getTracer("flow", "0.1.0") };
+  provider.register({ propagator: new W3CTraceContextPropagator() });
+  let meterProvider, instruments;
+  if (config.metrics.url) {
+    const {
+      MeterProvider,
+      PeriodicExportingMetricReader,
+      AggregationType,
+      createAllowListAttributesProcessor,
+    } = await import("@opentelemetry/sdk-metrics");
+    const { OTLPMetricExporter } =
+      config.metrics.protocol === "http/json"
+        ? await import("@opentelemetry/exporter-metrics-otlp-http")
+        : await import("@opentelemetry/exporter-metrics-otlp-proto");
+    const httpKeys = [
+      "http.request.method",
+      "http.route",
+      "http.response.status_code",
+      "error.type",
+    ];
+    const jobKeys = ["flow.job.kind", "flow.provider_id", "flow.status"];
+    const buckets = {
+      "http.server.request.duration": [
+        0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5,
+        10,
+      ],
+      "flow.job.duration": [
+        0.01, 0.1, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 600, 1800,
+      ],
+      "flow.job.queue.duration": [
+        0.01, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 300, 600, 1800,
+      ],
+    };
+    const views = Object.entries(buckets).map(
+      ([instrumentName, boundaries]) => ({
+        instrumentName,
+        meterName: "flow",
+        aggregationCardinalityLimit: 2000,
+        attributesProcessors: [
+          createAllowListAttributesProcessor(
+            instrumentName.startsWith("http.") ? httpKeys : jobKeys,
+          ),
+        ],
+        aggregation: {
+          type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+          options: { boundaries },
+        },
+      }),
+    );
+    meterProvider = new MeterProvider({
+      resource,
+      views,
+      readers: [
+        new PeriodicExportingMetricReader({
+          exporter: new OTLPMetricExporter({
+            url: config.metrics.url,
+            timeoutMillis: config.metrics.timeoutMillis,
+          }),
+          exportIntervalMillis: config.metrics.exportIntervalMillis,
+          exportTimeoutMillis: config.metrics.timeoutMillis,
+        }),
+      ],
+    });
+    metrics.setGlobalMeterProvider(meterProvider);
+    const meter = meterProvider.getMeter("flow", packageInfo.version);
+    instruments = {
+      http: meter.createHistogram("http.server.request.duration", {
+        unit: "s",
+      }),
+      job: meter.createHistogram("flow.job.duration", { unit: "s" }),
+      queue: meter.createHistogram("flow.job.queue.duration", { unit: "s" }),
+      attempts: meter.createCounter("flow.job.attempts", { unit: "{attempt}" }),
+    };
+  }
+  runtime = {
+    provider,
+    local,
+    meterProvider,
+    instruments,
+    config,
+    tracer: provider.getTracer("flow", packageInfo.version),
+  };
   return runtime;
 }
-export function startSpan(name, attributes = {}, parent) {
-  const parentContext = parent
-    ? trace.setSpan(ROOT_CONTEXT, parent)
-    : scope.getStore() || ROOT_CONTEXT;
+export function startSpan(name, attributes = {}, parent, options = {}) {
+  const parentContext =
+    parent === null
+      ? ROOT_CONTEXT
+      : parent
+        ? trace.setSpan(ROOT_CONTEXT, parent)
+        : context.active();
   return (runtime?.tracer || trace.getTracer("flow")).startSpan(
     name,
-    { attributes: safeAttributes(attributes) },
+    { ...options, attributes: safeAttributes(attributes) },
     parentContext,
   );
 }
 export function inSpan(span, fn) {
-  return scope.run(trace.setSpan(scope.getStore() || ROOT_CONTEXT, span), fn);
+  return context.with(trace.setSpan(context.active(), span), fn);
 }
 export function traced(name, attributes, fn) {
   const span = startSpan(name, attributes);
@@ -222,27 +320,54 @@ export function mark(span, name, attributes = {}) {
 export function traceIdentity(span) {
   const id = span?.spanContext();
   return id && trace.isSpanContextValid(id)
-    ? { traceId: id.traceId, spanId: id.spanId }
+    ? { traceId: id.traceId, spanId: id.spanId, traceFlags: id.traceFlags }
     : {};
+}
+export function parentFromIdentity(identity) {
+  if (!identity || !trace.isSpanContextValid(identity)) return null;
+  return trace.wrapSpanContext({
+    ...identity,
+    traceFlags: identity.traceFlags ?? 1,
+    isRemote: true,
+  });
+}
+export function observeJob({ kind, providerId, status, durationMs, queueMs }) {
+  const attributes = safeAttributes({
+    "flow.job.kind": kind,
+    "flow.provider_id": providerId,
+    "flow.status": status,
+  });
+  runtime?.instruments?.job.record(durationMs / 1000, attributes);
+  runtime?.instruments?.queue.record(queueMs / 1000, attributes);
+  runtime?.instruments?.attempts.add(1, attributes);
 }
 export function browserObservation(identity, values) {
   if (!identity.traceId || !identity.spanId) return;
-  const parent = trace.wrapSpanContext({
-    traceId: identity.traceId,
-    spanId: identity.spanId,
-    traceFlags: 1,
-    isRemote: true,
-  });
+  const parent = parentFromIdentity(identity);
+  if (!parent) return;
   const span = startSpan("agent.browser.observed", values, parent);
   mark(span, "first_preview_painted", values);
   span.end();
 }
 export async function readTrace(traceId) {
-  await runtime?.provider.forceFlush();
   return runtime ? runtime.local.read(traceId) : [];
 }
+export async function flushTelemetry() {
+  await Promise.all([
+    runtime?.provider.forceFlush(),
+    runtime?.meterProvider?.forceFlush(),
+  ]);
+}
 export async function closeTracing() {
-  await runtime?.provider.shutdown();
+  if (!runtime) return;
+  await Promise.allSettled([
+    runtime.provider.shutdown(),
+    runtime.meterProvider?.shutdown(),
+  ]);
+  trace.disable();
+  context.disable();
+  propagation.disable();
+  if (runtime.meterProvider) metrics.disable();
   runtime = undefined;
 }
 export function tracingStatus() {
@@ -250,6 +375,11 @@ export function tracingStatus() {
     enabled: Boolean(runtime),
     exporter: runtime ? "local-jsonl" : null,
     directory: runtime?.local.directory,
+    serviceName: runtime?.config.serviceName,
+    otlp: {
+      traces: Boolean(runtime?.config.traces.url),
+      metrics: Boolean(runtime?.config.metrics.url),
+    },
   };
 }
 export function traceHttp(req, res, next) {
@@ -260,11 +390,34 @@ export function traceHttp(req, res, next) {
     req.path.endsWith("/timing")
   )
     return next();
-  const span = startSpan("http.server", { "http.request.method": req.method });
+  const parent = propagation.extract(ROOT_CONTEXT, req.headers);
+  const span = context.with(parent, () =>
+    startSpan("http.server", { "http.request.method": req.method }, undefined, {
+      kind: SpanKind.SERVER,
+    }),
+  );
+  const identity = traceIdentity(span);
+  if (identity.traceId) res.setHeader("X-Flow-Trace-Id", identity.traceId);
+  const started = performance.now();
+  let ended = false;
   const finish = () => {
-    span.setAttribute("http.route", req.route?.path || "/api/unknown");
-    span.setAttribute("http.response.status_code", res.statusCode);
-    if (res.statusCode >= 500) span.setStatus({ code: SpanStatusCode.ERROR });
+    if (ended) return;
+    ended = true;
+    const attributes = safeAttributes({
+      "http.request.method": req.method,
+      "http.route":
+        typeof req.route?.path === "string" ? req.route.path : "/api/unknown",
+      "http.response.status_code": res.statusCode,
+      ...(!res.writableFinished && { "error.type": "connection_closed" }),
+    });
+    span.setAttributes(attributes);
+    span.updateName(`${req.method} ${attributes["http.route"]}`);
+    runtime?.instruments?.http.record(
+      (performance.now() - started) / 1000,
+      attributes,
+    );
+    if (res.statusCode >= 500 || !res.writableFinished)
+      span.setStatus({ code: SpanStatusCode.ERROR });
     span.end();
   };
   res.once("finish", finish);

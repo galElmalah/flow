@@ -5,6 +5,7 @@ import {
   runSubmissionSchema,
 } from "../shared/run-options.mjs";
 import { resolveViewer } from "./viewer.mjs";
+import { context, propagation } from "@opentelemetry/api";
 const encoded = (id) => encodeURIComponent(id);
 
 export class FlowError extends Error {
@@ -64,6 +65,12 @@ export class FlowClient {
   }
   async response(route, options = {}) {
     const headers = new Headers(options.headers);
+    if (!headers.has("traceparent")) {
+      const carrier = {};
+      propagation.inject(context.active(), carrier);
+      for (const key of ["traceparent", "tracestate"])
+        if (carrier[key]) headers.set(key, carrier[key]);
+    }
     if (typeof options.body === "string" && !headers.has("Content-Type"))
       headers.set("Content-Type", "application/json");
     const response = await this.fetch(this.url + route, {
@@ -83,6 +90,9 @@ export class FlowClient {
           typeof data?.code === "string" ? data.code : undefined,
         ),
         typeof data?.runId === "string" && { runId: data.runId },
+        response.headers.get("X-Flow-Trace-Id") && {
+          traceId: response.headers.get("X-Flow-Trace-Id"),
+        },
         Array.isArray(data?.issues) && { issues: data.issues },
         providerFailureFields(data),
       );
@@ -445,6 +455,9 @@ export class FlowClient {
         409,
       );
     return run;
+  }
+  runTrace(id) {
+    return this.request(this.scoped(`/api/runs/${encoded(id)}/trace`));
   }
   control(id, action) {
     return this.post(`/api/runs/${encoded(id)}/${encoded(action)}`, {

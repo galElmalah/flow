@@ -205,6 +205,15 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
       return res.end(
         JSON.stringify({ id: "pending", projectId: "qa", status: "running" }),
       );
+    if (req.url === "/api/runs/failing/trace?projectId=qa") {
+      res.setHeader("X-Flow-Trace-Id", "1234567890abcdef1234567890abcdef");
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: "Trace read failed" }));
+    }
+    if (req.url === "/api/runs/qa-run/trace?projectId=qa")
+      return res.end(
+        JSON.stringify({ runId: "qa-run", traceId: null, spans: [] }),
+      );
     if (req.url.split("?")[0] === "/api/runs/qa-run")
       return res.end(
         JSON.stringify({
@@ -279,6 +288,7 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
     "organize_workflow",
     "list_runs",
     "inspect_run",
+    "read_run_trace",
     "control_run",
     "list_styles",
     "read_style",
@@ -715,6 +725,19 @@ test("stdio MCP discovers tools, validates calls and preserves project ownership
       .properties.id,
   );
   assert.equal(run.structuredContent.data.id, "qa-run");
+  const telemetry = await call("read_run_trace", { runId: "qa-run" });
+  assert.deepEqual(telemetry.structuredContent.data, {
+    runId: "qa-run",
+    traceId: null,
+    spans: [],
+  });
+  assert.equal(requests.at(-1).url, "/api/runs/qa-run/trace?projectId=qa");
+  const failedTrace = await call("read_run_trace", { runId: "failing" });
+  assert.equal(failedTrace.isError, true);
+  assert.equal(
+    failedTrace.structuredContent.error.traceId,
+    "1234567890abcdef1234567890abcdef",
+  );
   const waited = await call("wait_run", { runId: "qa-run", timeoutSeconds: 1 });
   assert.equal(waited.structuredContent.data.run.status, "completed");
   assert.equal(waited.structuredContent.data.timedOut, false);

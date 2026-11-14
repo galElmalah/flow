@@ -6,6 +6,7 @@ import { summarize } from "../store.mjs";
 import { galleryItems } from "../search/documents.mjs";
 import { archiveFilterSchema } from "../../shared/archive.mjs";
 import { runOptionsSchema } from "../../shared/run-options.mjs";
+import { readTrace } from "../../observability/tracing.mjs";
 import {
   generationKind,
   isMediaJob,
@@ -145,6 +146,36 @@ export function registerRunRoutes(
     try {
       projects.assertWorkflow(r, req.query.projectId);
       res.json(r);
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.get("/api/runs/:id/trace", async (req, res, next) => {
+    try {
+      const run = store.runs.get(req.params.id);
+      if (!run) return res.status(404).json({ error: "Run not found." });
+      projects.assertWorkflow(run, req.query.projectId);
+      const traceId = run.telemetry?.traceId || null;
+      const spans = traceId ? await readTrace(traceId) : [];
+      const children = new Map();
+      for (const span of spans) {
+        const group = children.get(span.parentSpanId) || [];
+        group.push(span.spanId);
+        children.set(span.parentSpanId, group);
+      }
+      const selected = new Set(),
+        pending = [run.telemetry?.spanId];
+      while (pending.length) {
+        const id = pending.pop();
+        if (!id || selected.has(id)) continue;
+        selected.add(id);
+        pending.push(...(children.get(id) || []));
+      }
+      res.json({
+        runId: run.id,
+        traceId,
+        spans: spans.filter((span) => selected.has(span.spanId)),
+      });
     } catch (error) {
       next(error);
     }

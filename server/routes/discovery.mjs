@@ -29,6 +29,12 @@ export function registerDiscoveryRoutes(
       setup: "/api/guide/setup",
       commandHelp: "/api/help?command=run",
       runOptionsSchema: "/api/schema/run",
+      telemetry: {
+        status: "GET /api/server → telemetry",
+        runTrace:
+          "GET /api/runs/:id/trace; client.runTrace(id); flow trace RUN_ID --json; MCP read_run_trace",
+        guide: "/api/guide/observability",
+      },
       runSubmission: {
         result:
           "Full run document; its durable identifier is id on HTTP, SDK and CLI (MCP structuredContent.data.id).",
@@ -504,6 +510,15 @@ export function registerDiscoveryRoutes(
       submission: z.toJSONSchema(runSubmissionSchema),
     }),
   );
+  app.get("/api/guide/observability", async (_, res, next) => {
+    try {
+      res
+        .type("text/markdown")
+        .send(await readFile(path.join(root, "docs/observability.md"), "utf8"));
+    } catch (error) {
+      next(error);
+    }
+  });
   app.get("/api/guide/setup", async (_, res, next) => {
     try {
       res

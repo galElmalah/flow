@@ -9,14 +9,14 @@
 <meta name="theme-color" content="#000000" />
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
-<link rel="canonical" href="https://gal.overto.work/flow-landing/flow/" />
+<link rel="canonical" href="https://gal.overto.run/flow-landing/flow/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Flow" />
 <meta property="og:title" content="Flow — Images that remember where they came from" />
 <meta property="og:description" content="Flow: a local canvas for AI image, GIF and video workflows. Open source, agent-native, with full lineage." />
-<meta property="og:url" content="https://gal.overto.work/flow-landing/flow/" />
-<meta property="og:image" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
-<meta property="og:image:secure_url" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
+<meta property="og:url" content="https://gal.overto.run/flow-landing/flow/" />
+<meta property="og:image" content="https://gal.overto.run/flow-landing/flow/assets/og.jpg" />
+<meta property="og:image:secure_url" content="https://gal.overto.run/flow-landing/flow/assets/og.jpg" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -24,12 +24,13 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Flow — Images that remember where they came from" />
 <meta name="twitter:description" content="Flow: a local canvas for AI image, GIF and video workflows. Open source, agent-native, with full lineage." />
-<meta name="twitter:image" content="https://gal.overto.work/flow-landing/flow/assets/og.jpg" />
+<meta name="twitter:image" content="https://gal.overto.run/flow-landing/flow/assets/og.jpg" />
 <meta name="twitter:image:alt" content="Flow campaign workflow: one helmet seed expanded into four salt-flat racing scenes" />
 <script>document.documentElement.classList.add("js")</script>
-<link rel="icon" href="assets/favicon.png" type="image/png" sizes="32x32" />
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" sizes="any" />
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180" />
+<link rel="icon" href="assets/favicon.ico?v=liquid" type="image/x-icon" sizes="16x16 32x32 48x48" />
+<link rel="icon" href="assets/favicon.png?v=liquid" type="image/png" sizes="32x32" />
+<link rel="icon" href="assets/favicon.svg?v=liquid" type="image/svg+xml" sizes="any" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=liquid" sizes="180x180" />
 <link rel="preload" href="assets/Figtree-Variable.woff2" as="font" type="font/woff2" crossorigin />
 <style>
 @font-face { font-family: Figtree; src: url(assets/Figtree-Variable.woff2) format("woff2"); font-weight: 300 900; font-display: swap; }
@@ -56,7 +57,7 @@ a { color: inherit; text-decoration: none; }
 nav { position: fixed; z-index: 50; inset: 0 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 22px clamp(20px, 4vw, 56px); mix-blend-mode: difference; }
 nav .l { display: flex; gap: 30px; font-size: 14px; letter-spacing: .02em; }
 nav .brand { font-weight: 800; font-size: 20px; letter-spacing: -.03em; display: flex; align-items: center; gap: 10px; }
-nav .brand i { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+nav .brand img { display: block; width: 44px; height: 44px; }
 nav .gh { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; letter-spacing: .02em; }
 nav .gh svg { width: 16px; height: 16px; fill: currentColor; }
 nav .gh .sc { font-variant-numeric: tabular-nums; opacity: .6; }
@@ -257,8 +258,8 @@ footer div { display: flex; gap: 22px; } footer a:hover { color: #fff; }
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Image viewer" aria-hidden="true"><button class="x" type="button" aria-label="Close image">×</button><img alt="" /><p>Click anywhere or press Esc to close</p></div>
 
 <nav>
-  <a class="brand" href="#"><i></i>flow</a>
-  <div class="l"><a class="u" href="#workflow">Workflow</a><a class="u" href="#features">Features</a><a class="u" href="#edit">Editing</a><a class="u" href="#agents">Agents</a><a class="u" href="#code">Code</a><a class="u docs" href="https://gal.overto.work/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a></div>
+  <a class="brand" href="#" aria-label="Flow home"><img src="assets/flow-liquid.svg" width="44" height="44" alt="Flow" /></a>
+  <div class="l"><a class="u" href="#workflow">Workflow</a><a class="u" href="#features">Features</a><a class="u" href="#edit">Editing</a><a class="u" href="#agents">Agents</a><a class="u" href="#code">Code</a><a class="u docs" href="https://gal.overto.run/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a></div>
   <a class="gh u" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub <span class="sc">★ <span data-stars data-fallback="">·</span></span></a>
 </nav>
 
@@ -355,7 +356,7 @@ footer div { display: flex; gap: 22px; } footer a:hover { color: #fff; }
     <h2>Built for <em>agents</em> as much as humans.</h2>
     <p>The CLI, JavaScript client and MCP server use the same services as the canvas. Hand your agent the checkout and one instruction.</p>
     <div class="surfaces"><div><b>CLI</b>flow plan · run · wait</div><div><b>MCP</b>Discoverable tools</div><div><b>Client</b>FlowClient in JS</div><div><b>Skills</b>Installed for Claude &amp; Codex</div></div>
-    <p class="docs"><span>Docs</span><a class="u" href="https://gal.overto.work/flow-landing/docs/SETUP.html" target="_blank" rel="noopener noreferrer">Setup</a><a class="u" href="https://gal.overto.work/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/installation.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/mcp.html" target="_blank" rel="noopener noreferrer">MCP</a><a class="u" href="https://gal.overto.work/flow-landing/docs/guide/PROVIDERS.html" target="_blank" rel="noopener noreferrer">Providers</a></p>
+    <p class="docs"><span>Docs</span><a class="u" href="https://gal.overto.run/flow-landing/docs/SETUP.html" target="_blank" rel="noopener noreferrer">Setup</a><a class="u" href="https://gal.overto.run/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a><a class="u" href="https://gal.overto.run/flow-landing/docs/guide/installation.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK</a><a class="u" href="https://gal.overto.run/flow-landing/docs/guide/mcp.html" target="_blank" rel="noopener noreferrer">MCP</a><a class="u" href="https://gal.overto.run/flow-landing/docs/guide/PROVIDERS.html" target="_blank" rel="noopener noreferrer">Providers</a></p>
   </div>
   <div class="quote"><span id="q">Read SETUP.md first, then AGENTS.md. Install dependencies, run setup and verify:setup, then use the Flow CLI/client/MCP to create and plan a workflow for my project. Check provider readiness and planned counts before generating. Keep the returned run ID and report the viewer URL and output lineage.</span><small><span>Paste into Claude Code or Codex</span><button class="copy" data-copy="#q">Copy prompt</button></small></div>
 </section>
@@ -370,7 +371,7 @@ footer div { display: flex; gap: 22px; } footer a:hover { color: #fff; }
       <li><b>Plan first</b><code>flow plan</code> counts every job before a single image is generated.</li>
     </ul>
   </div>
-  <div class="ide"><p class="meta">Register your project with the CLI, install the SDK in that folder, and add <code>helmet-seed.png</code>. The script uploads it and saves a four-scene workflow without starting inference.</p><p class="meta"><a class="u" href="examples/salt-speed.flow.json" download>Download workflow</a> · <a class="u" href="examples/build.mjs" download>Download build.mjs</a> · <a class="u" href="https://gal.overto.work/flow-landing/docs/guide/agents.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK reference</a></p>
+  <div class="ide"><p class="meta">Register your project with the CLI, install the SDK in that folder, and add <code>helmet-seed.png</code>. The script uploads it and saves a four-scene workflow without starting inference.</p><p class="meta"><a class="u" href="examples/salt-speed.flow.json" download>Download workflow</a> · <a class="u" href="examples/build.mjs" download>Download build.mjs</a> · <a class="u" href="https://gal.overto.run/flow-landing/docs/guide/agents.html" target="_blank" rel="noopener noreferrer">CLI &amp; SDK reference</a></p>
     <div class="tabs" id="tabs"><button class="on" data-t="file">salt-speed.flow.json</button><button data-t="js">build.mjs</button><button data-t="cli">terminal</button></div>
     <pre id="src"></pre>
   </div>
@@ -380,12 +381,12 @@ footer div { display: flex; gap: 22px; } footer a:hover { color: #fff; }
   <canvas id="gl2" aria-hidden="true"></canvas>
   <div class="inner">
     <h2>Make it<br />yours.</h2>
-    <div class="row2"><a href="https://github.com/galElmalah/flow" target="_blank" rel="noopener">★ Star <b data-stars data-fallback="">·</b></a><a href="https://gal.overto.work/flow-landing/docs/SETUP.html" target="_blank" rel="noopener">Run locally →</a></div>
+    <div class="row2"><a href="https://github.com/galElmalah/flow" target="_blank" rel="noopener">★ Star <b data-stars data-fallback="">·</b></a><a href="https://gal.overto.run/flow-landing/docs/SETUP.html" target="_blank" rel="noopener">Run locally →</a></div>
     <div class="install-command"><code id="install-command">git clone https://github.com/galElmalah/flow.git &amp;&amp; cd flow &amp;&amp; npm ci &amp;&amp; npm run setup &amp;&amp; npm run demo</code><button class="copy" type="button" data-copy="#install-command" aria-live="polite">Copy command</button></div>
   </div>
 </section>
 
-<footer><span>Flow — MIT licensed. Brand marks belong to their owners.</span><div><a class="u" href="https://gal.overto.work/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a><a class="u" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener noreferrer">GitHub</a><a class="u" href="https://github.com/galElmalah/flow/issues" target="_blank" rel="noopener noreferrer">Issues</a><a class="u" href="https://gal.overto.work/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a></div></footer>
+<footer><span>Flow — MIT licensed. Brand marks belong to their owners.</span><div><a class="u" href="https://gal.overto.run/flow-landing/docs/" target="_blank" rel="noopener noreferrer">Docs</a><a class="u" href="https://github.com/galElmalah/flow" target="_blank" rel="noopener noreferrer">GitHub</a><a class="u" href="https://github.com/galElmalah/flow/issues" target="_blank" rel="noopener noreferrer">Issues</a><a class="u" href="https://gal.overto.run/flow-landing/docs/AGENTS.html" target="_blank" rel="noopener noreferrer">AGENTS.md</a></div></footer>
 
 <script defer src="shared/examples.js"></script>
 <script defer src="shared/site.js"></script>

@@ -230,7 +230,7 @@ the original workflow and run recorded in `forkedFrom`. These operations work
 even when the inline graph was never saved as a workflow.
 
 With `--json`, successful CLI results go to stdout. Failures exit nonzero and
-write `{error:{message,code,status?,runId?,blockers?}}` as JSON to stderr.
+write `{error:{message,code,status?,runId?,traceId?,blockers?}}` as JSON to stderr.
 Unknown flags, invalid numbers and irrelevant options are rejected before any
 upload or network request. A wait timeout preserves the run; use the error's
 `runId` to resume monitoring. See `flow help COMMAND --json` for accepted options,
@@ -249,6 +249,16 @@ under `structuredContent.data`, with its ID at `structuredContent.data.id`.
 `wait_run` takes `timeoutSeconds` up to 55 and returns `{run, timedOut}`. Repeat
 that wait for longer jobs. Read [MCP configuration](docs/mcp.md) for host examples
 and [agent workflows](docs/agents.md) for the complete API.
+
+## Inspect run traces
+
+`flow trace RUN_ID --project PROJECT_ID --json` reads locally retained
+OpenTelemetry spans. SDK clients use `client.runTrace(runId)`; MCP exposes
+`read_run_trace`. Traces cover submission, job attempts, input preparation and
+provider execution. Empty traces can mean active, disabled, sampled-out, historical
+or rotated spans; use `inspect` for durable status. No collector is required.
+See [observability setup](docs/observability.md) for optional collector export and
+[configuration](docs/opentelemetry-reference.md) for environment variables.
 
 ## Configure an AI provider when needed
 

@@ -86,6 +86,7 @@ use `flow workflow create --seed-image ./reference.png` or JavaScript
 | `run_workflow`                                     | Submit one new run; returns its durable ID                                  |
 | `list_runs`, `inspect_run`, `wait_run`             | Follow existing runs, including exact inputs and outputs                    |
 | `control_run`                                      | Pause, resume, cancel or retry an existing run                              |
+| `read_run_trace`                                   | Read retained OpenTelemetry spans for one project-scoped run branch         |
 | `search_images`                                    | Local semantic search across the connection's project image history         |
 | `viewer_url`                                       | Validate a workflow/node/run/gallery link without launching an application  |
 | `list_rule_templates`                              | List built-in rules, presets, and custom templates                          |
@@ -93,7 +94,8 @@ use `flow workflow create --seed-image ./reference.png` or JavaScript
 
 All tools publish JSON Schemas and read/write annotations. Invalid arguments
 fail before an API call. Handler errors have `isError: true` and structured
-`error.message`/optional `error.status`. Successful responses expose
+`error.message`/optional `error.status` and `error.traceId` when the HTTP response
+provides a trace identifier. Successful responses expose
 `structuredContent.data` and the same JSON in their text content.
 
 The style library also exposes `list_styles`, `read_style`, `create_style`,

@@ -10,6 +10,7 @@ import {
   readTrace,
   safeAttributes,
   mark,
+  flushTelemetry,
 } from "../observability/tracing.mjs";
 
 test("real OpenTelemetry exports related spans locally; content and error messages never enter the trace", async (t) => {
@@ -18,7 +19,7 @@ test("real OpenTelemetry exports related spans locally; content and error messag
     await closeTracing();
     await rm(root, { recursive: true, force: true });
   });
-  await initializeTracing({ dataRoot: root });
+  await initializeTracing({ dataRoot: root, env: {} });
   let id, parentId, childId;
   await traced(
     "agent.turn",
@@ -86,6 +87,7 @@ test("optional OTLP export reaches a local collector with real SDK spans", async
   });
   await initializeTracing({
     dataRoot: root,
+    env: {},
     otlpEndpoint: `http://127.0.0.1:${server.address().port}/v1/traces`,
   });
   let traceId;
@@ -93,6 +95,7 @@ test("optional OTLP export reaches a local collector with real SDK spans", async
     traceId = span.spanContext().traceId;
   });
   await readTrace(traceId);
+  await flushTelemetry();
   assert.ok(received.length > 0);
   assert.ok(
     received

@@ -1,6 +1,8 @@
 # Flow
 
-**Agents: [read SETUP.md first](SETUP.md).** · [Documentation](https://gal.overto.work/flow-landing/docs/) · [Website](https://gal.overto.work/flow-landing/flow/)
+![Flow Liquid circular wordmark](public/branding/flow-liquid.png)
+
+**Agents: [read SETUP.md first](SETUP.md).** · [Documentation](https://gal.overto.run/flow-landing/docs/) · [Website](https://gal.overto.run/flow-landing/flow/)
 
 A local canvas for image, GIF and video workflows. Connect reference images, shared prompts and scene collections, then run parallel batches through your own CLI harnesses, API providers or local models. Outputs keep their resolved prompts, settings, inputs and lineage.
 
@@ -104,7 +106,13 @@ npm run check:licenses
 
 ## Documentation and website
 
-The [documentation site](https://gal.overto.work/flow-landing/docs/) renders this repository's Markdown, and the [landing page](https://gal.overto.work/flow-landing/flow/) is in `website/landing/`. Both are static; Flow itself always runs locally. Build the docs with `npm run docs:build`; see [website/README.md](website/README.md).
+Flow includes local OpenTelemetry traces and optional OTLP traces/metrics export
+to a loopback collector. See [observability setup](docs/observability.md) and the
+[configuration reference](docs/opentelemetry-reference.md). Read run spans through
+`flow trace RUN_ID --project PROJECT_ID --json`, `client.runTrace(runId)` or MCP
+`read_run_trace`.
+
+The [documentation site](https://gal.overto.run/flow-landing/docs/) renders this repository's Markdown, and the [landing page](https://gal.overto.run/flow-landing/flow/) is in `website/landing/`. Both are static; Flow itself always runs locally. Build the docs with `npm run docs:build`; see [website/README.md](website/README.md).
 
 ## License
 
