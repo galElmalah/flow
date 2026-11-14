@@ -122,7 +122,7 @@ function frame({ current, title, description, bodyClass, main }) {
   const asset = (name) => escape(relative(current, `assets/${name}`));
   const home = escape(relative(current, "index.html"));
   const canonical = new URL(current === "index.html" ? "" : current, docsUrl).href;
-  const preview = new URL("assets/og.png", docsUrl).href;
+  const preview = new URL("assets/og.jpg", docsUrl).href;
   const previewAlt = "Flow documentation: Run it locally. Drive it from your agents.";
   const html = `<!doctype html>
 <html lang="en" class="no-js" data-root="${escape(root)}" data-public-root="${escape(docsUrl)}">
@@ -139,7 +139,7 @@ function frame({ current, title, description, bodyClass, main }) {
 <meta property="og:url" content="${escape(canonical)}">
 <meta property="og:image" content="${escape(preview)}">
 <meta property="og:image:secure_url" content="${escape(preview)}">
-<meta property="og:image:type" content="image/png">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="720">
 <meta property="og:image:alt" content="${escape(previewAlt)}">

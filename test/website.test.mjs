@@ -312,6 +312,7 @@ test('both sites publish real icons and unfurl images, with correct deep-link me
     const image = await sharp(resolve(preview.href.slice(base.length))).metadata();
     assert.equal(image.width, Number(meta.get('og:image:width')));
     assert.equal(image.height, Number(meta.get('og:image:height')));
+    assert.equal(meta.get('og:image:type'), image.format === 'jpeg' ? 'image/jpeg' : `image/${image.format}`);
     assert.ok(image.width >= 1200 && image.height >= 630);
     for (const [rel, type, width] of [['icon', 'image/svg+xml', null], ['icon', 'image/png', 32], ['apple-touch-icon', undefined, 180]]) {
       const icon = links.find((a) => a.rel === rel && (!type || a.type === type));

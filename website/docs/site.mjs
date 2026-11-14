@@ -16,7 +16,7 @@ export const staticFiles = [
   ["assets/favicon.svg", "website/docs/assets/favicon.svg"],
   ["assets/favicon.png", "website/docs/assets/favicon.png"],
   ["assets/apple-touch-icon.png", "website/docs/assets/apple-touch-icon.png"],
-  ["assets/og.png", "website/docs/assets/og.png"],
+  ["assets/og.jpg", "website/docs/assets/og.jpg"],
   ["assets/grain.svg", "website/docs/assets/grain.svg"],
   ["assets/Figtree-Variable.woff2", "public/fonts/figtree/Figtree-Variable.woff2"],
   ["assets/Figtree-Italic-Variable.woff2", "public/fonts/figtree/Figtree-Italic-Variable.woff2"],
