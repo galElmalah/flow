@@ -82,4 +82,8 @@ test("publication preflight rejects the original same-frame link mistake and mis
     '<a href="../index.html">Overview</a>',
   );
   await validateDocumentationBundle(root, ["index.html", "docs/setup.html"]);
+  await writeFile(entry, '<link rel="canonical" href="https://example.com/docs/">');
+  await validateDocumentationBundle(root, ["index.html"]);
+  await writeFile(entry, '<link rel="stylesheet" href="https://example.com/styles.css">');
+  await assert.rejects(validateDocumentationBundle(root, ["index.html"]), /bundle external dependencies/);
 });

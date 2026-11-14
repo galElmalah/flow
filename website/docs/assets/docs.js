@@ -597,6 +597,13 @@
         document.body.className = data.bodyClass;
         document.title = data.title;
         $('meta[name="description"]').content = data.description;
+        const canonical = new URL(data.path === "index.html" ? "" : data.path, doc.dataset.publicRoot || root).href;
+        $('link[rel="canonical"]').href = canonical;
+        for (const [selector, value] of [
+          ['meta[property="og:title"]', data.title], ['meta[name="twitter:title"]', data.title],
+          ['meta[property="og:description"]', data.description], ['meta[name="twitter:description"]', data.description],
+          ['meta[property="og:url"]', canonical],
+        ]) $(selector).content = value;
         currentPage = page;
         cache.delete(page);
         cache.set(page, data);

@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import sharp from "sharp";
 import {
   documentationLink,
   renderMarkdown,
@@ -286,4 +287,51 @@ test("navigation payloads contain exactly the matching article and metadata with
     assert.doesNotMatch(payload.main, /<script|<header class="topbar"|id="sidebar"/, file);
     assert.match(html, /<style>html,body\{background:#060607;color:#f4f1ea\}<\/style>/, "direct loads start dark before CSS arrives");
   }
+});
+
+test('both sites publish real icons and unfurl images, with correct deep-link metadata', async () => {
+  const pages = await bundle();
+  const assets = new Map(staticFiles);
+  const attributes = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)="([^"]*)"/g)].map(([, key, value]) => [key, value]));
+  const checkPage = async (html, base, pathname, resolve) => {
+    const meta = new Map([...html.matchAll(/<meta\b[^>]*>/g)].map(([tag]) => {
+      const a = attributes(tag); return [a.property || a.name, a.content];
+    }));
+    const links = [...html.matchAll(/<link\b[^>]*>/g)].map(([tag]) => attributes(tag));
+    const canonical = new URL(pathname === 'index.html' ? '' : pathname, base).href;
+    assert.equal(links.find((a) => a.rel === 'canonical').href, canonical);
+    assert.equal(meta.get('og:url'), canonical);
+    assert.equal(meta.get('og:type'), 'website');
+    assert.equal(meta.get('twitter:card'), 'summary_large_image');
+    for (const field of ['title', 'description', 'image', 'image:alt']) {
+      assert.ok(meta.get(`og:${field}`), `${pathname}: ${field}`);
+      assert.equal(meta.get(`og:${field}`), meta.get(`twitter:${field}`));
+    }
+    const preview = new URL(meta.get('og:image'));
+    assert.ok(preview.href.startsWith(base));
+    const image = await sharp(resolve(preview.href.slice(base.length))).metadata();
+    assert.equal(image.width, Number(meta.get('og:image:width')));
+    assert.equal(image.height, Number(meta.get('og:image:height')));
+    assert.ok(image.width >= 1200 && image.height >= 630);
+    for (const [rel, type, width] of [['icon', 'image/svg+xml', null], ['icon', 'image/png', 32], ['apple-touch-icon', undefined, 180]]) {
+      const icon = links.find((a) => a.rel === rel && (!type || a.type === type));
+      assert.ok(icon, `${pathname}: ${rel} ${type || ''}`);
+      const url = new URL(icon.href, canonical);
+      assert.ok(url.href.startsWith(base));
+      const bytes = await readFile(resolve(url.href.slice(base.length)));
+      if (width) assert.equal((await sharp(bytes).metadata()).width, width);
+      else assert.match(bytes.toString(), /<svg/);
+    }
+  };
+  for (const [file, html] of pages) {
+    if (!file.endsWith('.html')) continue;
+    await checkPage(html, docsUrl, file, (asset) => {
+      assert.ok(assets.has(asset), `undeclared preview asset ${asset}`);
+      return path.join(root, assets.get(asset));
+    });
+  }
+  await checkPage(await readFile(path.join(site, 'index.html'), 'utf8'),
+    'https://gal.overto.work/flow-landing/flow/', 'index.html', (asset) => path.join(site, asset));
+  assert.deepEqual(await readFile(path.join(site, 'assets/favicon.svg')),
+    await readFile(path.join(root, 'website/docs/assets/favicon.svg')));
 });

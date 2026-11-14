@@ -121,6 +121,9 @@ function frame({ current, title, description, bodyClass, main }) {
   const root = relative(current, "index.html").replace(/index\.html$/, "") || "./";
   const asset = (name) => escape(relative(current, `assets/${name}`));
   const home = escape(relative(current, "index.html"));
+  const canonical = new URL(current === "index.html" ? "" : current, docsUrl).href;
+  const preview = new URL("assets/og.png", docsUrl).href;
+  const previewAlt = "Flow documentation: Run it locally. Drive it from your agents.";
   const html = `<!doctype html>
 <html lang="en" class="no-js" data-root="${escape(root)}" data-public-root="${escape(docsUrl)}">
 <head>
@@ -128,10 +131,29 @@ function frame({ current, title, description, bodyClass, main }) {
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${escape(title)}</title>
 <meta name="description" content="${escape(description)}">
+<link rel="canonical" href="${escape(canonical)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Flow">
+<meta property="og:title" content="${escape(title)}">
+<meta property="og:description" content="${escape(description)}">
+<meta property="og:url" content="${escape(canonical)}">
+<meta property="og:image" content="${escape(preview)}">
+<meta property="og:image:secure_url" content="${escape(preview)}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="${escape(previewAlt)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escape(title)}">
+<meta name="twitter:description" content="${escape(description)}">
+<meta name="twitter:image" content="${escape(preview)}">
+<meta name="twitter:image:alt" content="${escape(previewAlt)}">
 <meta name="color-scheme" content="dark">
 <style>html,body{background:#060607;color:#f4f1ea}</style>
 <meta name="theme-color" content="#060607">
-<link rel="icon" href="${asset("favicon.svg")}" type="image/svg+xml">
+<link rel="icon" href="${asset("favicon.png")}" type="image/png" sizes="32x32">
+<link rel="icon" href="${asset("favicon.svg")}" type="image/svg+xml" sizes="any">
+<link rel="apple-touch-icon" href="${asset("apple-touch-icon.png")}" sizes="180x180">
 <link rel="preload" href="${asset("Figtree-Variable.woff2")}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${asset("docs.css")}">
 <script defer src="${asset("docs.js")}"></script>

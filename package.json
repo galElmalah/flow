@@ -30,6 +30,7 @@
     "check:licenses": "node tools/license-inventory.mjs",
     "check:unused": "knip",
     "docs:build": "node tools/build-docs.mjs",
+    "website:icons": "node website/build-icons.mjs",
     "landing:examples": "node website/landing/build-examples.mjs",
     "landing:verify": "node website/landing/verify-examples.mjs"
   },

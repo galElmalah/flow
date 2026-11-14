@@ -308,6 +308,8 @@ export async function validateDocumentationBundle(
       ),
     ].map((match) => [match[0], match[1]])) {
       if (/^(?:https?:|\/\/|mailto:)/i.test(href)) {
+        if (/^<link\b/.test(tag) && /\brel="canonical"/.test(tag) && /^https:/.test(href))
+          continue; // A canonical address is metadata, not a loaded dependency.
         if (!/^<a\b/.test(tag))
           throw new Error(
             `${file}: bundle external dependencies instead of loading ${href}`,

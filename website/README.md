@@ -9,6 +9,11 @@ rules (connection, version fence, audience, hosted checks) are in
 | `flow`  | https://gal.overto.work/flow-landing/flow/    | `website/landing/site/` | The files in that directory                 |
 | `docs`  | https://gal.overto.work/flow-landing/docs/    | `website/build/docs/`   | Repository Markdown, via `npm run docs:build` |
 
+Both publish SVG and PNG favicons, an Apple touch icon, Open Graph metadata and
+a large-image X/Twitter card. Docs deep links have their own canonical URL and
+page title; preview images are public bundle assets. Regenerate both icon sets
+with `npm run website:icons` after editing `website/docs/assets/favicon.svg`.
+
 Both use entry `index.html`, relative paths and no SPA fallback. Neither runs Flow;
 the app is local.
 
@@ -21,7 +26,7 @@ npm run docs:build
 
 The command deletes and rebuilds the ignored `website/build/docs/`, then writes
 `website/build/docs.manifest.json`: an inventory whose `files` entries are
-`{path, mediaType, size, sha256}` (HTML, JSON, CSS, JavaScript, JPEG, SVG, WOFF2 and
+`{path, mediaType, size, sha256}` (HTML, JSON, CSS, JavaScript, JPEG, PNG, SVG, WOFF2 and
 text). Upload exactly those files. The build fails if a declared page is missing or
 Git-ignored, a local link, image or `#section` target does not exist, an external
 link lacks a separate-tab target, a stylesheet asset is undeclared, or an
@@ -89,7 +94,7 @@ authorized a public audience for `docs`. Later updates keep the public audience;
 
 ## Landing page
 
-`website/landing/site/` is the complete landing bundle: 34 files, including fonts,
+`website/landing/site/` is the complete landing bundle, including fonts,
 images, provider marks and the downloadable SALT / SPEED example. Edit it in place.
 The header Docs link and other cross-artifact links open in a new tab.
 
